@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <menuitem id="benjali_project_root" name="Business Consulting"></menuitem>
+
+
+    <menuitem id="menu_project_stage_one" name="Project Stages"
+              parent="benjali_project_root" action="action_project_stage_one" ></menuitem>
+
+
+<!--    <menuitem id="menu_employee_loan_line_one" name="Employee Loan Line" parent="menu_employee_loan_root"-->
+<!--    action="action_employee_loan_line_one"/>-->
+
+
+</odoo>

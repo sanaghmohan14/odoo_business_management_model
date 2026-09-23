@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<odoo>
+
+    <!-- =========================
+         SALES & BUSINESS DEVELOPMENT
+    ========================== -->
+
+    <record id="stage_lead_generation" model="business.project.stage">
+        <field name="name">Lead Generation &amp; Registration</field>
+        <field name="sequence">10</field>
+        <field name="phase">sales</field>
+        <field name="responsible_role">Sales Person</field>
+        <field name="approver_role">Sales Head</field>
+        <field name="description">
+            Capture leads from different sources and register them in CRM.
+        </field>
+    </record>
+
+
+    <record id="stage_lead_screening" model="business.project.stage">
+        <field name="name">Lead Screening &amp; Qualification</field>
+        <field name="sequence">20</field>
+        <field name="phase">sales</field>
+        <field name="responsible_role">Operations Head / GVP</field>
+        <field name="approver_role">Operations Head / GVP</field>
+        <field name="description">
+            Evaluate the potential of the lead and assess whether it is qualified.
+        </field>
+    </record>
+
+
+    <record id="stage_ceo_sales_activity" model="business.project.stage">
+        <field name="name">CEO / CASAC Sales Activity</field>
+        <field name="sequence">30</field>
+        <field name="phase">sales</field>
+        <field name="responsible_role">CEO (CASAC)</field>
+        <field name="approver_role">CEO (CASAC)</field>
+        <field name="description">
+            Founder or CEO meets the prospect, discusses requirements and conducts sales activities.
+        </field>
+    </record>
+
+
+    <record id="stage_proposal" model="business.project.stage">
+        <field name="name">Proposal Preparation &amp; Approval</field>
+        <field name="sequence">40</field>
+        <field name="phase">sales</field>
+        <field name="responsible_role">Sales Coordinator</field>
+        <field name="approver_role">Sales Head / CEO</field>
+        <field name="description">
+            Prepare, review and approve the commercial proposal.
+        </field>
+    </record>
+
+
+    <record id="stage_negotiation" model="business.project.stage">
+        <field name="name">Client Follow-up, Negotiation &amp; Closing</field>
+        <field name="sequence">50</field>
+        <field name="phase">sales</field>
+        <field name="responsible_role">Sales Person</field>
+        <field name="approver_role">Sales Head / CEO</field>
+        <field name="description">
+            Follow up with the client, negotiate the proposal and close the deal.
+        </field>
+    </record>
+
+
+    <record id="stage_payment" model="business.project.stage">
+        <field name="name">Payment Confirmation</field>
+        <field name="sequence">60</field>
+        <field name="phase">sales</field>
+        <field name="responsible_role">Sales Person</field>
+        <field name="approver_role">Finance Head</field>
+        <field name="description">
+            Receive payment and confirm the payment with Sales, Sales Head and Finance.
+        </field>
+    </record>
+
+
+    <!-- =========================
+         ONBOARDING & PROJECT INITIATION
+    ========================== -->
+
+    <record id="stage_client_onboarding" model="business.project.stage">
+        <field name="name">Client Onboarding</field>
+        <field name="sequence">70</field>
+        <field name="phase">onboarding</field>
+        <field name="responsible_role">Sales Head</field>
+        <field name="approver_role">CEO</field>
+        <field name="description">
+            Convert the lead into a client and create the client profile.
+        </field>
+    </record>
+
+
+    <record id="stage_project_creation" model="business.project.stage">
+        <field name="name">Project Creation</field>
+        <field name="sequence">80</field>
+        <field name="phase">onboarding</field>
+        <field name="responsible_role">Project Manager</field>
+        <field name="approver_role">COO</field>
+        <field name="description">
+            Create the project in Odoo and define the basic project details.
+        </field>
+    </record>
+
+
+    <record id="stage_team_allocation" model="business.project.stage">
+        <field name="name">Team Allocation</field>
+        <field name="sequence">90</field>
+        <field name="phase">onboarding</field>
+        <field name="responsible_role">Project Manager</field>
+        <field name="approver_role">COO</field>
+        <field name="description">
+            Assign the project team and define team roles.
+        </field>
+    </record>
+
+
+    <record id="stage_kickoff" model="business.project.stage">
+        <field name="name">Initial Client Contact &amp; Kick-off</field>
+        <field name="sequence">100</field>
+        <field name="phase">onboarding</field>
+        <field name="responsible_role">Project Manager</field>
+        <field name="approver_role">COO</field>
+        <field name="description">
+            Contact the client, plan and conduct the kick-off meeting within the required timeline.
+        </field>
+    </record>
+
+
+    <record id="stage_communication" model="business.project.stage">
+        <field name="name">Project Communication Setup</field>
+        <field name="sequence">110</field>
+        <field name="phase">onboarding</field>
+        <field name="responsible_role">Project Manager</field>
+        <field name="approver_role">COO</field>
+        <field name="description">
+            Create communication channels and establish the client communication process.
+        </field>
+    </record>
+
+
+    <!-- =========================
+         PLANNING & ANALYSIS
+    ========================== -->
+
+    <record id="stage_kra" model="business.project.stage">
+        <field name="name">Project KRA Development</field>
+        <field name="sequence">120</field>
+        <field name="phase">planning</field>
+        <field name="responsible_role">Lead Consultant / PM</field>
+        <field name="approver_role">CEO / COO</field>
+        <field name="description">
+            Define key result areas and project objectives.
+        </field>
+    </record>
+
+
+    <record id="stage_activity_plan" model="business.project.stage">
+        <field name="name">Activity Plan Preparation</field>
+        <field name="sequence">130</field>
+        <field name="phase">planning</field>
+        <field name="responsible_role">Project Manager</field>
+        <field name="approver_role">COO</field>
+        <field name="description">
+            Prepare the detailed activity plan including activities, resources and timeline.
+        </field>
+    </record>
+
+
+    <record id="stage_management_review" model="business.project.stage">
+        <field name="name">Management Review &amp; Approval</field>
+        <field name="sequence">140</field>
+        <field name="phase">planning</field>
+        <field name="responsible_role">COO / CEO</field>
+        <field name="approver_role">CEO</field>
+        <field name="description">
+            Review and approve the project plan.
+        </field>
+    </record>
+
+
+    <record id="stage_data_collection" model="business.project.stage">
+        <field name="name">System Study &amp; Data Collection</field>
+        <field name="sequence">150</field>
+        <field name="phase">planning</field>
+        <field name="responsible_role">Consulting Team</field>
+        <field name="approver_role">PM / COO</field>
+        <field name="description">
+            Collect data and documents, conduct interviews and study existing systems.
+        </field>
+    </record>
+
+
+    <record id="stage_analysis" model="business.project.stage">
+        <field name="name">Analysis &amp; Findings</field>
+        <field name="sequence">160</field>
+        <field name="phase">planning</field>
+        <field name="responsible_role">Consulting Team</field>
+        <field name="approver_role">PM / COO</field>
+        <field name="description">
+            Analyse current processes, identify gaps, root causes and risks.
+        </field>
+    </record>
+
+
+    <!-- =========================
+         EXTRA CONTROL STAGES
+    ========================== -->
+
+    <record id="stage_new" model="business.project.stage">
+        <field name="name">New</field>
+        <field name="sequence">1</field>
+        <field name="phase">sales</field>
+        <field name="responsible_role">Sales Person</field>
+        <field name="description">
+            Newly created business project record.
+        </field>
+    </record>
+
+
+    <record id="stage_on_hold" model="business.project.stage">
+        <field name="name">On Hold</field>
+        <field name="sequence">900</field>
+        <field name="phase">sales</field>
+        <field name="description">
+            Project temporarily paused.
+        </field>
+        <field name="folded">True</field>
+    </record>
+
+
+    <record id="stage_cancelled" model="business.project.stage">
+        <field name="name">Cancelled</field>
+        <field name="sequence">910</field>
+        <field name="phase">sales</field>
+        <field name="description">
+            Business process cancelled or rejected.
+        </field>
+        <field name="folded">True</field>
+    </record>
+
+
+    <record id="stage_completed" model="business.project.stage">
+        <field name="name">Completed</field>
+        <field name="sequence">1000</field>
+        <field name="phase">planning</field>
+        <field name="description">
+            Business project process completed.
+        </field>
+        <field name="folded">True</field>
+    </record>
+
+</odoo>
