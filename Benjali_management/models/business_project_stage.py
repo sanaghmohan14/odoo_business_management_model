@@ -48,3 +48,26 @@ class BusinessProjectStage(models.Model):
         string='Folded in Kanban',
         default=False
     )
+
+    requires_approval = fields.Boolean(
+        string='Requires Approval',
+        default=False
+    )
+
+    approval_type = fields.Selection([
+        ('proposal', 'Proposal Approval'),
+        ('management_review', 'Management Review'),
+        ('kra', 'KRA Approval'),
+        ('activity_plan', 'Activity Plan Approval'),
+        ('other', 'Other'),
+    ], string='Approval Type')
+
+    approver_id = fields.Many2one(
+        'res.users',
+        string='Default Approver'
+    )
+
+    responsible_user_id = fields.Many2one(
+        'res.users',
+        string='Default Responsible User'
+    )

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="approval_sequence_one" model="ir.sequence">
+            <field name="name">Approval sequence</field>
+            <field name="code">business.project.approval</field>
+            <field name="prefix">AP</field>
+            <field name="padding">2</field>
+            <field name="number_increment">1</field>
+        </record>
+    </data>
+</odoo>

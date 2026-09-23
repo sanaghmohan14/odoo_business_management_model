@@ -22,7 +22,9 @@ class BusinessProject(models.Model):
         string='Reference',
         readonly=True,
         copy=False,
-        default='New'
+        default=lambda self: self.env['ir.sequence'].next_by_code(
+            'business.project'
+        ) or 'New'
     )
 
     active = fields.Boolean(
@@ -38,8 +40,10 @@ class BusinessProject(models.Model):
         'business.project.stage',
         string='Stage',
         required=True,
+        default=lambda self: self._default_stage(),
         tracking=True,
-        ondelete='restrict'
+        ondelete='restrict',
+        group_expand='_read_group_stage_ids'
     )
 
     phase = fields.Selection(
@@ -60,6 +64,10 @@ class BusinessProject(models.Model):
         string='Resume Stage',
         readonly=True
     )
+    requires_approval = fields.Boolean(
+        string='Requires Approval',
+        default=False
+    )
 
     # ---------------------------------------------------------
     # CUSTOMER
@@ -73,6 +81,12 @@ class BusinessProject(models.Model):
         ondelete='restrict'
     )
 
+    responsible_user_id = fields.Many2one(
+        'res.users',
+        string='Responsible User',
+        tracking=True
+    )
+
     # ---------------------------------------------------------
     # CRM / SALES
     # ---------------------------------------------------------
@@ -81,6 +95,15 @@ class BusinessProject(models.Model):
         'crm.lead',
         string='Opportunity',
         tracking=True,
+        ondelete='set null',
+        index=True
+    )
+
+
+
+    lead_id = fields.Many2one(
+        'crm.lead',
+        string='CRM Lead',
         ondelete='set null'
     )
 
@@ -94,8 +117,15 @@ class BusinessProject(models.Model):
     sales_person_id = fields.Many2one(
         'res.users',
         string='Sales Person',
-        tracking=True,
-        ondelete='set null'
+        # tracking=True,
+        # ondelete='set null'
+    )
+
+    department_id = fields.Many2one(
+        'hr.department',
+        string='Department',
+        ondelete='set null',
+        index=True
     )
 
     # ---------------------------------------------------------
@@ -104,7 +134,7 @@ class BusinessProject(models.Model):
 
     project_id = fields.Many2one(
         'project.project',
-        string='Odoo Project',
+        string='Project Allocate',
         tracking=True,
         ondelete='set null'
     )
@@ -172,6 +202,22 @@ class BusinessProject(models.Model):
         compute='_compute_workflow_status'
     )
 
+    approval_ids = fields.One2many(
+        'business.project.approval',
+        'project_id',
+        string='Approvals'
+    )
+
+    qualification_status = fields.Selection([
+        ('not_checked', 'Not Checked'),
+        ('qualified', 'Qualified'),
+        ('not_qualified', 'Not Qualified'),
+    ], string='Qualification Status', default='not_checked', tracking=True)
+
+    qualification_notes = fields.Text(
+        string='Qualification Notes'
+    )
+
     # ---------------------------------------------------------
     # DEFAULT
     # ---------------------------------------------------------
@@ -179,42 +225,70 @@ class BusinessProject(models.Model):
     @api.model
     def _default_stage(self):
         stage = self.env.ref(
-            'business_consulting_management.stage_new',
+            'Benjali_management.stage_new',
             raise_if_not_found=False
         )
         return stage.id if stage else False
+
+    @api.model
+    def _read_group_stage_ids(self, stages, domain):
+        return self.env['business.project.stage'].search(
+            [('active', '=', True)],
+            order='sequence, id'
+        )
 
     # ---------------------------------------------------------
     # CREATE
     # ---------------------------------------------------------
 
+
+    # @api.model_create_multi
+    # def create(self, vals_list):
+    #     for vals in vals_list:
+    #         if vals.get('reference', 'New') == 'New':
+    #             vals['reference'] = (
+    #                     self.env['ir.sequence'].next_by_code(
+    #                         'business.project'
+    #                     ) or 'New'
+    #             )
+    #
+    #     return super().create(vals_list)
+
+    def _assign_stage_responsible_user(self):
+        for record in self:
+            responsible_user = record.stage_id.responsible_user_id
+
+            if not responsible_user and record.stage_id.name == 'Lead Generation & Registration':
+                responsible_user = record.sales_person_id
+
+            if responsible_user:
+                record.responsible_user_id = responsible_user.id
+
+
     @api.model_create_multi
     def create(self, vals_list):
-
         for vals in vals_list:
-
-            if vals.get('reference', 'New') == 'New':
+            if not vals.get('reference'):
                 vals['reference'] = self.env['ir.sequence'].next_by_code(
                     'business.project'
                 ) or 'New'
 
             if not vals.get('stage_id'):
-                stage = self.env.ref(
-                    'business_consulting_management.stage_new',
-                    raise_if_not_found=False
-                )
+                vals['stage_id'] = self.env.ref(
+                    'Benjali_management.stage_new'
+                ).id
 
-                if stage:
-                    vals['stage_id'] = stage.id
+        projects = super().create(vals_list)
 
-        records = super().create(vals_list)
-
-        for record in records:
-            record.message_post(
-                body='Business project created.'
+        for project in projects:
+            project._assign_stage_responsible_user()
+            project.message_post(
+                body=f'Business Project {project.name} created.'
             )
 
-        return records
+        return projects
+
+
 
     # ---------------------------------------------------------
     # WORKFLOW STATUS
@@ -225,7 +299,7 @@ class BusinessProject(models.Model):
 
         for record in self:
 
-            stage_name = record.stage_id.name.lower()
+            stage_name = (record.stage_id.name or '').strip().lower()
 
             record.is_on_hold = stage_name == 'on hold'
             record.is_cancelled = stage_name == 'cancelled'
@@ -236,33 +310,117 @@ class BusinessProject(models.Model):
     # ---------------------------------------------------------
 
     def action_next_stage(self):
-
         for record in self:
 
             if record.is_cancelled:
                 raise UserError(
-                    'A cancelled project cannot move to the next stage.'
+                    'Cancelled projects cannot move to another stage.'
                 )
 
             if record.is_completed:
                 raise UserError(
-                    'This project is already completed.'
+                    'Completed projects cannot move to another stage.'
                 )
 
             if record.is_on_hold:
                 raise UserError(
-                    'Resume the project before moving to the next stage.'
+                    'Resume the project before moving to another stage.'
                 )
 
-            next_stage = self.env['business.project.stage'].search(
-                [
-                    ('active', '=', True),
-                    ('sequence', '>', record.stage_id.sequence),
-                    ('name', 'not in', ['On Hold', 'Cancelled']),
-                ],
-                order='sequence asc',
-                limit=1
+            if record.stage_id.name == 'Lead Screening & Qualification':
+
+                if record.qualification_status == 'not_checked':
+                    raise UserError(
+                        'Please complete the lead qualification before '
+                        'moving to the next stage.'
+                    )
+
+                if record.qualification_status == 'not_qualified':
+                    raise UserError(
+                        'This lead is not qualified and cannot proceed.'
+                    )
+
+            # Check whether current stage needs approval
+            if record.stage_id.requires_approval:
+
+                pending_approval = self.env[
+                    'business.project.approval'
+                ].search([
+                    ('project_id', '=', record.id),
+                    ('approval_type', '=', record.stage_id.approval_type),
+                    ('state', '=', 'pending'),
+                ], limit=1)
+
+                if pending_approval:
+                    raise UserError(
+                        'This stage is waiting for approval.'
+                    )
+
+                # Create approval request
+                if not record.stage_id.approver_id:
+                    raise UserError(
+                        'Please configure an approver for this stage.'
+                    )
+
+                self.env['business.project.approval'].create({
+                    'project_id': record.id,
+                    'approval_type': record.stage_id.approval_type,
+                    'approver_id': record.stage_id.approver_id.id,
+                })
+
+                record.message_post(
+                    body=(
+                        f'Approval request created for '
+                        f'<b>{record.stage_id.name}</b>.'
+                    )
+                )
+
+                return True
+
+            # Normal stage movement
+
+            next_stage = self.env['business.project.stage'].search([
+                ('sequence', '>', record.stage_id.sequence),
+                ('active', '=', True),
+                ('name', 'not in', ['On Hold', 'Cancelled']),
+            ], order='sequence asc', limit=1)
+
+            if not next_stage:
+                raise UserError(
+                    'There is no next stage.'
+                )
+
+            old_stage = record.stage_id
+
+            record.write({
+                'previous_stage_id': old_stage.id,
+                'stage_id': next_stage.id,
+            })
+
+            record._assign_stage_responsible_user()
+            record._create_stage_activity()
+
+            record.message_post(
+                body=(
+                    f'Project moved from '
+                    f'<b>{old_stage.name}</b> to '
+                    f'<b>{next_stage.name}</b>.'
+                )
             )
+
+    def action_move_after_approval(self):
+        for record in self:
+
+            current_stage = record.stage_id
+
+            next_stage = self.env[
+                'business.project.stage'
+            ].search([
+                ('sequence', '>', current_stage.sequence),
+                ('active', '=', True),
+            ], order='sequence asc', limit=1)
+
+
 
             if not next_stage:
                 raise UserError(
@@ -270,21 +428,21 @@ class BusinessProject(models.Model):
                 )
 
             record.write({
-                'previous_stage_id': record.stage_id.id,
+                'previous_stage_id': current_stage.id,
                 'stage_id': next_stage.id,
             })
+            record._assign_stage_responsible_user()
+            record._create_stage_activity()
 
             record.message_post(
                 body=(
-                    'Stage changed from <b>%s</b> to <b>%s</b>.'
-                    % (
-                        record.previous_stage_id.name,
-                        next_stage.name
-                    )
+                    f'Approval completed for '
+                    f'<b>{current_stage.name}</b>. '
+                    f'Project moved to '
+                    f'<b>{next_stage.name}</b>.'
                 )
             )
 
-        return True
 
     # ---------------------------------------------------------
     # PREVIOUS STAGE
@@ -343,7 +501,7 @@ class BusinessProject(models.Model):
     def action_hold(self):
 
         hold_stage = self.env.ref(
-            'business_consulting_management.stage_on_hold',
+            'Benjali_management.stage_on_hold',
             raise_if_not_found=False
         )
 
@@ -417,7 +575,7 @@ class BusinessProject(models.Model):
     def action_cancel(self):
 
         cancel_stage = self.env.ref(
-            'business_consulting_management.stage_cancelled',
+            'Benjali_management.stage_cancelled',
             raise_if_not_found=False
         )
 
@@ -452,7 +610,7 @@ class BusinessProject(models.Model):
     def action_complete(self):
 
         completed_stage = self.env.ref(
-            'business_consulting_management.stage_completed',
+            'Benjali_management.stage_completed',
             raise_if_not_found=False
         )
 
@@ -479,3 +637,26 @@ class BusinessProject(models.Model):
             )
 
         return True
+
+
+
+
+    #add activity
+
+    def _create_stage_activity(self):
+        for record in self:
+            if not record.responsible_user_id:
+                continue
+
+            record.activity_schedule(
+                'mail.mail_activity_data_todo',
+                user_id=record.responsible_user_id.id,
+                summary=f'Work on {record.stage_id.name}',
+                note=(
+                    f'Please complete the activities related to '
+                    f'the stage: {record.stage_id.name}.'
+                ),
+            )
+
+
+

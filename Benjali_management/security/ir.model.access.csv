@@ -2,8 +2,10 @@ id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 
 
 
-business_consulting_management.access_business_project_one,access_business_project_one,business_consulting_management.model_business_project,base.group_user,1,1,1,1
-business_consulting_management.access_business_project_stage_one,access_business_project_stage_one,business_consulting_management.model_business_project_stage,base.group_user,1,1,1,1
+Benjali_management.access_business_project_one,access_business_project_one,Benjali_management.model_business_project,base.group_user,1,1,1,1
+Benjali_management.access_business_project_stage_one,access_business_project_stage_one,Benjali_management.model_business_project_stage,base.group_user,1,1,1,1
+Benjali_management.access_business_project_approval_one,access_business_project_approval_one,Benjali_management.model_business_project_approval,base.group_user,1,1,1,1
+
 
 
 

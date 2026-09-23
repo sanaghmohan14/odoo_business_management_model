@@ -1,12 +1,25 @@
 <?xml version='1.0' encoding='utf-8'?>
 <odoo>
-    <record id="crm_dept_one" model="ir.ui.view">
+    <record id="crm_dept_two_one" model="ir.ui.view">
         <field name="name">CRM</field>
         <field name="model">crm.lead</field>
         <field name="inherit_id" ref="crm.crm_lead_view_form"/>
         <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+
+                        <button
+                                name="action_create_business_project"
+                                string="Create Business Project"
+                                type="object"
+                                class="btn-primary"
+                                invisible="won_status != 'won' or business_project_id"
+                                                                    />
+
+            </xpath>
             <xpath expr="//field[@name='user_id']" position="after">
-                    <field name="department_id"/>
+                        <field name="department_id"/>
+
+                        <field name="business_project_id" readonly="1"/>
             </xpath>
         </field>
     </record>
