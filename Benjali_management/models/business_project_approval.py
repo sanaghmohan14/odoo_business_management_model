@@ -122,31 +122,6 @@ class BusinessProjectApproval(models.Model):
 
 
 
-    # def action_approve(self):
-    #     for approval in self:
-    #
-    #         if approval.state != 'pending':
-    #             raise UserError(
-    #                 'Only pending approval requests can be approved.'
-    #             )
-    #
-    #         if approval.approver_id != self.env.user:
-    #             raise UserError(
-    #                 'Only the assigned approver can approve this request.'
-    #             )
-    #
-    #         approval.write({
-    #             'state': 'approved',
-    #             'approval_date': fields.Datetime.now(),
-    #         })
-    #
-    #         approval.project_id.message_post(
-    #             body=(
-    #                 f'Approval <b>{approval.name}</b> '
-    #                 f'has been <b>approved</b> by '
-    #                 f'{self.env.user.name}.'
-    #             )
-    #         )
 
     def action_reject(self):
         for approval in self:

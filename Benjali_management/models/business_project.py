@@ -8,9 +8,7 @@ class BusinessProject(models.Model):
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _order = 'id desc'
 
-    # ---------------------------------------------------------
     # BASIC INFORMATION
-    # ---------------------------------------------------------
 
     name = fields.Char(
         string='Project Name',
@@ -32,9 +30,7 @@ class BusinessProject(models.Model):
         default=True
     )
 
-    # ---------------------------------------------------------
     # WORKFLOW
-    # ---------------------------------------------------------
 
     stage_id = fields.Many2one(
         'business.project.stage',
@@ -69,9 +65,7 @@ class BusinessProject(models.Model):
         default=False
     )
 
-    # ---------------------------------------------------------
     # CUSTOMER
-    # ---------------------------------------------------------
 
     partner_id = fields.Many2one(
         'res.partner',
@@ -87,9 +81,14 @@ class BusinessProject(models.Model):
         tracking=True
     )
 
-    # ---------------------------------------------------------
+    team_member_ids = fields.One2many(
+        'business.project.team',
+        'project_id',
+        string='Team Members'
+    )
+
     # CRM / SALES
-    # ---------------------------------------------------------
+
 
     opportunity_id = fields.Many2one(
         'crm.lead',
@@ -127,10 +126,30 @@ class BusinessProject(models.Model):
         ondelete='set null',
         index=True
     )
+    #communication steps
+    communication_channel = fields.Selection([
+        ('whatsapp', 'WhatsApp'),
+        ('email', 'Email'),
+        ('teams', 'Microsoft Teams'),
+        ('other', 'Other'),
+    ], string='Communication Channel')
 
-    # ---------------------------------------------------------
+    communication_group_name = fields.Char(
+        string='Group / Channel Name'
+    )
+
+    communication_created = fields.Boolean(
+        string='Communication Setup Completed',
+        default=False
+    )
+
+    communication_notes = fields.Text(
+        string='Communication Notes'
+    )
+
+
     # PROJECT
-    # ---------------------------------------------------------
+
 
     project_id = fields.Many2one(
         'project.project',
@@ -146,9 +165,8 @@ class BusinessProject(models.Model):
         ondelete='set null'
     )
 
-    # ---------------------------------------------------------
     # DATES
-    # ---------------------------------------------------------
+
 
     start_date = fields.Date(
         string='Start Date',
@@ -165,9 +183,29 @@ class BusinessProject(models.Model):
         tracking=True
     )
 
-    # ---------------------------------------------------------
+    #client kickoff
+
+    kickoff_contact_date = fields.Datetime(
+        string='Initial Client Contact'
+    )
+
+    kickoff_date = fields.Datetime(
+        string='Kick-off Date'
+    )
+
+    kickoff_completed = fields.Boolean(
+        string='Kick-off Completed',
+        default=False
+    )
+
+    kickoff_notes = fields.Text(
+        string='Kick-off Notes'
+    )
+
+
+
     # DESCRIPTION
-    # ---------------------------------------------------------
+
 
     description = fields.Text(
         string='Description'
@@ -177,9 +215,31 @@ class BusinessProject(models.Model):
         string='Internal Notes'
     )
 
-    # ---------------------------------------------------------
+    #kra connection
+    kra_ids = fields.One2many(
+        'business.project.kra',
+        'project_id',
+        string='KRAs'
+    )
+
+    #activity
+
+    activity_plan_ids = fields.One2many(
+        'business.project.activity',
+        'project_id',
+        string='Activity Plan'
+    )
+
+    #data collection
+
+    data_collection_ids = fields.One2many(
+        'business.project.data.collection',
+        'project_id',
+        string='Data Collection'
+    )
+
     # COMPUTED INFORMATION
-    # ---------------------------------------------------------
+
 
     stage_sequence = fields.Integer(
         related='stage_id.sequence',
@@ -218,9 +278,7 @@ class BusinessProject(models.Model):
         string='Qualification Notes'
     )
 
-    # ---------------------------------------------------------
-    # DEFAULT
-    # ---------------------------------------------------------
+
 
     @api.model
     def _default_stage(self):
@@ -229,6 +287,7 @@ class BusinessProject(models.Model):
             raise_if_not_found=False
         )
         return stage.id if stage else False
+
 
     @api.model
     def _read_group_stage_ids(self, stages, domain):
@@ -258,7 +317,7 @@ class BusinessProject(models.Model):
         for record in self:
             responsible_user = record.stage_id.responsible_user_id
 
-            if not responsible_user and record.stage_id.name == 'Lead Generation & Registration':
+            if not responsible_user and record.stage_id.name == 'Team Allocation':
                 responsible_user = record.sales_person_id
 
             if responsible_user:
@@ -305,41 +364,94 @@ class BusinessProject(models.Model):
             record.is_cancelled = stage_name == 'cancelled'
             record.is_completed = stage_name == 'completed'
 
+    def _check_stage_requirements(self):
+        """Validate requirements before leaving the current stage."""
+        for record in self:
+            if record.is_cancelled:
+                raise UserError(
+                    'Cancelled projects cannot move to another stage.'
+                )
+            if record.is_completed:
+                raise UserError(
+                    'Completed projects cannot move to another stage.'
+                )
+            if record.is_on_hold:
+                raise UserError(
+                    'Resume the project before moving to another stage.'
+                )
+            if record.stage_id.name == 'Team Allocation' and not record.team_member_ids:
+                raise UserError(
+                    'Please allocate at least one team member before '
+                    'moving to the next stage.'
+                )
+            if record.stage_id.name == 'Initial Client Contact & Kick-off' \
+                    and not record.kickoff_completed:
+                raise UserError(
+                    'Please complete the client kick-off before moving '
+                    'to the next stage.'
+                )
+            if record.stage_id.name == 'System Study & Data Collection':
+                if not record.data_collection_ids:
+                    raise UserError(
+                        'Please add at least one data collection item '
+                        'before moving to the next stage.'
+                    )
+                if any(
+                        item.state not in ('collected', 'verified')
+                        for item in record.data_collection_ids
+                ):
+                    raise UserError(
+                        'All data collection items must be Collected or '
+                        'Verified before moving to Analysis & Findings.'
+                    )
+            if record.stage_id.name == 'Project Communication Setup' \
+                    and not record.communication_created:
+                raise UserError(
+                    'Please complete the project communication setup '
+                    'before moving to the next stage.'
+                )
+            if record.stage_id.name == 'Lead Screening & Qualification':
+                if record.qualification_status == 'not_checked':
+                    raise UserError(
+                        'Please complete the lead qualification before '
+                        'moving to the next stage.'
+                    )
+                if record.qualification_status == 'not_qualified':
+                    raise UserError(
+                        'This lead is not qualified and cannot proceed.'
+                    )
+
+    def write(self, vals):
+        if 'stage_id' in vals and not self.env.context.get(
+                'skip_stage_requirements'):
+            for record in self:
+                if vals['stage_id'] != record.stage_id.id:
+                    record._check_stage_requirements()
+                    if record.stage_id.requires_approval:
+                        pending_approval = self.env[
+                            'business.project.approval'
+                        ].search([
+                            ('project_id', '=', record.id),
+                            ('approval_type', '=', record.stage_id.approval_type),
+                            ('state', '=', 'pending'),
+                        ], limit=1)
+                        if pending_approval:
+                            raise UserError(
+                                'This stage is waiting for approval.'
+                            )
+                        raise UserError(
+                            'Approval is required before moving to the next '
+                            'stage. Use the Next Stage button to request it.'
+                        )
+        return super().write(vals)
+
     # ---------------------------------------------------------
     # NEXT STAGE
     # ---------------------------------------------------------
 
     def action_next_stage(self):
         for record in self:
-
-            if record.is_cancelled:
-                raise UserError(
-                    'Cancelled projects cannot move to another stage.'
-                )
-
-            if record.is_completed:
-                raise UserError(
-                    'Completed projects cannot move to another stage.'
-                )
-
-            if record.is_on_hold:
-                raise UserError(
-                    'Resume the project before moving to another stage.'
-                )
-
-            if record.stage_id.name == 'Lead Screening & Qualification':
-
-                if record.qualification_status == 'not_checked':
-                    raise UserError(
-                        'Please complete the lead qualification before '
-                        'moving to the next stage.'
-                    )
-
-                if record.qualification_status == 'not_qualified':
-                    raise UserError(
-                        'This lead is not qualified and cannot proceed.'
-                    )
-
+            record._check_stage_requirements()
             # Check whether current stage needs approval
             if record.stage_id.requires_approval:
 
@@ -392,7 +504,7 @@ class BusinessProject(models.Model):
 
             old_stage = record.stage_id
 
-            record.write({
+            record.with_context(skip_stage_requirements=True).write({
                 'previous_stage_id': old_stage.id,
                 'stage_id': next_stage.id,
             })
@@ -427,7 +539,7 @@ class BusinessProject(models.Model):
                     'There is no next stage.'
                 )
 
-            record.write({
+            record.with_context(skip_stage_requirements=True).write({
                 'previous_stage_id': current_stage.id,
                 'stage_id': next_stage.id,
             })
@@ -477,7 +589,7 @@ class BusinessProject(models.Model):
                     'There is no previous stage.'
                 )
 
-            record.write({
+            record.with_context(skip_stage_requirements=True).write({
                 'previous_stage_id': record.stage_id.id,
                 'stage_id': previous_stage.id,
             })
@@ -522,7 +634,7 @@ class BusinessProject(models.Model):
                     'A completed project cannot be put on hold.'
                 )
 
-            record.write({
+            record.with_context(skip_stage_requirements=True).write({
                 'hold_return_stage_id': record.stage_id.id,
                 'stage_id': hold_stage.id,
             })
@@ -553,7 +665,7 @@ class BusinessProject(models.Model):
 
             resume_stage = record.hold_return_stage_id
 
-            record.write({
+            record.with_context(skip_stage_requirements=True).write({
                 'stage_id': resume_stage.id,
                 'hold_return_stage_id': False,
             })
@@ -591,7 +703,7 @@ class BusinessProject(models.Model):
                     'A completed project cannot be cancelled.'
                 )
 
-            record.write({
+            record.with_context(skip_stage_requirements=True).write({
                 'previous_stage_id': record.stage_id.id,
                 'stage_id': cancel_stage.id,
                 'active': False,
@@ -626,7 +738,7 @@ class BusinessProject(models.Model):
                     'A cancelled project cannot be completed.'
                 )
 
-            record.write({
+            record.with_context(skip_stage_requirements=True).write({
                 'previous_stage_id': record.stage_id.id,
                 'stage_id': completed_stage.id,
                 'actual_end_date': fields.Date.today(),

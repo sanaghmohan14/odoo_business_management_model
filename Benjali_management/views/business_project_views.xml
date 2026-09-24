@@ -5,7 +5,7 @@
 
         <field name="name">Business Project</field>
         <field name="res_model">business.project</field>
-        <field name="view_mode">kanban,list,form</field>
+        <field name="view_mode">kanban,list,form,calendar</field>
     </record>
 
     <record id="project_kanban" model="ir.ui.view">
@@ -216,6 +216,13 @@
 
                     </group>
 
+                    <group string="Project Communication">
+                        <field name="communication_channel"/>
+                         <field name="communication_group_name"/>
+                        <field name="communication_created"/>
+                        <field name="communication_notes"/>
+                    </group>
+
 
                     <!-- ================= WORKFLOW INFORMATION ================= -->
 
@@ -239,6 +246,12 @@
                         </group>
 
                     </group>
+                    <group string="Client Kick-off">
+    <field name="kickoff_contact_date"/>
+    <field name="kickoff_date"/>
+    <field name="kickoff_completed"/>
+    <field name="kickoff_notes"/>
+</group>
 
 
                     <!-- ================= DESCRIPTION ================= -->
@@ -246,40 +259,68 @@
                     <notebook>
 
                         <page string="Description">
-
-                            <field name="description"
-                                   placeholder="Enter project description..."/>
-
+                            <field name="description" placeholder="Enter project description..."/>
                         </page>
-
-
                         <page string="Internal Notes">
-
                             <field name="notes"
                                    placeholder="Enter internal notes..."/>
-
                         </page>
                         <page string="Approvals">
+                            <field name="approval_ids"
+                                        readonly="1">
 
-    <field name="approval_ids"
-           readonly="1">
+            <list>
 
-        <list>
-
-            <field name="name"/>
-            <field name="approval_type"/>
-            <field name="approver_id"/>
-            <field name="requested_date"/>
-            <field name="approval_date"/>
-            <field name="state"/>
+                <field name="name"/>
+                <field name="approval_type"/>
+                <field name="approver_id"/>
+                <field name="requested_date"/>
+                <field name="approval_date"/>
+                <field name="state"/>
 
         </list>
 
     </field>
 
 </page>
+                        <page string="Team Allocation">
+    <field name="team_member_ids">
+        <list editable="bottom">
+            <field name="user_id"/>
+            <field name="role"/>
+            <field name="notes"/>
+        </list>
+    </field>
+</page>
+                        <page string="KRA">
+    <field name="kra_ids">
+        <list editable="bottom">
+            <field name="sequence"/>
+            <field name="name"/>
+            <field name="objective"/>
+            <field name="responsible_user_id"/>
+            <field name="target"/>
+            <field name="measurement"/>
+        </list>
+    </field>
+</page>
+
+                        <page string="Data Collection">
+    <field name="data_collection_ids">
+        <list editable="bottom">
+            <field name="name"/>
+            <field name="data_type"/>
+            <field name="responsible_user_id"/>
+            <field name="collection_date"/>
+            <field name="source"/>
+            <field name="state"/>
+            <field name="notes"/>
+        </list>
+    </field>
+</page>
 
                     </notebook>
+
 
                 </sheet>
 
@@ -321,4 +362,21 @@
             </list>
         </field>
     </record>
+    <record id="business_project_calendar" model="ir.ui.view">
+        <field name="name">Business Project Calendar</field>
+        <field name="model">business.project</field>
+        <field name="arch" type="xml">
+            <calendar string="Business Projects"
+                      date_start="start_date"
+                      date_stop="expected_end_date"
+                      color="partner_id"
+                      mode="month">
+                <field name="name"/>
+                <field name="reference"/>
+                <field name="partner_id"/>
+                <field name="department_id"/>
+            </calendar>
+        </field>
+    </record>
+
 </odoo>
