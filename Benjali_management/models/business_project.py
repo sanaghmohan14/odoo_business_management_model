@@ -86,6 +86,12 @@ class BusinessProject(models.Model):
         'project_id',
         string='Team Members'
     )
+    #time sheets
+    timesheet_ids = fields.One2many(
+        'account.analytic.line',
+        'business_project_id',
+        string='Timesheets'
+    )
 
     # CRM / SALES
 

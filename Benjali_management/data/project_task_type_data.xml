@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<odoo>
+
+    <!-- ========================================================= -->
+    <!-- 1. Lead Generation & Registration                         -->
+    <!-- ========================================================= -->
+
+    <record id="task_stage_lead_generation" model="project.task.type">
+        <field name="name">Lead Generation &amp; Registration</field>
+        <field name="sequence">1</field>
+        <field name="fold">False</field>
+    </record>
+
+
+    <!-- ========================================================= -->
+    <!-- 2. Lead Screening & Qualification                         -->
+    <!-- ========================================================= -->
+
+    <record id="task_stage_lead_screening" model="project.task.type">
+        <field name="name">Lead Screening &amp; Qualification</field>
+        <field name="sequence">2</field>
+        <field name="fold">False</field>
+    </record>
+
+
+    <!-- ========================================================= -->
+    <!-- 3. CEO / CASAC Sales Activity                             -->
+    <!-- ========================================================= -->
+
+    <record id="task_stage_ceo_sales_activity" model="project.task.type">
+        <field name="name">CEO / CASAC Sales Activity</field>
+        <field name="sequence">3</field>
+        <field name="fold">False</field>
+    </record>
+
+
+    <!-- ========================================================= -->
+    <!-- 4. Proposal Preparation & Approval                        -->
+    <!-- ========================================================= -->
+
+    <record id="task_stage_proposal_approval" model="project.task.type">
+        <field name="name">Proposal Preparation &amp; Approval</field>
+        <field name="sequence">4</field>
+        <field name="fold">False</field>
+    </record>
+
+
+    <!-- ========================================================= -->
+    <!-- 5. Client Follow-up, Negotiation & Closing                -->
+    <!-- ========================================================= -->
+
+    <record id="task_stage_negotiation_closing" model="project.task.type">
+        <field name="name">Client Follow-up, Negotiation &amp; Closing</field>
+        <field name="sequence">5</field>
+        <field name="fold">False</field>
+    </record>
+
+
+    <!-- ========================================================= -->
+    <!-- 6. Payment Confirmation                                   -->
+    <!-- ========================================================= -->
+
+    <record id="task_stage_payment_confirmation" model="project.task.type">
+        <field name="name">Payment Confirmation</field>
+        <field name="sequence">6</field>
+        <field name="fold">False</field>
+    </record>
+
+
+    <!-- ========================================================= -->
+    <!-- 7. Client Onboarding                                      -->
+    <!-- ========================================================= -->
+
+    <record id="task_stage_client_onboarding" model="project.task.type">
+        <field name="name">Client Onboarding</field>
+        <field name="sequence">7</field>
+        <field name="fold">False</field>
+    </record>
+
+
+    <!-- ========================================================= -->
+    <!-- 8. Project Creation                                       -->
+    <!-- ========================================================= -->
+
+    <record id="task_stage_project_creation" model="project.task.type">
+        <field name="name">Project Creation</field>
+        <field name="sequence">8</field>
+        <field name="fold">False</field>
+    </record>
+
+
+    <!-- ========================================================= -->
+    <!-- 9. Team Allocation                                        -->
+    <!-- ========================================================= -->
+
+    <record id="task_stage_team_allocation" model="project.task.type">
+        <field name="name">Team Allocation</field>
+        <field name="sequence">9</field>
+        <field name="fold">False</field>
+    </record>
+
+
+    <!-- ========================================================= -->
+    <!-- 10. Initial Client Contact & Kick-off                     -->
+    <!-- ========================================================= -->
+
+    <record id="task_stage_kickoff" model="project.task.type">
+        <field name="name">Initial Client Contact &amp; Kick-off</field>
+        <field name="sequence">10</field>
+        <field name="fold">False</field>
+    </record>
+
+
+    <!-- ========================================================= -->
+    <!-- 11. Project Communication Setup                           -->
+    <!-- ========================================================= -->
+
+    <record id="task_stage_communication_setup" model="project.task.type">
+        <field name="name">Project Communication Setup</field>
+        <field name="sequence">11</field>
+        <field name="fold">False</field>
+    </record>
+
+
+    <!-- ========================================================= -->
+    <!-- 12. Project KRA Development                               -->
+    <!-- ========================================================= -->
+
+    <record id="task_stage_kra_development" model="project.task.type">
+        <field name="name">Project KRA Development</field>
+        <field name="sequence">12</field>
+        <field name="fold">False</field>
+    </record>
+
+
+    <!-- ========================================================= -->
+    <!-- 13. Activity Plan Preparation                             -->
+    <!-- ========================================================= -->
+
+    <record id="task_stage_activity_plan" model="project.task.type">
+        <field name="name">Activity Plan Preparation</field>
+        <field name="sequence">13</field>
+        <field name="fold">False</field>
+    </record>
+
+
+    <!-- ========================================================= -->
+    <!-- 14. Management Review & Approval                          -->
+    <!-- ========================================================= -->
+
+    <record id="task_stage_management_review" model="project.task.type">
+        <field name="name">Management Review &amp; Approval</field>
+        <field name="sequence">14</field>
+        <field name="fold">False</field>
+    </record>
+
+
+    <!-- ========================================================= -->
+    <!-- 15. System Study & Data Collection                        -->
+    <!-- ========================================================= -->
+
+    <record id="task_stage_data_collection" model="project.task.type">
+        <field name="name">System Study &amp; Data Collection</field>
+        <field name="sequence">15</field>
+        <field name="fold">False</field>
+    </record>
+
+
+    <!-- ========================================================= -->
+    <!-- 16. Analysis & Findings                                   -->
+    <!-- ========================================================= -->
+
+    <record id="task_stage_analysis_findings" model="project.task.type">
+        <field name="name">Analysis &amp; Findings</field>
+        <field name="sequence">16</field>
+        <field name="fold">False</field>
+    </record>
+
+</odoo>

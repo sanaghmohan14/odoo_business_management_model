@@ -1,0 +1,589 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<templates xml:space="preserve">
+
+    <t t-name="BenjaliManagement.Dashboard">
+
+        <div class="benjali_dashboard">
+
+            <!-- ============================= -->
+            <!-- HEADER -->
+            <!-- ============================= -->
+
+            <div class="dashboard_header">
+
+                <div>
+                    <h1>Benjali Management Dashboard</h1>
+                    <p>Business Management Overview</p>
+                </div>
+
+            </div>
+
+
+            <!-- ============================= -->
+            <!-- LOADING -->
+            <!-- ============================= -->
+
+            <t t-if="state.loading">
+
+                <div class="dashboard_loading">
+                    <div class="dashboard_spinner"></div>
+                    <p>Loading dashboard...</p>
+                </div>
+
+            </t>
+
+
+            <!-- ============================= -->
+            <!-- ERROR -->
+            <!-- ============================= -->
+
+            <t t-elif="state.error">
+
+                <div class="dashboard_error">
+
+                    <h3>Unable to load dashboard</h3>
+
+                    <p>
+                        There was a problem loading the dashboard data.
+                    </p>
+
+                    <button
+                        class="btn btn-primary"
+                        t-on-click="loadDashboardData"
+                    >
+                        Retry
+                    </button>
+
+                </div>
+
+            </t>
+
+
+            <!-- ============================= -->
+            <!-- DASHBOARD -->
+            <!-- ============================= -->
+
+            <t t-elif="state.data">
+
+                <!-- ============================= -->
+                <!-- PROJECT KPI CARDS -->
+                <!-- ============================= -->
+
+                <div class="dashboard_section">
+
+                    <h2>Project Overview</h2>
+
+                    <div class="dashboard_kpi_grid">
+
+                        <!-- Total Projects -->
+
+                        <div class="dashboard_kpi_card">
+
+                            <div class="kpi_title">
+                                Total Projects
+                            </div>
+
+                            <div class="kpi_value">
+                                <t t-esc="state.data.projects.total"/>
+                            </div>
+
+                            <div class="kpi_description">
+                                All business projects
+                            </div>
+
+                        </div>
+
+
+                        <!-- Active Projects -->
+
+                        <div class="dashboard_kpi_card">
+
+                            <div class="kpi_title">
+                                Active Projects
+                            </div>
+
+                            <div class="kpi_value">
+                                <t t-esc="state.data.projects.active"/>
+                            </div>
+
+                            <div class="kpi_description">
+                                Currently active
+                            </div>
+
+                        </div>
+
+
+                        <!-- Completed Projects -->
+
+                        <div class="dashboard_kpi_card">
+
+                            <div class="kpi_title">
+                                Completed
+                            </div>
+
+                            <div class="kpi_value">
+                                <t t-esc="state.data.projects.completed"/>
+                            </div>
+
+                            <div class="kpi_description">
+                                Successfully completed
+                            </div>
+
+                        </div>
+
+
+                        <!-- On Hold -->
+
+                        <div class="dashboard_kpi_card">
+
+                            <div class="kpi_title">
+                                On Hold
+                            </div>
+
+                            <div class="kpi_value">
+                                <t t-esc="state.data.projects.on_hold"/>
+                            </div>
+
+                            <div class="kpi_description">
+                                Projects currently on hold
+                            </div>
+
+                        </div>
+
+
+                        <!-- Cancelled -->
+
+                        <div class="dashboard_kpi_card">
+
+                            <div class="kpi_title">
+                                Cancelled
+                            </div>
+
+                            <div class="kpi_value">
+                                <t t-esc="state.data.projects.cancelled"/>
+                            </div>
+
+                            <div class="kpi_description">
+                                Cancelled projects
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ============================= -->
+                <!-- KRA -->
+                <!-- ============================= -->
+
+                <div class="dashboard_section">
+
+                    <h2>KRA Overview</h2>
+
+                    <div class="dashboard_kpi_grid">
+
+                        <div class="dashboard_kpi_card">
+
+                            <div class="kpi_title">
+                                Total KRAs
+                            </div>
+
+                            <div class="kpi_value">
+                                <t t-esc="state.data.kra.total"/>
+                            </div>
+
+                            <div class="kpi_description">
+                                All project KRAs
+                            </div>
+
+                        </div>
+
+
+                        <div class="dashboard_kpi_card">
+
+                            <div class="kpi_title">
+                                Active KRAs
+                            </div>
+
+                            <div class="kpi_value">
+                                <t t-esc="state.data.kra.active"/>
+                            </div>
+
+                            <div class="kpi_description">
+                                Currently active KRAs
+                            </div>
+
+                        </div>
+
+
+                        <div class="dashboard_kpi_card">
+
+                            <div class="kpi_title">
+                                Projects With KRAs
+                            </div>
+
+                            <div class="kpi_value">
+                                <t t-esc="state.data.kra.projects_with_kra"/>
+                            </div>
+
+                            <div class="kpi_description">
+                                Projects containing KRAs
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ============================= -->
+                <!-- ACTIVITY -->
+                <!-- ============================= -->
+
+                <div class="dashboard_section">
+
+                    <h2>Activity Overview</h2>
+
+                    <div class="dashboard_kpi_grid">
+
+                        <div class="dashboard_kpi_card">
+
+                            <div class="kpi_title">
+                                Total Activities
+                            </div>
+
+                            <div class="kpi_value">
+                                <t t-esc="state.data.activities.total"/>
+                            </div>
+
+                            <div class="kpi_description">
+                                All project activities
+                            </div>
+
+                        </div>
+
+
+                        <div class="dashboard_kpi_card">
+
+                            <div class="kpi_title">
+                                Planned
+                            </div>
+
+                            <div class="kpi_value">
+                                <t t-esc="state.data.activities.planned"/>
+                            </div>
+
+                        </div>
+
+
+                        <div class="dashboard_kpi_card">
+
+                            <div class="kpi_title">
+                                In Progress
+                            </div>
+
+                            <div class="kpi_value">
+                                <t t-esc="state.data.activities.in_progress"/>
+                            </div>
+
+                        </div>
+
+
+                        <div class="dashboard_kpi_card">
+
+                            <div class="kpi_title">
+                                Completed
+                            </div>
+
+                            <div class="kpi_value">
+                                <t t-esc="state.data.activities.completed"/>
+                            </div>
+
+                        </div>
+
+
+                        <div class="dashboard_kpi_card">
+
+                            <div class="kpi_title">
+                                Cancelled
+                            </div>
+
+                            <div class="kpi_value">
+                                <t t-esc="state.data.activities.cancelled"/>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ============================= -->
+                <!-- DATA COLLECTION -->
+                <!-- ============================= -->
+
+                <div class="dashboard_section">
+
+                    <h2>Data Collection</h2>
+
+                    <div class="dashboard_kpi_grid">
+
+                        <div class="dashboard_kpi_card">
+
+                            <div class="kpi_title">
+                                Total
+                            </div>
+
+                            <div class="kpi_value">
+                                <t t-esc="state.data.data_collection.total"/>
+                            </div>
+
+                        </div>
+
+
+                        <div class="dashboard_kpi_card">
+
+                            <div class="kpi_title">
+                                Planned
+                            </div>
+
+                            <div class="kpi_value">
+                                <t t-esc="state.data.data_collection.planned"/>
+                            </div>
+
+                        </div>
+
+
+                        <div class="dashboard_kpi_card">
+
+                            <div class="kpi_title">
+                                In Progress
+                            </div>
+
+                            <div class="kpi_value">
+                                <t t-esc="state.data.data_collection.in_progress"/>
+                            </div>
+
+                        </div>
+
+
+                        <div class="dashboard_kpi_card">
+
+                            <div class="kpi_title">
+                                Collected
+                            </div>
+
+                            <div class="kpi_value">
+                                <t t-esc="state.data.data_collection.collected"/>
+                            </div>
+
+                        </div>
+
+
+                        <div class="dashboard_kpi_card">
+
+                            <div class="kpi_title">
+                                Verified
+                            </div>
+
+                            <div class="kpi_value">
+                                <t t-esc="state.data.data_collection.verified"/>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ============================= -->
+                <!-- TEAM / TIMESHEET / CRM -->
+                <!-- ============================= -->
+
+                <div class="dashboard_section">
+
+                    <h2>Management Overview</h2>
+
+                    <div class="dashboard_kpi_grid">
+
+                        <!-- Team -->
+
+                        <div class="dashboard_kpi_card">
+
+                            <div class="kpi_title">
+                                Active Team Members
+                            </div>
+
+                            <div class="kpi_value">
+                                <t t-esc="state.data.team.total_active_members"/>
+                            </div>
+
+                        </div>
+
+
+                        <!-- Timesheets -->
+
+                        <div class="dashboard_kpi_card">
+
+                            <div class="kpi_title">
+                                Timesheets
+                            </div>
+
+                            <div class="kpi_value">
+                                <t t-esc="state.data.timesheets.total"/>
+                            </div>
+
+                            <div class="kpi_description">
+                                Total timesheet entries
+                            </div>
+
+                        </div>
+
+
+                        <!-- Timesheet Hours -->
+
+                        <div class="dashboard_kpi_card">
+
+                            <div class="kpi_title">
+                                Timesheet Hours
+                            </div>
+
+                            <div class="kpi_value">
+                                <t t-esc="state.data.timesheets.total_hours"/>
+                            </div>
+
+                            <div class="kpi_description">
+                                Total recorded hours
+                            </div>
+
+                        </div>
+
+
+                        <!-- CRM -->
+
+                        <div class="dashboard_kpi_card">
+
+                            <div class="kpi_title">
+                                CRM Leads
+                            </div>
+
+                            <div class="kpi_value">
+                                <t t-esc="state.data.crm.total"/>
+                            </div>
+
+                            <div class="kpi_description">
+                                Leads / opportunities
+                            </div>
+
+                        </div>
+
+
+                        <!-- CRM With Project -->
+
+                        <div class="dashboard_kpi_card">
+
+                            <div class="kpi_title">
+                                Converted to Projects
+                            </div>
+
+                            <div class="kpi_value">
+                                <t t-esc="state.data.crm.with_business_project"/>
+                            </div>
+
+                            <div class="kpi_description">
+                                CRM records linked to projects
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ============================= -->
+                <!-- 16 STAGE PIPELINE -->
+                <!-- ============================= -->
+
+                <div class="dashboard_section">
+
+                    <h2>Project Pipeline</h2>
+
+                    <div class="dashboard_pipeline">
+
+                        <t t-foreach="state.data.stages"
+                           t-as="stage"
+                           t-key="stage.id">
+
+                            <div class="pipeline_row">
+
+                                <div class="pipeline_stage_name">
+                                    <t t-esc="stage.name"/>
+                                </div>
+
+                                <div class="pipeline_stage_phase">
+                                    <t t-esc="stage.phase_label"/>
+                                </div>
+
+                                <div class="pipeline_stage_count">
+                                    <t t-esc="stage.count"/>
+                                </div>
+
+                            </div>
+
+                        </t>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ============================= -->
+                <!-- PHASE SUMMARY -->
+                <!-- ============================= -->
+
+                <div class="dashboard_section">
+
+                    <h2>Phase Overview</h2>
+
+                    <div class="dashboard_kpi_grid">
+
+                        <t t-foreach="state.data.phases"
+                           t-as="phase"
+                           t-key="phase.code">
+
+                            <div class="dashboard_kpi_card">
+
+                                <div class="kpi_title">
+                                    <t t-esc="phase.name"/>
+                                </div>
+
+                                <div class="kpi_value">
+                                    <t t-esc="phase.count"/>
+                                </div>
+
+                                <div class="kpi_description">
+                                    Projects in this phase
+                                </div>
+
+                            </div>
+
+                        </t>
+
+                    </div>
+
+                </div>
+
+            </t>
+
+        </div>
+
+    </t>
+
+</templates>

@@ -8,13 +8,21 @@
 
 
         <menuitem id="menu_project_action_one" name="Project Management" parent="benjali_project_root"
-    action="business_project_action" sequence="1"/>
+    action="business_project_action" sequence="2"/>
 
     <menuitem id="menu_project_stage_one" name="Project Stages"
-              parent="benjali_project_root" action="action_project_stage_one" sequence="3" ></menuitem>
+              parent="benjali_project_root" action="action_project_stage_one" sequence="4" ></menuitem>
 
     <menuitem id="menu_project_approval_action_one" name="Project Approval" parent="benjali_project_root"
-    action="business_project_approval_action" sequence="2"/>
+    action="business_project_approval_action" sequence="3"/>
+
+     <menuitem id="menu_project_department_one" name="Department Management" parent="benjali_project_root"
+    action="action_business_departments" sequence="1"/>
+
+    <menuitem id="menu_project_department_one" name="Dashboard" parent="benjali_project_root"
+    action="action_benjali_management_dashboard" sequence="5"/>
+
+
 
 
 </odoo>

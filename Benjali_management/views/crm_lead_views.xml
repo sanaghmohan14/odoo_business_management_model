@@ -15,11 +15,22 @@
                                 invisible="won_status != 'won' or business_project_id"
                                                                     />
 
+                         <button
+    name="action_open_project_task"
+    string="Create Project"
+    type="object"
+    class="btn-primary"
+    invisible="not project_assign_id or not stage_id.is_won"
+/>
+
             </xpath>
             <xpath expr="//field[@name='user_id']" position="after">
                         <field name="department_id"/>
 
                         <field name="business_project_id" readonly="1"/>
+                        <field name="project_assign_id"/>
+
+
             </xpath>
         </field>
     </record>

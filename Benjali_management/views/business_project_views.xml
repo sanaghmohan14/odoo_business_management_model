@@ -9,45 +9,52 @@
     </record>
 
     <record id="project_kanban" model="ir.ui.view">
-        <field name="name">Business Project Pipeline</field>
-        <field name="model">business.project</field>
-        <field name="arch" type="xml">
-            <kanban default_group_by="stage_id"
-                    class="o_kanban_small_column o_opportunity_kanban"
-                    archivable="false">
+    <field name="name">Business Project Pipeline</field>
+    <field name="model">business.project</field>
+    <field name="arch" type="xml">
+        <kanban default_group_by="stage_id"
+                class="o_kanban_small_column o_opportunity_kanban"
+                archivable="false">
 
-                <field name="stage_id"/>
-                <field name="reference"/>
-                <field name="name"/>
-                <field name="opportunity_id"/>
-                <field name="partner_id"/>
-                <field name="department_id"/>
-                <field name="active"/>
+            <field name="stage_id"/>
+            <field name="reference"/>
+            <field name="name"/>
+            <field name="opportunity_id"/>
+            <field name="partner_id"/>
+            <field name="department_id"/>
+            <field name="active"/>
 
-                <templates>
-                    <t t-name="card">
-                        <field name="name" class="fw-bold fs-5"/>
-                        <div class="text-muted">
-                            <field name="reference"/>
-                        </div>
-                        <div t-if="record.opportunity_id.raw_value"
-                             class="mt-2">
-                            <strong>Opportunity: </strong>
-                            <field name="opportunity_id"/>
-                        </div>
-                        <div t-if="record.partner_id.raw_value">
-                            <strong>Client: </strong>
-                            <field name="partner_id"/>
-                        </div>
-                        <div t-if="record.department_id.raw_value">
-                            <strong>Department: </strong>
-                            <field name="department_id"/>
-                        </div>
-                    </t>
-                </templates>
-            </kanban>
-        </field>
-    </record>
+            <templates>
+                <t t-name="card">
+
+                    <field name="name" class="fw-bold fs-5"/>
+
+                    <div class="text-muted">
+                        <field name="reference"/>
+                    </div>
+
+                    <div t-if="record.opportunity_id.raw_value"
+                         class="mt-2">
+                        <strong>Opportunity: </strong>
+                        <field name="opportunity_id"/>
+                    </div>
+
+                    <div t-if="record.partner_id.raw_value">
+                        <strong>Client: </strong>
+                        <field name="partner_id"/>
+                    </div>
+
+                    <div t-if="record.department_id.raw_value">
+                        <strong>Department: </strong>
+                        <field name="department_id"/>
+                    </div>
+
+                </t>
+            </templates>
+
+        </kanban>
+    </field>
+</record>
 
     <record id="project_form_form" model="ir.ui.view">
         <field name="name">Business project</field>
@@ -292,6 +299,17 @@
         </list>
     </field>
 </page>
+                        <page string="Timesheets">
+    <field name="timesheet_ids">
+        <list editable="bottom">
+            <field name="date"/>
+            <field name="employee_id"/>
+            <field name="name"/>
+            <field name="unit_amount"/>
+        </list>
+    </field>
+</page>
+
                         <page string="KRA">
     <field name="kra_ids">
         <list editable="bottom">
@@ -376,6 +394,27 @@
                 <field name="partner_id"/>
                 <field name="department_id"/>
             </calendar>
+        </field>
+    </record>
+
+
+     <record id="business_project_search_views" model="ir.ui.view">
+        <field name="name">business.project.view.search</field>
+        <field name="model">business.project</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="stage_id"/>
+                <field name="reference"/>
+                 <field name="name"/>
+                <field name="opportunity_id"/>
+                <field name="partner_id"/>
+                <field name="department_id"/>
+                <field name="active"/>
+                <filter name="stage_id" string="filter by stage"/>
+                <filter name="Active" string="archived" domain="[('active', '=', False)]"/>
+                <filter name="actual_end_date" string="filter by End date" context="{'group_by':'actual_end_date'}"/>
+                <filter name="start_date" string="filter by start date" context="{'group_by':'start_date'}"/>
+            </search>
         </field>
     </record>
 
