@@ -16,12 +16,15 @@
                                                                     />
 
                          <button
-    name="action_open_project_task"
-    string="Create Project"
-    type="object"
-    class="btn-primary"
-    invisible="not project_assign_id or not stage_id.is_won"
-/>
+                        name="action_open_project_task"
+                        string="Create Project"
+                        type="object"
+                        class="btn-primary"
+                        invisible="not project_assign_id or not stage_id.is_won"
+                        />
+
+                        <button name="create_sale_quotation" string="New Quotation"
+                                type="object" class="btn-primary"/>
 
             </xpath>
             <xpath expr="//field[@name='user_id']" position="after">

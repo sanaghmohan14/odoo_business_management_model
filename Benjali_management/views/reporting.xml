@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<odoo>
+
+    <!-- Reporting Root Menu -->
+
+    <menuitem
+        id="menu_benjali_management_reporting"
+        name="Reporting"
+        parent="benjali_project_root"
+        sequence="50"
+    />
+
+
+    <!-- Project Analysis -->
+
+    <record id="action_business_project_report"
+            model="ir.actions.act_window">
+
+        <field name="name">Project Analysis</field>
+
+        <field name="res_model">business.project</field>
+
+        <field name="view_mode">pivot,graph,list</field>
+
+    </record>
+
+    <menuitem
+        id="menu_business_project_report"
+        name="Project Analysis"
+        parent="menu_benjali_management_reporting"
+        action="action_business_project_report"
+        sequence="10"
+    />
+
+
+    <!-- Stage Analysis -->
+
+    <record id="action_business_project_stage_report"
+            model="ir.actions.act_window">
+
+        <field name="name">Stage Analysis</field>
+
+        <field name="res_model">business.project</field>
+
+        <field name="view_mode">pivot,graph,list</field>
+
+        <field name="context">
+            {
+                "group_by": ["stage_id"]
+            }
+        </field>
+
+    </record>
+
+    <menuitem
+        id="menu_business_project_stage_report"
+        name="Stage Analysis"
+        parent="menu_benjali_management_reporting"
+        action="action_business_project_stage_report"
+        sequence="20"
+    />
+
+
+    <!-- Department Analysis -->
+
+    <record id="action_business_project_department_report"
+            model="ir.actions.act_window">
+
+        <field name="name">Department Analysis</field>
+
+        <field name="res_model">business.project</field>
+
+        <field name="view_mode">pivot,graph,list</field>
+
+        <field name="context">
+            {
+                "group_by": ["department_id"]
+            }
+        </field>
+
+    </record>
+
+    <menuitem
+        id="menu_business_project_department_report"
+        name="Department Analysis"
+        parent="menu_benjali_management_reporting"
+        action="action_business_project_department_report"
+        sequence="30"
+    />
+
+
+    <!-- KRA Analysis -->
+
+    <record id="action_business_project_kra_report"
+            model="ir.actions.act_window">
+
+        <field name="name">KRA Analysis</field>
+
+        <field name="res_model">business.project.kra</field>
+
+        <field name="view_mode">pivot,graph,list</field>
+
+    </record>
+
+    <menuitem
+        id="menu_business_project_kra_report"
+        name="KRA Analysis"
+        parent="menu_benjali_management_reporting"
+        action="action_business_project_kra_report"
+        sequence="40"
+    />
+
+
+    <!-- Activity Analysis -->
+
+    <record id="action_business_project_activity_report"
+            model="ir.actions.act_window">
+
+        <field name="name">Activity Analysis</field>
+
+        <field name="res_model">business.project.activity</field>
+
+        <field name="view_mode">pivot,graph,list</field>
+
+    </record>
+
+    <menuitem
+        id="menu_business_project_activity_report"
+        name="Activity Analysis"
+        parent="menu_benjali_management_reporting"
+        action="action_business_project_activity_report"
+        sequence="50"
+    />
+
+
+    <!-- Data Collection Analysis -->
+
+    <record id="action_business_project_data_collection_report"
+            model="ir.actions.act_window">
+
+        <field name="name">Data Collection Analysis</field>
+
+        <field name="res_model">business.project.data.collection</field>
+
+        <field name="view_mode">pivot,graph,list</field>
+
+    </record>
+
+    <menuitem
+        id="menu_business_project_data_collection_report"
+        name="Data Collection Analysis"
+        parent="menu_benjali_management_reporting"
+        action="action_business_project_data_collection_report"
+        sequence="60"
+    />
+
+
+     <menuitem
+        id="b_pdf_report"
+        name="PDf Report"
+        parent="menu_benjali_management_reporting"
+        action="action_business_project_data_collection_report"
+        sequence="60"
+    />
+     <menuitem
+        id="b_excel_report"
+        name="Excel Report"
+        parent="menu_benjali_management_reporting"
+        action="action_business_project_data_collection_report"
+        sequence="60"
+    />
+
+</odoo>

@@ -45,7 +45,7 @@ class CrmLead(models.Model):
             )
 
         # A Business Project requires a client.
-        if not self.partner_id:
+        if not self. partner_id:
             raise UserError(
                 'Please select a customer before creating a Business Project.'
             )
@@ -125,4 +125,24 @@ class CrmLead(models.Model):
                 'default_project_id': self.project_assign_id.id,
             },
             'target': 'current',
+        }
+
+
+
+
+    def create_sale_quotation(self):
+
+        sale_order=self.env['sale.order'].create({
+            'partner_id':self.partner_id.id,
+             'id':self.id,
+
+        })
+        return{
+            'type': 'ir.actions.act_window',
+            'name': 'Sale quotation',
+            'res_model': 'sale.order',
+            'res_id': sale_order.id,
+            'view_mode': 'form',
+            'target': 'current',
+
         }

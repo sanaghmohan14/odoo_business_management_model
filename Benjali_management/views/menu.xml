@@ -20,6 +20,11 @@
     action="action_benjali_management_dashboard" sequence="5"/>
 
 
+<!--    <menuitem id="menu_reporting" name="Reporting " parent="benjali_project_root"-->
+<!--    action="action_benjali_management_Reporting" sequence="6"/>-->
+
+
+
 
 
 </odoo>
