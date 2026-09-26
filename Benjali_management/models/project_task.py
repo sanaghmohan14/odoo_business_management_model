@@ -5,6 +5,7 @@ class ProjectTask(models.Model):
     _inherit = 'project.task'
 
     # Allow stages with no project_ids to be used by every project task.
+
     stage_id = fields.Many2one(
         domain="['|', ('project_ids', '=', project_id), ('project_ids', '=', False)]",
     )

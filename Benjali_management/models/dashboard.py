@@ -6,16 +6,10 @@ class BenjaliManagementDashboard(models.AbstractModel):
     _description = 'Benjali Management Dashboard'
 
     def get_dashboard_data(self, department_id=False):
-        """
-        Return dynamic dashboard information.
-
-        department_id:
-            If provided, all project-related statistics are filtered
-            by that department.
-        """
 
         Project = self.env['business.project']
         Stage = self.env['business.project.stage']
+        Department = self.env['hr.department']
         KRA = self.env['business.project.kra']
         Activity = self.env['business.project.activity']
         DataCollection = self.env['business.project.data.collection']
@@ -38,26 +32,72 @@ class BenjaliManagementDashboard(models.AbstractModel):
         # PROJECT COUNTS
         # ---------------------------------------------------------
 
-        total_projects = Project.search_count(project_domain)
+        total_projects = Project.search_count(
+            project_domain
+        )
 
         active_projects = Project.search_count(
-            project_domain + [('active', '=', True)]
+            project_domain + [
+                ('active', '=', True)
+            ]
         )
 
         completed_projects = Project.search_count(
-            project_domain + [('stage_id.name', '=', 'Completed')]
+            project_domain + [
+                ('stage_id.name', '=', 'Completed')
+            ]
         )
 
         on_hold_projects = Project.search_count(
-            project_domain + [('stage_id.name', '=', 'On Hold')]
+            project_domain + [
+                ('stage_id.name', '=', 'On Hold')
+            ]
         )
 
         cancelled_projects = Project.search_count(
-            project_domain + [('stage_id.name', '=', 'Cancelled')]
+            project_domain + [
+                ('stage_id.name', '=', 'Cancelled')
+            ]
+        )
+
+        # Projects which are actually in working stages
+        open_projects = max(
+            total_projects
+            - completed_projects
+            - on_hold_projects
+            - cancelled_projects,
+            0
         )
 
         # ---------------------------------------------------------
-        # PROJECTS BY STAGE
+        # PROJECT STATUS CHART
+        # ---------------------------------------------------------
+
+        status_data = [
+            {
+                'name': 'Open',
+                'count': open_projects,
+                'class': 'status-open',
+            },
+            {
+                'name': 'Completed',
+                'count': completed_projects,
+                'class': 'status-completed',
+            },
+            {
+                'name': 'On Hold',
+                'count': on_hold_projects,
+                'class': 'status-hold',
+            },
+            {
+                'name': 'Cancelled',
+                'count': cancelled_projects,
+                'class': 'status-cancelled',
+            },
+        ]
+
+        # ---------------------------------------------------------
+        # STAGES
         # ---------------------------------------------------------
 
         stages = Stage.search(
@@ -68,6 +108,7 @@ class BenjaliManagementDashboard(models.AbstractModel):
         stage_data = []
 
         for stage in stages:
+
             count = Project.search_count(
                 project_domain + [
                     ('stage_id', '=', stage.id)
@@ -88,7 +129,7 @@ class BenjaliManagementDashboard(models.AbstractModel):
             })
 
         # ---------------------------------------------------------
-        # PROJECTS BY PHASE
+        # PHASE DATA
         # ---------------------------------------------------------
 
         phase_selection = dict(
@@ -119,6 +160,36 @@ class BenjaliManagementDashboard(models.AbstractModel):
             })
 
         # ---------------------------------------------------------
+        # DEPARTMENT SUMMARY
+        # ---------------------------------------------------------
+
+        department_data = []
+
+        department_domain = []
+
+        if department_id:
+            department_domain.append(
+                ('id', '=', department_id)
+            )
+
+        departments = Department.search(
+            department_domain,
+            order='name'
+        )
+
+        for department in departments:
+
+            department_count = Project.search_count([
+                ('department_id', '=', department.id)
+            ])
+
+            department_data.append({
+                'id': department.id,
+                'name': department.name,
+                'count': department_count,
+            })
+
+        # ---------------------------------------------------------
         # KRA
         # ---------------------------------------------------------
 
@@ -132,7 +203,9 @@ class BenjaliManagementDashboard(models.AbstractModel):
         total_kras = KRA.search_count(kra_domain)
 
         active_kras = KRA.search_count(
-            kra_domain + [('active', '=', True)]
+            kra_domain + [
+                ('active', '=', True)
+            ]
         )
 
         projects_with_kra = Project.search_count(
@@ -152,7 +225,9 @@ class BenjaliManagementDashboard(models.AbstractModel):
                 ('project_id.department_id', '=', department_id)
             )
 
-        total_activities = Activity.search_count(activity_domain)
+        total_activities = Activity.search_count(
+            activity_domain
+        )
 
         planned_activities = Activity.search_count(
             activity_domain + [
@@ -177,6 +252,25 @@ class BenjaliManagementDashboard(models.AbstractModel):
                 ('state', '=', 'cancelled')
             ]
         )
+
+        activity_data = [
+            {
+                'name': 'Planned',
+                'count': planned_activities,
+            },
+            {
+                'name': 'In Progress',
+                'count': in_progress_activities,
+            },
+            {
+                'name': 'Completed',
+                'count': completed_activities,
+            },
+            {
+                'name': 'Cancelled',
+                'count': cancelled_activities,
+            },
+        ]
 
         # ---------------------------------------------------------
         # DATA COLLECTION
@@ -217,6 +311,25 @@ class BenjaliManagementDashboard(models.AbstractModel):
             ]
         )
 
+        data_collection_chart = [
+            {
+                'name': 'Planned',
+                'count': planned_data_collection,
+            },
+            {
+                'name': 'In Progress',
+                'count': in_progress_data_collection,
+            },
+            {
+                'name': 'Collected',
+                'count': collected_data_collection,
+            },
+            {
+                'name': 'Verified',
+                'count': verified_data_collection,
+            },
+        ]
+
         # ---------------------------------------------------------
         # TEAM
         # ---------------------------------------------------------
@@ -229,7 +342,9 @@ class BenjaliManagementDashboard(models.AbstractModel):
             )
 
         total_team_members = Team.search_count(
-            team_domain + [('active', '=', True)]
+            team_domain + [
+                ('active', '=', True)
+            ]
         )
 
         # ---------------------------------------------------------
@@ -240,17 +355,23 @@ class BenjaliManagementDashboard(models.AbstractModel):
 
         if department_id:
             timesheet_domain.append(
-                ('business_project_id.department_id', '=', department_id)
+                (
+                    'business_project_id.department_id',
+                    '=',
+                    department_id
+                )
             )
 
         total_timesheets = Timesheet.search_count(
             timesheet_domain
         )
 
+        timesheet_records = Timesheet.search(
+            timesheet_domain
+        )
+
         total_timesheet_hours = sum(
-            Timesheet.search(
-                timesheet_domain
-            ).mapped('unit_amount')
+            timesheet_records.mapped('unit_amount')
         )
 
         # ---------------------------------------------------------
@@ -264,7 +385,9 @@ class BenjaliManagementDashboard(models.AbstractModel):
                 ('department_id', '=', department_id)
             )
 
-        total_crm = Lead.search_count(crm_domain)
+        total_crm = Lead.search_count(
+            crm_domain
+        )
 
         crm_with_project = Lead.search_count(
             crm_domain + [
@@ -278,22 +401,54 @@ class BenjaliManagementDashboard(models.AbstractModel):
             ]
         )
 
+
+        departments = self.env['hr.department'].search(
+            [],
+            order='name'
+        )
+
+        department_data = []
+
+        for department in departments:
+            department_project_domain = [
+                ('department_id', '=', department.id)
+            ]
+
+            department_project_count = Project.search_count(
+                department_project_domain
+            )
+
+            department_data.append({
+                'id': department.id,
+                'name': department.name,
+                'count': department_project_count,
+            })
+
         # ---------------------------------------------------------
         # RETURN DATA
         # ---------------------------------------------------------
 
         return {
+
+            'selected_department': department_id or False,
+            'departments': department_data,
+
             'projects': {
                 'total': total_projects,
                 'active': active_projects,
                 'completed': completed_projects,
                 'on_hold': on_hold_projects,
                 'cancelled': cancelled_projects,
+                'open': open_projects,
             },
+
+            'status': status_data,
 
             'stages': stage_data,
 
             'phases': phase_data,
+
+            'departments': department_data,
 
             'kra': {
                 'total': total_kras,
@@ -307,6 +462,7 @@ class BenjaliManagementDashboard(models.AbstractModel):
                 'in_progress': in_progress_activities,
                 'completed': completed_activities,
                 'cancelled': cancelled_activities,
+                'chart': activity_data,
             },
 
             'data_collection': {
@@ -315,6 +471,7 @@ class BenjaliManagementDashboard(models.AbstractModel):
                 'in_progress': in_progress_data_collection,
                 'collected': collected_data_collection,
                 'verified': verified_data_collection,
+                'chart': data_collection_chart,
             },
 
             'team': {

@@ -4,9 +4,6 @@
     <menuitem id="benjali_project_root" name="Business Consulting"></menuitem>
 
 
-
-
-
         <menuitem id="menu_project_action_one" name="Project Management" parent="benjali_project_root"
     action="business_project_action" sequence="2"/>
 
@@ -19,7 +16,7 @@
      <menuitem id="menu_project_department_one" name="Department Management" parent="benjali_project_root"
     action="action_business_departments" sequence="1"/>
 
-    <menuitem id="menu_project_department_one" name="Dashboard" parent="benjali_project_root"
+    <menuitem id="menu_project_dashboard_one" name="Dashboard" parent="benjali_project_root"
     action="action_benjali_management_dashboard" sequence="5"/>
 
 
