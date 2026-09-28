@@ -44,10 +44,10 @@
                             <field name="requires_approval"/>
 
                             <field name="approval_type"
-                                invisible="not requires_approval"/>
+                                   invisible="not requires_approval"/>
 
                             <field name="approver_id"
-                                invisible="not requires_approval"/>
+                                   invisible="not requires_approval"/>
 
                         </group>
 
@@ -84,7 +84,7 @@
         <field name="name">Project Stage Tree</field>
         <field name="model">business.project.stage</field>
         <field name="arch" type="xml">
-                 <list string="Project Stages">
+            <list string="Project Stages">
 
                 <field name="sequence" widget="handle"/>
 

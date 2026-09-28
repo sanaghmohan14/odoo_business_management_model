@@ -6,7 +6,9 @@ from . import business_project_team
 from . import business_project_kra
 from . import business_project_activity
 from . import business_project_data_collection
+from . import business_project_subtask
 # from . import project_task
 from . import account_analytic_line
 from . import hr_department
 from . import dashboard
+from . import crm_tag

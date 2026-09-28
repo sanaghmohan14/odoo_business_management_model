@@ -30,6 +30,13 @@ class BusinessProject(models.Model):
         default=True
     )
 
+    priority = fields.Selection([
+        ('0', 'Low'),
+        ('1', 'Medium'),
+        ('2', 'High'),
+        ('3', 'Very High'),
+    ], string='Priority', default='0', index=True, tracking=True)
+
     # WORKFLOW
 
     stage_id = fields.Many2one(
@@ -244,6 +251,12 @@ class BusinessProject(models.Model):
         string='Data Collection'
     )
 
+    subtask_ids = fields.One2many(
+        'business.project.subtask',
+        'project_id',
+        string='Sub Tasks'
+    )
+
     # COMPUTED INFORMATION
 
 
@@ -283,6 +296,38 @@ class BusinessProject(models.Model):
     qualification_notes = fields.Text(
         string='Qualification Notes'
     )
+
+    meeting_count = fields.Integer(
+        string='Meetings',
+        compute='_compute_meeting_count'
+    )
+
+    @api.depends()
+    def _compute_meeting_count(self):
+        Meeting = self.env['calendar.event']
+        for record in self:
+            record.meeting_count = Meeting.search_count([
+                ('res_model', '=', self._name),
+                ('res_id', '=', record.id),
+            ])
+
+    def action_view_meetings(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Meetings',
+            'res_model': 'calendar.event',
+            'view_mode': 'calendar,list,form',
+            'domain': [
+                ('res_model', '=', self._name),
+                ('res_id', '=', self.id),
+            ],
+            'context': {
+                'default_res_model': self._name,
+                'default_res_id': self.id,
+                'default_name': self.name,
+            },
+        }
 
 
 

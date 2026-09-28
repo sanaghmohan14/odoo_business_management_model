@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <!--    Report Template-->
+    <template id="business_one">
+        <t t-call="web.html_container">
+
+            <h2>Business Report</h2>
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <div class="oe_structure"/>
+                        <h2>Business Report</h2>
+                        <br></br>
+
+
+<!--                        <p>-->
+<!--                            <t t-if="docs.start_date" >-->
+<!--                            <strong>Start Date :</strong>-->
+<!--                            <span t-esc="docs.start_date"/>-->
+<!--                            </t>-->
+
+<!--                        </p>-->
+
+<!--                        <p>-->
+<!--                            <t t-if="docs.end_date">-->
+<!--                            <strong>End Date : </strong>-->
+<!--                            <span t-esc="docs.end_date"/>-->
+<!--                            </t>-->
+<!--                        </p>-->
+                        <p>
+                            <!--                             Name :-->
+                            <!--                            <h5 t-field="o.partner_id.name"/>-->
+                            <!--                            <br></br>-->
+                            <!--                            Advisor Name:-->
+                            <!--                            <h5 t-field="o.advisor_id.name"/>-->
+                            <!--                            <br></br>-->
+                            <p>
+                                <table style="height: 100px; width: 850px;">
+                                    <thead style="font-weight:bold">
+                                        <tr>
+                                            <tr style="font-weight:bold">
+                                                <th>CLIENT</th>
+                                                <th>DEPARTMENT</th>
+                                                <th>PROJECT MANAGER</th>
+                                                <th>START DATE</th>
+                                                <th>END DATE</th>
+                                            </tr>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="records" t-as="rec">
+                                            <tr style="text-align:center;">
+                                                <td>
+                                                    <span t-esc="rec['partner_id.name']"/>
+                                                </td>
+                                                <td>
+                                                    <span t-esc="rec['separtment_id.name']"/>
+                                                </td>
+                                                <td>
+                                                    <span t-esc="rec['project_manager_id.name']"/>
+                                                </td>
+                                                <!--                                        <td><span t-esc="rec['vechicle_model']"/></td>-->
+                                                <td>
+                                                    <span t-esc="rec['start_date']"/>
+                                                </td>
+                                                <td>
+                                                    <span t-esc="rec['expected_end_date']"/>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+
+
+                                </table>
+
+                            </p>
+
+                            <br></br>
+
+
+                        </p>
+
+                    </div>
+
+                </t>
+            </t>
+        </t>
+
+    </template>
+</odoo>

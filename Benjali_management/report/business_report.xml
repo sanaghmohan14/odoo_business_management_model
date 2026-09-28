@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!--    Report Function -->
+    <record id="action_business_request_report" model="ir.actions.report">
+        <field name="name">Business Report</field>
+        <field name="model">business.project</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">Benjali_management.business_one</field>
+        <field name="report_file">Benjali_management.business_one</field>
+        <field name="binding_model_id" ref="model_business_project"/>
+        <field name="binding_type">report</field>
+    </record>
+</odoo>

@@ -1,4 +1,4 @@
-from odoo import models, fields
+from odoo import models, fields , api
 from odoo.exceptions import UserError
 
 
@@ -146,3 +146,17 @@ class CrmLead(models.Model):
             'target': 'current',
 
         }
+
+
+    @api.onchange('tag_ids')
+    def _onchange_tag_id(self):
+        for rec in self:
+            if rec.tag_ids:
+                department = self.env['crm.tag'].search(
+                [('id', 'in', rec.tag_ids.mapped('department_ids').ids)],
+                limit=1 )
+                if department:
+                    rec.department_id = department.id
+
+
+
