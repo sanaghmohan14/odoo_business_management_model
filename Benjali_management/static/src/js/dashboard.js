@@ -332,6 +332,49 @@ export class BenjaliDashboard extends Component {
 
 
     // =========================================================
+    // OPEN PROJECTS BY STATUS
+    // =========================================================
+
+    async openProjectsByStatus(event) {
+
+        const status = event.currentTarget.dataset.status;
+        const domain = [];
+
+        if (status === "active") {
+            domain.push(["active", "=", true]);
+        } else if (status === "completed") {
+            domain.push(["stage_id.name", "=", "Completed"]);
+        } else if (status === "on_hold") {
+            domain.push(["stage_id.name", "=", "On Hold"]);
+        } else if (status === "cancelled") {
+            domain.push(["stage_id.name", "=", "Cancelled"]);
+        }
+
+        if (this.state.departmentId) {
+            domain.push([
+                "department_id",
+                "=",
+                this.state.departmentId,
+            ]);
+        }
+
+        await this.action.doAction({
+            type: "ir.actions.act_window",
+            name: `${status.replace("_", " ")} Projects`,
+            res_model: "business.project",
+            views: [
+                [false, "list"],
+                [false, "form"],
+            ],
+            domain: domain,
+            context: {
+                active_test: false,
+            },
+        });
+    }
+
+
+    // =========================================================
     // OPEN STAGE
     // =========================================================
 

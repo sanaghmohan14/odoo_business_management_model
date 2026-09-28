@@ -32,7 +32,7 @@ class BenjaliManagementDashboard(models.AbstractModel):
         # PROJECT COUNTS
         # ---------------------------------------------------------
 
-        total_projects = Project.search_count(
+        total_projects = Project.with_context(active_test=False).search_count(
             project_domain
         )
 
@@ -54,7 +54,7 @@ class BenjaliManagementDashboard(models.AbstractModel):
             ]
         )
 
-        cancelled_projects = Project.search_count(
+        cancelled_projects = Project.with_context(active_test=False).search_count(
             project_domain + [
                 ('stage_id.name', '=', 'Cancelled')
             ]

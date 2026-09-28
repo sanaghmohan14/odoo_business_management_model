@@ -167,7 +167,11 @@
 
                     <!-- ACTIVE -->
 
-                    <div class="modern_kpi green">
+                    <div
+                        class="modern_kpi green"
+                        t-on-click="openProjectsByStatus"
+                        data-status="active"
+                    >
 
                         <div class="kpi_icon">
                             <i class="fa fa-play"/>
@@ -198,7 +202,11 @@
 
                     <!-- COMPLETED -->
 
-                    <div class="modern_kpi purple">
+                    <div
+                        class="modern_kpi purple"
+                        t-on-click="openProjectsByStatus"
+                        data-status="completed"
+                    >
 
                         <div class="kpi_icon">
                             <i class="fa fa-check"/>
@@ -229,7 +237,11 @@
 
                     <!-- HOLD -->
 
-                    <div class="modern_kpi orange">
+                    <div
+                        class="modern_kpi orange"
+                        t-on-click="openProjectsByStatus"
+                        data-status="on_hold"
+                    >
 
                         <div class="kpi_icon">
                             <i class="fa fa-pause"/>
@@ -260,7 +272,11 @@
 
                     <!-- CANCELLED -->
 
-                    <div class="modern_kpi red">
+                    <div
+                        class="modern_kpi red"
+                        t-on-click="openProjectsByStatus"
+                        data-status="cancelled"
+                    >
 
                         <div class="kpi_icon">
                             <i class="fa fa-times"/>
