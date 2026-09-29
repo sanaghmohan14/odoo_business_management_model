@@ -138,6 +138,12 @@
                                    widget="statinfo"
                                    string="Meetings"/>
                         </button>
+                        <button name="action_view_activity_calendar"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-tasks">
+                            <span class="o_stat_text">Activities</span>
+                        </button>
                     </div>
                     <!-- Title -->
                     <div class="oe_title">
@@ -192,6 +198,19 @@
 
                         <page string="Notes">
                             <field name="description" placeholder="Enter project description..."/>
+                        </page>
+
+                        <page string="Activity Plan">
+                            <field name="activity_plan_ids">
+                                <list editable="bottom">
+                                    <field name="name"/>
+                                    <field name="responsible_user_id"/>
+                                    <field name="planned_start"/>
+                                    <field name="planned_end"/>
+                                    <field name="priority"/>
+                                    <field name="state"/>
+                                </list>
+                            </field>
                         </page>
 
                         <page string="Approvals">
@@ -346,6 +365,25 @@
             </calendar>
         </field>
     </record>
+
+    <record id="business_project_activity_calendar" model="ir.ui.view">
+        <field name="name">Business Project Activity Calendar</field>
+        <field name="model">business.project.activity</field>
+        <field name="arch" type="xml">
+            <calendar string="Project Activities"
+                      date_start="planned_start"
+                      date_stop="planned_end"
+                      color="responsible_user_id"
+                      mode="month">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="responsible_user_id"/>
+                <field name="state"/>
+                <field name="priority"/>
+            </calendar>
+        </field>
+    </record>
+
     <record id="business_project_search_views" model="ir.ui.view">
         <field name="name">business.project.view.search</field>
         <field name="model">business.project</field>

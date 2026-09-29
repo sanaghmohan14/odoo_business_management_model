@@ -30,7 +30,10 @@ class BusinessProject(models.Model):
         default=True
     )
 
-    company_id = fields.Many2one('res.company',string="Company",default=lambda self: self.env.company,readonly=True)
+    company_id = fields.Many2one('res.company',
+                                 string="Company",
+                                 default=lambda self: self.env.company,
+                                 readonly=True)
 
 
     priority = fields.Selection([
@@ -331,6 +334,27 @@ class BusinessProject(models.Model):
                 'default_res_model': self._name,
                 'default_res_id': self.id,
                 'default_name': self.name,
+            },
+        }
+
+    def action_view_activity_calendar(self):
+        self.ensure_one()
+        calendar_view = self.env.ref(
+            'Benjali_management.business_project_activity_calendar'
+        )
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Project Activities',
+            'res_model': 'business.project.activity',
+            'view_mode': 'calendar,list,form',
+            'views': [
+                (calendar_view.id, 'calendar'),
+                (False, 'list'),
+                (False, 'form'),
+            ],
+            'domain': [('project_id', '=', self.id)],
+            'context': {
+                'default_project_id': self.id,
             },
         }
 

@@ -6,6 +6,7 @@ class BusinessProjectApproval(models.Model):
     _name = 'business.project.approval'
     _description = 'Business Project Approval'
     _order = 'id desc'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
 
     name = fields.Char(
         string='Approval Reference',
@@ -68,12 +69,16 @@ class BusinessProjectApproval(models.Model):
         string='Comments'
     )
 
-    company_id = fields.Many2one(
-        'res.company',
-        string='Company',
-        default=lambda self: self.env.company,
-        required=True
-    )
+    # company_id = fields.Many2one(
+    #     'res.company',
+    #     string='Company',
+    #     default=lambda self: self.env.company,
+    #     required=True
+    #
+    company_id = fields.Many2one('res.company',
+                                 string="Company",
+                                 default=lambda self: self.env.company,
+                                 readonly=True)
 
     requires_approval = fields.Boolean(
         string='Requires Approval',
