@@ -155,20 +155,13 @@
         sequence="60"
     />
 
+        <menuitem id="menu_project_xlsx" name="PDF/EXCEL Report"
+                  parent="menu_benjali_management_reporting"
+       action="create_reporting_wizard_business"
+                  sequence="60"/>
 
-     <menuitem
-        id="b_pdf_report"
-        name="PDf Report"
-        parent="menu_benjali_management_reporting"
-        action="action_business_project_data_collection_report"
-        sequence="60"
-    />
-     <menuitem
-        id="b_excel_report"
-        name="Excel Report"
-        parent="menu_benjali_management_reporting"
-        action="action_business_project_data_collection_report"
-        sequence="60"
-    />
+
+
+
 
 </odoo>

@@ -4,6 +4,7 @@ from odoo.exceptions import UserError
 
 class CrmLead(models.Model):
     _inherit = 'crm.lead'
+    _check_company_auto = True
 
     department_id = fields.Many2one(
         'hr.department',

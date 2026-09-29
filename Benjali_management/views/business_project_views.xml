@@ -166,6 +166,7 @@
                             <field name="actual_end_date"
                                    readonly="1"/>
                             <field name="active"/>
+                            <field name="company_id"/>
                         </group>
 
                     </group>

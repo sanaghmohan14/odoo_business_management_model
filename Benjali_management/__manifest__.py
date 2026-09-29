@@ -14,12 +14,15 @@
         "project",
     ],
     "data": [
+
+        "security/record_rules.xml",
         "security/user_groups.xml",
         "security/ir.model.access.csv",
         # "data/project_task_type_data.xml",
         "data/approval_sequence.xml",
         "data/sequence_data.xml",
         "data/stage_data.xml",
+        "wizard/report_wizard.xml",
         "report/report_view.xml",
         "report/business_report.xml",
         "views/crm_tag_views.xml",

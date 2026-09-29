@@ -30,6 +30,9 @@ class BusinessProject(models.Model):
         default=True
     )
 
+    company_id = fields.Many2one('res.company',string="Company",default=lambda self: self.env.company,readonly=True)
+
+
     priority = fields.Selection([
         ('0', 'Low'),
         ('1', 'Medium'),
@@ -61,6 +64,8 @@ class BusinessProject(models.Model):
         string='Previous Stage',
         readonly=True
     )
+
+
 
     hold_return_stage_id = fields.Many2one(
         'business.project.stage',

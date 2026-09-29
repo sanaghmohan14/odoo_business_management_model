@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="reporting_wizard_business_one" model="ir.ui.view">
+        <field name="name">reporting.wizard.form</field>
+        <field name="model">business.reporting.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+<!--                        <field name="partner_id" widget="many2many_tags"/>-->
+<!--                        <field name="project_manager_id" widget="many2many_tags"/>-->
+<!--                        <field name="department_id" widget="many2many_tags"/>-->
+                        <field name="start_date" />
+                        <field name="end_date"/>
+                    </group>
+                </sheet>
+                      <footer>
+                    <button type="object" string="Create PDF Report"  name="action_print_report"/>
+                    <button type="object" string="Excel report" name="action_print_xlsx"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="create_reporting_wizard_business" model="ir.actions.act_window">
+        <field name="name">BUSINESS REPORTING WIZARD</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">business.reporting.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="reporting_wizard_business_one"/>
+        <field name="target">new</field>
+    </record>
+
+
+
+
+</odoo>
