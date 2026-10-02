@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="business_project_kra_action" model="ir.actions.act_window">
+        <field name="name">KRAs</field>
+        <field name="res_model">business.project.kra</field>
+        <field name="view_mode">list,kanban,form</field>
+    </record>
+
+    <record id="business_project_kra_entry_action" model="ir.actions.act_window">
+        <field name="name">KRA Entries</field>
+        <field name="res_model">business.project.kra.entry</field>
+        <field name="view_mode">list,pivot,graph,calendar,form</field>
+    </record>
+
+    <record id="business_project_kra_list" model="ir.ui.view">
+        <field name="name">business.project.kra.list</field>
+        <field name="model">business.project.kra</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="reference"/>
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="department_id"/>
+                <field name="user_id"/>
+                <field name="kpi"/>
+                <field name="target"/>
+                <field name="unit"/>
+                <field name="weightage"/>
+                <field name="achievement_percentage"/>
+                <field name="weighted_performance"/>
+                <field name="state"/>
+                <field name="active" column_invisible="True"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="business_project_kra_form" model="ir.ui.view">
+        <field name="name">business.project.kra.form</field>
+        <field name="model">business.project.kra</field>
+        <field name="arch" type="xml">
+            <form string="KRA">
+                <header>
+                    <button name="action_activate" string="Activate" type="object"
+                            class="btn-primary" invisible="state == 'active'"/>
+                    <button name="action_complete" string="Complete" type="object"
+                            invisible="state in ('completed', 'cancelled')"/>
+                    <button name="action_cancel" string="Cancel" type="object"
+                            invisible="state == 'cancelled'"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,active,completed,cancelled"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" placeholder="KRA name"/></h1>
+                    </div>
+                    <group>
+                        <group string="Assignment">
+                            <field name="reference"/>
+                            <field name="project_id"/>
+                            <field name="department_id"/>
+                            <field name="user_id"/>
+                            <field name="manager_id"/>
+                        </group>
+                        <group string="Target">
+                            <field name="kpi"/>
+                            <field name="target"/>
+                            <field name="unit"/>
+                            <field name="weightage"/>
+                            <field name="frequency"/>
+                            <field name="priority" widget="priority"/>
+                        </group>
+                    </group>
+                    <group string="Period">
+                        <field name="start_date"/>
+                        <field name="end_date"/>
+                        <field name="active"/>
+                        <field name="company_id"/>
+                    </group>
+                    <group string="Performance" col="4">
+                        <field name="entry_count"/>
+                        <field name="achievement_percentage"/>
+                        <field name="weighted_performance"/>
+                    </group>
+                    <notebook>
+                        <page string="Description">
+                            <group>
+                                <field name="objective"/>
+                                <field name="description"/>
+                            </group>
+                        </page>
+                        <page string="Daily Entries">
+                            <field name="entry_ids">
+                                <list editable="bottom">
+                                    <field name="date"/>
+                                    <field name="achievement"/>
+                                    <field name="unit"/>
+                                    <field name="achievement_percentage"/>
+                                    <field name="weighted_performance"/>
+                                    <field name="state"/>
+                                    <field name="notes"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="business_project_kra_search" model="ir.ui.view">
+        <field name="name">business.project.kra.search</field>
+        <field name="model">business.project.kra</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="reference"/>
+                <field name="project_id"/>
+                <field name="department_id"/>
+                <field name="user_id"/>
+                <field name="state"/>
+                <filter name="active" string="Active" domain="[('active', '=', True)]"/>
+                <filter name="completed" string="Completed" domain="[('state', '=', 'completed')]"/>
+                <separator/>
+                <filter name="group_project" string="Business Project" context="{'group_by': 'project_id'}"/>
+                <filter name="group_department" string="Department" context="{'group_by': 'department_id'}"/>
+                <filter name="group_user" string="Responsible User" context="{'group_by': 'user_id'}"/>
+                <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="business_project_kra_entry_list" model="ir.ui.view">
+        <field name="name">business.project.kra.entry.list</field>
+        <field name="model">business.project.kra.entry</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="date"/>
+                <field name="day"/>
+                <field name="week_start"/>
+                <field name="month_start"/>
+                <field name="kra_id"/>
+                <field name="project_id"/>
+                <field name="department_id"/>
+                <field name="user_id"/>
+                <field name="target"/>
+                <field name="achievement"/>
+                <field name="achievement_percentage"/>
+                <field name="weighted_performance"/>
+                <field name="state"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="business_project_kra_entry_form" model="ir.ui.view">
+        <field name="name">business.project.kra.entry.form</field>
+        <field name="model">business.project.kra.entry</field>
+        <field name="arch" type="xml">
+            <form string="KRA Entry">
+                <header>
+                    <button name="action_submit" string="Submit" type="object"
+                            class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_approve" string="Approve" type="object"
+                            invisible="state not in ('submitted', 'rejected')"/>
+                    <button name="action_reject" string="Reject" type="object"
+                            invisible="state not in ('submitted', 'approved')"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,submitted,approved,rejected"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="kra_id"/>
+                            <field name="project_id"/>
+                            <field name="department_id"/>
+                            <field name="user_id"/>
+                        </group>
+                        <group>
+                            <field name="date"/>
+                            <field name="target"/>
+                            <field name="achievement"/>
+                            <field name="unit"/>
+                        </group>
+                    </group>
+                    <group string="Calculated Performance">
+                        <field name="achievement_percentage"/>
+                        <field name="weighted_performance"/>
+                        <field name="day"/>
+                        <field name="week_start"/>
+                        <field name="month_start"/>
+                    </group>
+                    <field name="name" placeholder="What was achieved?"/>
+                    <field name="notes"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="business_project_kra_entry_search" model="ir.ui.view">
+        <field name="name">business.project.kra.entry.search</field>
+        <field name="model">business.project.kra.entry</field>
+        <field name="arch" type="xml">
+            <search string="KRA Performance">
+                <field name="date"/>
+                <field name="kra_id"/>
+                <field name="project_id"/>
+                <field name="department_id"/>
+                <field name="user_id"/>
+                <field name="state"/>
+                <filter name="today" string="Today" domain="[('date', '=', context_today())]"/>
+                <filter name="this_week" string="This Week" domain="[('week_start', '=', context_today().strftime('%%Y-%%m-%%d'))]"/>
+                <filter name="this_month" string="This Month" domain="[('month_start', '=', context_today().replace(day=1).strftime('%%Y-%%m-%%d'))]"/>
+                <separator/>
+                <filter name="group_date" string="Date" context="{'group_by': 'date'}"/>
+                <filter name="group_day" string="Day" context="{'group_by': 'day'}"/>
+                <filter name="group_week" string="Week" context="{'group_by': 'week_start'}"/>
+                <filter name="group_month" string="Month" context="{'group_by': 'month_start'}"/>
+                <filter name="group_department" string="Department" context="{'group_by': 'department_id'}"/>
+                <filter name="group_user" string="Responsible User" context="{'group_by': 'user_id'}"/>
+                <filter name="group_project" string="Business Project" context="{'group_by': 'project_id'}"/>
+                <filter name="group_kra" string="KRA" context="{'group_by': 'kra_id'}"/>
+                <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="business_project_kra_entry_pivot" model="ir.ui.view">
+        <field name="name">business.project.kra.entry.pivot</field>
+        <field name="model">business.project.kra.entry</field>
+        <field name="arch" type="xml">
+            <pivot string="KRA Performance">
+                <field name="date" type="row" interval="month"/>
+                <field name="kra_id" type="row"/>
+                <field name="achievement" type="measure"/>
+                <field name="achievement_percentage" type="measure"/>
+                <field name="weighted_performance" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="business_project_kra_entry_graph" model="ir.ui.view">
+        <field name="name">business.project.kra.entry.graph</field>
+        <field name="model">business.project.kra.entry</field>
+        <field name="arch" type="xml">
+            <graph string="KRA Performance" type="bar">
+                <field name="date" interval="week"/>
+                <field name="weighted_performance" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="business_project_kra_entry_calendar" model="ir.ui.view">
+        <field name="name">business.project.kra.entry.calendar</field>
+        <field name="model">business.project.kra.entry</field>
+        <field name="arch" type="xml">
+            <calendar string="KRA Entries" date_start="date" color="kra_id">
+                <field name="kra_id"/>
+                <field name="achievement"/>
+                <field name="achievement_percentage"/>
+            </calendar>
+        </field>
+    </record>
+
+</odoo>

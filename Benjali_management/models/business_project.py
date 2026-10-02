@@ -259,11 +259,16 @@ class BusinessProject(models.Model):
         string='Data Collection'
     )
 
-    subtask_ids = fields.One2many(
-        'business.project.subtask',
-        'project_id',
+
+
+    task_ids = fields.One2many(
+        'project.task',
+        'business_project_id',
         string='Sub Tasks'
     )
+
+
+
 
     # COMPUTED INFORMATION
 
@@ -286,6 +291,21 @@ class BusinessProject(models.Model):
 
     is_completed = fields.Boolean(
         string='Completed',
+        compute='_compute_workflow_status'
+    )
+
+    is_team_allocation_stage = fields.Boolean(
+        string='Team Allocation Stage',
+        compute='_compute_workflow_status'
+    )
+
+    is_kickoff_stage = fields.Boolean(
+        string='Kick-off Stage',
+        compute='_compute_workflow_status'
+    )
+
+    is_communication_stage = fields.Boolean(
+        string='Communication Stage',
         compute='_compute_workflow_status'
     )
 
@@ -429,9 +449,9 @@ class BusinessProject(models.Model):
 
 
 
-    # ---------------------------------------------------------
+
     # WORKFLOW STATUS
-    # ---------------------------------------------------------
+
 
     @api.depends('stage_id')
     def _compute_workflow_status(self):
@@ -443,6 +463,13 @@ class BusinessProject(models.Model):
             record.is_on_hold = stage_name == 'on hold'
             record.is_cancelled = stage_name == 'cancelled'
             record.is_completed = stage_name == 'completed'
+            record.is_team_allocation_stage = stage_name == 'team allocation'
+            record.is_kickoff_stage = (
+                stage_name == 'initial client contact & kick-off'
+            )
+            record.is_communication_stage = (
+                stage_name == 'project communication setup'
+            )
 
     def _check_stage_requirements(self):
         """Validate requirements before leaving the current stage."""
@@ -470,7 +497,7 @@ class BusinessProject(models.Model):
                     'Please complete the client kick-off before moving '
                     'to the next stage.'
                 )
-            if record.stage_id.name == 'System Study & Data Collection':
+            if record.stage_id.name == 'System Study &  Collection':
                 if not record.data_collection_ids:
                     raise UserError(
                         'Please add at least one data collection item '
@@ -635,10 +662,8 @@ class BusinessProject(models.Model):
                 )
             )
 
-
-    # ---------------------------------------------------------
     # PREVIOUS STAGE
-    # ---------------------------------------------------------
+
 
     def action_previous_stage(self):
 
@@ -686,9 +711,9 @@ class BusinessProject(models.Model):
 
         return True
 
-    # ---------------------------------------------------------
+
     # HOLD
-    # ---------------------------------------------------------
+
 
     def action_hold(self):
 
@@ -725,9 +750,8 @@ class BusinessProject(models.Model):
 
         return True
 
-    # ---------------------------------------------------------
     # RESUME
-    # ---------------------------------------------------------
+
 
     def action_resume(self):
 
@@ -795,9 +819,8 @@ class BusinessProject(models.Model):
 
         return True
 
-    # ---------------------------------------------------------
     # COMPLETE
-    # ---------------------------------------------------------
+
 
     def action_complete(self):
 

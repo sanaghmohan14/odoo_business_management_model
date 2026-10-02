@@ -6,9 +6,8 @@
 
         <div class="benjali_dashboard">
 
-            <!-- ================================================= -->
+
             <!-- HEADER -->
-            <!-- ================================================= -->
 
             <div class="dashboard_top">
 
@@ -77,9 +76,8 @@
             </div>
 
 
-            <!-- ================================================= -->
             <!-- LOADING -->
-            <!-- ================================================= -->
+
 
             <t t-if="state.loading">
 
@@ -96,9 +94,8 @@
             </t>
 
 
-            <!-- ================================================= -->
             <!-- ERROR -->
-            <!-- ================================================= -->
+
 
             <t t-elif="state.error">
 
@@ -119,15 +116,13 @@
             </t>
 
 
-            <!-- ================================================= -->
             <!-- DASHBOARD -->
-            <!-- ================================================= -->
+
 
             <t t-elif="state.data">
 
-                <!-- ============================================= -->
                 <!-- PROJECT KPI -->
-                <!-- ============================================= -->
+
 
                 <div class="kpi_grid">
 
@@ -304,12 +299,44 @@
 
                     </div>
 
+
+                    <!-- APPROVAL REQUESTS -->
+
+                    <div
+                        class="modern_kpi teal"
+                        t-on-click="openApprovalRequests"
+                    >
+
+                        <div class="kpi_icon">
+                            <i class="fa fa-check-square-o"/>
+                        </div>
+
+                        <div class="kpi_information">
+
+                            <span>
+                                Approval Requests
+                            </span>
+
+                            <strong>
+                                <t t-esc="state.data.approvals.pending"/>
+                            </strong>
+
+                            <small>
+                                Pending approvals
+                            </small>
+
+                        </div>
+
+                        <div class="kpi_graph">
+                            ✓
+                        </div>
+
+                    </div>
+
                 </div>
 
-
-                <!-- ============================================= -->
                 <!-- CHART ROW -->
-                <!-- ============================================= -->
+
 
                 <div class="dashboard_grid chart_row">
 
@@ -522,9 +549,8 @@
                 </div>
 
 
-                <!-- ============================================= -->
                 <!-- SECOND ROW -->
-                <!-- ============================================= -->
+
 
                 <div class="dashboard_grid three_columns">
 
@@ -597,6 +623,22 @@
                                     <t t-esc="state.data.kra.projects_with_kra"/>
                                 </strong>
 
+                            </div>
+
+                            <div class="mini_kpi orange_light">
+                                <i class="fa fa-line-chart"/>
+                                <span>Achievement</span>
+                                <strong>
+                                    <t t-esc="state.data.kra.average_performance.toFixed(1)"/>%
+                                </strong>
+                            </div>
+
+                            <div class="mini_kpi green_light">
+                                <i class="fa fa-calendar-check-o"/>
+                                <span>Entries</span>
+                                <strong>
+                                    <t t-esc="state.data.kra.entries"/>
+                                </strong>
                             </div>
 
                         </div>
@@ -762,9 +804,8 @@
                 </div>
 
 
-                <!-- ============================================= -->
                 <!-- THIRD ROW -->
-                <!-- ============================================= -->
+
 
                 <div class="dashboard_grid three_columns">
 

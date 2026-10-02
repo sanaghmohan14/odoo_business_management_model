@@ -33,10 +33,8 @@ export class BenjaliDashboard extends Component {
         });
     }
 
-
-    // =========================================================
     // LOAD DASHBOARD
-    // =========================================================
+
 
     async loadDashboardData() {
 
@@ -82,9 +80,8 @@ export class BenjaliDashboard extends Component {
     }
 
 
-    // =========================================================
     // DEPARTMENT CHANGE
-    // =========================================================
+
 
     async onDepartmentChange(event) {
 
@@ -113,10 +110,8 @@ export class BenjaliDashboard extends Component {
         await this.loadDashboardData();
     }
 
-
-    // =========================================================
     // STATUS DONUT
-    // =========================================================
+
 
     getStatusChartStyle() {
 
@@ -136,7 +131,7 @@ export class BenjaliDashboard extends Component {
         }
 
         const colors = [
-            "#3b82f6",
+            "#0d64e8",
             "#8b5cf6",
             "#f59e0b",
             "#ef4444",
@@ -187,9 +182,8 @@ export class BenjaliDashboard extends Component {
     }
 
 
-    // =========================================================
     // DATA COLLECTION DONUT
-    // =========================================================
+
 
     getDataCollectionChartStyle() {
 
@@ -209,9 +203,8 @@ export class BenjaliDashboard extends Component {
     }
 
 
-    // =========================================================
     // DONUT HELPER
-    // =========================================================
+
 
     createDonutStyle(data, colors) {
 
@@ -247,9 +240,8 @@ export class BenjaliDashboard extends Component {
     }
 
 
-    // =========================================================
+
     // DEPARTMENT BAR CHART
-    // =========================================================
 
     getBarHeight(count) {
 
@@ -273,10 +265,8 @@ export class BenjaliDashboard extends Component {
         );
     }
 
-
-    // =========================================================
     // PIPELINE BAR
-    // =========================================================
+
 
     getPipelineWidth(count) {
 
@@ -298,9 +288,7 @@ export class BenjaliDashboard extends Component {
     }
 
 
-    // =========================================================
     // OPEN PROJECTS
-    // =========================================================
 
     async openProjects() {
 
@@ -331,9 +319,8 @@ export class BenjaliDashboard extends Component {
     }
 
 
-    // =========================================================
     // OPEN PROJECTS BY STATUS
-    // =========================================================
+
 
     async openProjectsByStatus(event) {
 
@@ -374,9 +361,8 @@ export class BenjaliDashboard extends Component {
     }
 
 
-    // =========================================================
     // OPEN STAGE
-    // =========================================================
+
 
     async openStage(stageId) {
 
@@ -413,9 +399,9 @@ export class BenjaliDashboard extends Component {
     }
 
 
-    // =========================================================
+
     // OPEN KRAs
-    // =========================================================
+
 
     async openKras() {
 
@@ -445,9 +431,9 @@ export class BenjaliDashboard extends Component {
     }
 
 
-    // =========================================================
+
     // OPEN ACTIVITIES
-    // =========================================================
+
 
     async openActivities() {
 
@@ -477,9 +463,8 @@ export class BenjaliDashboard extends Component {
     }
 
 
-    // =========================================================
     // OPEN DATA COLLECTION
-    // =========================================================
+
 
     async openDataCollection() {
 
@@ -509,9 +494,9 @@ export class BenjaliDashboard extends Component {
     }
 
 
-    // =========================================================
+
     // OPEN CRM
-    // =========================================================
+
 
     async openCRM() {
 
@@ -536,6 +521,34 @@ export class BenjaliDashboard extends Component {
                 [false, "form"],
             ],
 
+            domain: domain,
+        });
+    }
+
+
+    // OPEN APPROVAL REQUESTS
+
+
+    async openApprovalRequests() {
+
+        const domain = [];
+
+        if (this.state.departmentId) {
+            domain.push([
+                "project_id.department_id",
+                "=",
+                this.state.departmentId,
+            ]);
+        }
+
+        await this.action.doAction({
+            type: "ir.actions.act_window",
+            name: "Approval Requests",
+            res_model: "business.project.approval",
+            views: [
+                [false, "list"],
+                [false, "form"],
+            ],
             domain: domain,
         });
     }

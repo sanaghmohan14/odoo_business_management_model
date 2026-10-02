@@ -97,9 +97,9 @@
 
         <field name="name">KRA Analysis</field>
 
-        <field name="res_model">business.project.kra</field>
+        <field name="res_model">business.project.kra.entry</field>
 
-        <field name="view_mode">pivot,graph,list</field>
+        <field name="view_mode">pivot,graph,list,calendar,form</field>
 
     </record>
 

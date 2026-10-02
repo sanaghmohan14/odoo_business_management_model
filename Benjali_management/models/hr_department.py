@@ -10,6 +10,8 @@ class HrDepartment(models.Model):
         string='Business Projects'
     )
 
+
+
     def action_open_business_projects(self):
         self.ensure_one()
 

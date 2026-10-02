@@ -9,6 +9,20 @@
         <field name="global" eval="True"/>
     </record>
 
+    <record id="business_management_kra_rule_company" model="ir.rule">
+        <field name="name">KRA records for company</field>
+        <field name="model_id" ref="model_business_project_kra"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        <field name="global" eval="True"/>
+    </record>
+
+    <record id="business_management_kra_entry_rule_company" model="ir.rule">
+        <field name="name">KRA entry records for company</field>
+        <field name="model_id" ref="model_business_project_kra_entry"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        <field name="global" eval="True"/>
+    </record>
+
         <record id="business_management_approval_rule_company" model="ir.rule">
         <field name="name">Business approval record rules for company</field>
         <field name="model_id" ref="model_business_project_approval"/>

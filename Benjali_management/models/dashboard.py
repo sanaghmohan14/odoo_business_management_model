@@ -16,10 +16,11 @@ class BenjaliManagementDashboard(models.AbstractModel):
         Team = self.env['business.project.team']
         Timesheet = self.env['account.analytic.line']
         Lead = self.env['crm.lead']
+        Approval = self.env['business.project.approval']
 
-        # ---------------------------------------------------------
+
         # PROJECT DOMAIN
-        # ---------------------------------------------------------
+
 
         project_domain = []
 
@@ -28,9 +29,7 @@ class BenjaliManagementDashboard(models.AbstractModel):
                 ('department_id', '=', department_id)
             )
 
-        # ---------------------------------------------------------
         # PROJECT COUNTS
-        # ---------------------------------------------------------
 
         total_projects = Project.with_context(active_test=False).search_count(
             project_domain
@@ -69,9 +68,9 @@ class BenjaliManagementDashboard(models.AbstractModel):
             0
         )
 
-        # ---------------------------------------------------------
+
         # PROJECT STATUS CHART
-        # ---------------------------------------------------------
+
 
         status_data = [
             {
@@ -96,9 +95,8 @@ class BenjaliManagementDashboard(models.AbstractModel):
             },
         ]
 
-        # ---------------------------------------------------------
+
         # STAGES
-        # ---------------------------------------------------------
 
         stages = Stage.search(
             [('active', '=', True)],
@@ -128,9 +126,8 @@ class BenjaliManagementDashboard(models.AbstractModel):
                 'requires_approval': stage.requires_approval,
             })
 
-        # ---------------------------------------------------------
+
         # PHASE DATA
-        # ---------------------------------------------------------
 
         phase_selection = dict(
             Stage._fields['phase'].selection
@@ -159,9 +156,9 @@ class BenjaliManagementDashboard(models.AbstractModel):
                 'count': count,
             })
 
-        # ---------------------------------------------------------
+
         # DEPARTMENT SUMMARY
-        # ---------------------------------------------------------
+
 
         department_data = []
 
@@ -189,9 +186,8 @@ class BenjaliManagementDashboard(models.AbstractModel):
                 'count': department_count,
             })
 
-        # ---------------------------------------------------------
         # KRA
-        # ---------------------------------------------------------
+
 
         kra_domain = []
 
@@ -214,9 +210,21 @@ class BenjaliManagementDashboard(models.AbstractModel):
             ]
         )
 
-        # ---------------------------------------------------------
+        kra_records = KRA.search(kra_domain)
+        kra_average_performance = (
+            sum(kra_records.mapped('achievement_percentage')) / len(kra_records)
+            if kra_records else 0.0
+        )
+        kra_weighted_performance = sum(
+            kra_records.mapped('weighted_performance')
+        )
+        kra_entries = self.env['business.project.kra.entry']
+        total_kra_entries = kra_entries.search_count([
+            ('kra_id', 'in', kra_records.ids)
+        ])
+
         # ACTIVITIES
-        # ---------------------------------------------------------
+
 
         activity_domain = []
 
@@ -272,9 +280,9 @@ class BenjaliManagementDashboard(models.AbstractModel):
             },
         ]
 
-        # ---------------------------------------------------------
+
         # DATA COLLECTION
-        # ---------------------------------------------------------
+
 
         data_collection_domain = []
 
@@ -330,9 +338,8 @@ class BenjaliManagementDashboard(models.AbstractModel):
             },
         ]
 
-        # ---------------------------------------------------------
         # TEAM
-        # ---------------------------------------------------------
+
 
         team_domain = []
 
@@ -347,9 +354,9 @@ class BenjaliManagementDashboard(models.AbstractModel):
             ]
         )
 
-        # ---------------------------------------------------------
+
         # TIMESHEETS
-        # ---------------------------------------------------------
+
 
         timesheet_domain = []
 
@@ -374,9 +381,8 @@ class BenjaliManagementDashboard(models.AbstractModel):
             timesheet_records.mapped('unit_amount')
         )
 
-        # ---------------------------------------------------------
         # CRM
-        # ---------------------------------------------------------
+
 
         crm_domain = []
 
@@ -398,6 +404,23 @@ class BenjaliManagementDashboard(models.AbstractModel):
         crm_without_project = Lead.search_count(
             crm_domain + [
                 ('business_project_id', '=', False)
+            ]
+        )
+
+        # APPROVAL REQUESTS
+
+
+        approval_domain = []
+
+        if department_id:
+            approval_domain.append(
+                ('project_id.department_id', '=', department_id)
+            )
+
+        total_approval_requests = Approval.search_count(approval_domain)
+        pending_approval_requests = Approval.search_count(
+            approval_domain + [
+                ('state', '=', 'pending')
             ]
         )
 
@@ -424,9 +447,8 @@ class BenjaliManagementDashboard(models.AbstractModel):
                 'count': department_project_count,
             })
 
-        # ---------------------------------------------------------
         # RETURN DATA
-        # ---------------------------------------------------------
+
 
         return {
 
@@ -454,6 +476,9 @@ class BenjaliManagementDashboard(models.AbstractModel):
                 'total': total_kras,
                 'active': active_kras,
                 'projects_with_kra': projects_with_kra,
+                'entries': total_kra_entries,
+                'average_performance': kra_average_performance,
+                'weighted_performance': kra_weighted_performance,
             },
 
             'activities': {
@@ -487,5 +512,10 @@ class BenjaliManagementDashboard(models.AbstractModel):
                 'total': total_crm,
                 'with_business_project': crm_with_project,
                 'without_business_project': crm_without_project,
+            },
+
+            'approvals': {
+                'total': total_approval_requests,
+                'pending': pending_approval_requests,
             },
         }

@@ -121,6 +121,9 @@
                     <field name="stage_id"
                            widget="statusbar"
                            options="{'clickable': False}"/>
+                    <field name="is_team_allocation_stage" invisible="1"/>
+                    <field name="is_kickoff_stage" invisible="1"/>
+                    <field name="is_communication_stage" invisible="1"/>
 
                 </header>
 
@@ -231,7 +234,7 @@
                             </field>
 
                         </page>
-                        <page string="Team Allocation">
+                        <page string="Team Allocation" invisible="not is_team_allocation_stage">
                             <field name="team_member_ids">
                                 <list editable="bottom">
                                     <field name="user_id"/>
@@ -240,17 +243,17 @@
                                 </list>
                             </field>
                         </page>
-                        <page string="Timesheets">
-                            <field name="timesheet_ids">
-                                <list editable="bottom">
-                                    <field name="date"/>
-                                    <field name="employee_id"/>
-                                    <field name="name"/>
-                                    <field name="unit_amount"/>
-                                </list>
-                            </field>
-                        </page>
-                        <page string="Client Kick Off">
+<!--                        <page string="Timesheets">-->
+<!--                            <field name="timesheet_ids">-->
+<!--                                <list editable="bottom">-->
+<!--                                    <field name="date"/>-->
+<!--                                    <field name="employee_id"/>-->
+<!--                                    <field name="name"/>-->
+<!--                                    <field name="unit_amount"/>-->
+<!--                                </list>-->
+<!--                            </field>-->
+<!--                        </page>-->
+                        <page string="Client Kick Off" invisible="not is_kickoff_stage">
                             <group>
                                 <field name="kickoff_contact_date" string="Initial Client Contact"/>
                                 <field name="kickoff_date" string="Kick-off Date"/>
@@ -260,12 +263,13 @@
 
                         </page>
 
-                        <page string="Sub Task">
-                            <field name="subtask_ids">
+                        <page string="Sub Tasks">
+                            <field name="task_ids">
                                 <list editable="bottom">
-                                    <field name="task" string="Task"/>
-                                    <field name="assignee_id" string="Assignee"/>
-                                    <field name="completed" string="completed"/>
+                                    <field name="name" string="Task"/>
+                                    <field name="user_ids" string="Assignees" widget="many2many_tags"/>
+                                    <field name="stage_id"/>
+<!--                                    <field name="completed" string="completed"/>-->
                                 </list>
                             </field>
                         </page>
@@ -277,12 +281,17 @@
                                     <field name="name"/>
                                     <field name="objective"/>
                                     <field name="responsible_user_id"/>
+                                    <field name="kpi"/>
                                     <field name="target"/>
+                                    <field name="unit"/>
+                                    <field name="weightage"/>
+                                    <field name="frequency"/>
                                     <field name="measurement"/>
+                                    <field name="state"/>
                                 </list>
                             </field>
                         </page>
-                        <page string="Communication">
+                        <page string="Communication" invisible="not is_communication_stage">
                             <group string="Project Communication">
                                 <field name="communication_channel"/>
                                 <field name="communication_group_name"/>

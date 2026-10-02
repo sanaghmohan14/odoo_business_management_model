@@ -8,15 +8,7 @@ class BusinessProjectApproval(models.Model):
     _order = 'id desc'
     _inherit = ['mail.thread', 'mail.activity.mixin']
 
-    name = fields.Char(
-        string='Approval Reference',
-        required=True,
-        copy=False,
-        readonly=True,
-        default=lambda self: self.env['ir.sequence'].next_by_code(
-            'business.project.approval'
-        ) or 'New'
-    )
+    name = fields.Char(string='', readonly=True ,default='New')
 
     project_id = fields.Many2one(
         'business.project',
@@ -87,12 +79,80 @@ class BusinessProjectApproval(models.Model):
 
 
 
+    # @api.model_create_multi
+    # def create(self, vals_list):
+    #     for vals in vals_list:
+    #         if vals.get('name', 'New') == 'New':
+    #             vals['name'] = self.env['ir.sequence'].next_by_code('business.project.approval') or 'New'
+    #     return super().create(vals_list)
+
+
+    # @api.model_create_multi
+    # def create(self, vals_list):
+    #     for vals in vals_list:
+    #         if vals.get('name', 'New') == 'New':
+    #             vals['name'] = (
+    #                     self.env['ir.sequence'].next_by_code(
+    #                         'business.project.approval'
+    #                     ) or 'New'
+    #             )
+    #
+    #     return super().create(vals_list)
+
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
-            if vals.get('name', 'New') == 'New':
-                vals['name'] = self.env['ir.sequence'].next_by_code('business.project.approval') or 'New'
+
+            sequence = self.env['ir.sequence'].next_by_code(
+                'business.project.approval'
+            )
+
+            print("================================")
+            print("CREATE VALS:", vals)
+            print("CURRENT COMPANY:", self.env.company)
+            print("SEQUENCE:", sequence)
+            print("================================")
+
+            if not vals.get('name') or vals.get('name') == 'New':
+                vals['name'] = sequence
+
         return super().create(vals_list)
+
+
+
+    def action_test_sequence(self):
+        sequence = self.env['ir.sequence'].search([
+            ('code', '=', 'business.project.approval')
+        ])
+
+        raise UserError(
+            f"Found sequences: {sequence}\n"
+            f"IDs: {sequence.ids}\n"
+            f"Codes: {sequence.mapped('code')}"
+        )
+
+    def action_check_approval_sequence(self):
+        sequences = self.env['ir.sequence'].search([
+            ('code', '=', 'business.project.approval')
+        ])
+
+        if not sequences:
+            raise UserError(
+                "NO SEQUENCE FOUND\n\n"
+                "Searching for:\n"
+                "business.project.approval"
+            )
+
+        message = "\n".join(
+            f"ID={seq.id}\n"
+            f"Name={seq.name}\n"
+            f"Code={seq.code}\n"
+            f"Prefix={seq.prefix}\n"
+            f"Next Number={seq.number_next}\n"
+            for seq in sequences
+        )
+
+        raise UserError(message)
 
 
 

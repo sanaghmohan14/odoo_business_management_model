@@ -27,7 +27,11 @@ class CrmLead(models.Model):
     project_assign_id = fields.Many2one(
         'project.project',
         'Assign Project',
+        readonly=True,
     )
+
+
+
 
     def action_create_business_project(self):
         self.ensure_one()
@@ -61,8 +65,28 @@ class CrmLead(models.Model):
 
         })
 
+        # Create the related standard Odoo project. No project tasks or
+        # subtasks are created here.
+        project = self.env['project.project'].create({
+            'name': self.name,
+            'partner_id': self.partner_id.id,
+            'user_id': self.user_id.id or self.env.user.id,
+            'company_id': self.company_id.id or self.env.company.id,
+            'department_id': self.department_id.id,
+            'description': self.description,
+            'allow_billable': True,
+            'business_project_id': business_project.id,
+        })
+
+        # Keep both CRM links and the business project's project link in sync.
+        business_project.project_id = project.id
+
+
         # Link the Business Project to the CRM Lead
-        self.business_project_id = business_project.id
+        self.write({
+            'business_project_id': business_project.id,
+            'project_assign_id': project.id,
+        })
 
         return {
             'type': 'ir.actions.act_window',
@@ -77,65 +101,21 @@ class CrmLead(models.Model):
 
 
 
-    def action_open_project_task(self):
-        self.ensure_one()
 
-        # Check project
-        if not self.project_assign_id:
-            raise UserError(
-                'Please select a project before opening project tasks.'
-            )
-
-        # Find first stage
-        first_stage = self.env['project.task.type'].search(
-            [
-                ('name', '=', 'Client follow up')
-            ],
-            order='sequence, id',
-            limit=1
-        )
-
-        if not first_stage:
-            raise UserError(
-                'Client follow up stage was not found.'
-            )
-
-        # Create task if it does not already exist
-        if not self.project_task_id:
-
-            task = self.env['project.task'].create({
-                'name': self.name,
-                'project_id': self.project_assign_id.id,
-                'partner_id': self.partner_id.id,
-                'stage_id': first_stage.id,
-                'description': self.description,
-            })
-
-            self.project_task_id = task.id
-
-        # Open project tasks in Kanban view
-        return {
-            'type': 'ir.actions.act_window',
-            'name': self.project_assign_id.name + ' - Tasks',
-            'res_model': 'project.task',
-            'view_mode': 'kanban,list,form',
-            'domain': [
-                ('project_id', '=', self.project_assign_id.id)
-            ],
-            'context': {
-                'default_project_id': self.project_assign_id.id,
-            },
-            'target': 'current',
-        }
 
 
 
 
     def create_sale_quotation(self):
 
-        sale_order=self.env['sale.order'].create({
-            'partner_id':self.partner_id.id,
-             'id':self.id,
+        project = self.project_assign_id
+        if project:
+            # Sale Order's Project field only allows billable projects.
+            project.allow_billable = True
+
+        sale_order = self.env['sale.order'].create({
+            'partner_id': self.partner_id.id,
+            'project_id': project.id if project else False,
 
         })
         return{

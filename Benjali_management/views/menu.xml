@@ -19,6 +19,12 @@
     <menuitem id="menu_project_dashboard_one" name="Dashboard" parent="benjali_project_root"
     action="action_benjali_management_dashboard" sequence="5"/>
 
+    <menuitem id="menu_business_project_kra" name="KRAs" parent="benjali_project_root"
+              action="business_project_kra_action" sequence="6"/>
+
+    <menuitem id="menu_business_project_kra_entries" name="KRA Entries"
+              parent="benjali_project_root" action="business_project_kra_entry_action" sequence="7"/>
+
 
 
 

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="project_project_view_kanban_department" model="ir.ui.view">
+        <field name="name">project.project.kanban.department</field>
+        <field name="model">project.project</field>
+        <field name="inherit_id" ref="project.project_view_kanban"/>
+        <field name="arch" type="xml">
+            <xpath expr="//t[@t-name='card']/div[@class='d-flex']/field[@name='partner_id']" position="after">
+                <field name="department_id" string="Department"/>
+            </xpath>
+        </field>
+    </record>
+    <menuitem id="project_dashboard_one" name="Dashboard"
+             parent="project.menu_main_pm" sequence="11" action="Benjali_management.action_benjali_management_dashboard"/>
+
+    <menuitem id="project_approval_menu_one" name="Project Approval"
+             parent="project.menu_main_pm" sequence="12" action="Benjali_management.business_project_approval_action"/>
+</odoo>

@@ -1,7 +1,10 @@
 .benjali_dashboard {
+    height: calc(100vh - 45px);
     min-height: calc(100vh - 45px);
+    max-height: calc(100vh - 45px);
     overflow-y: auto;
     overflow-x: hidden;
+    scrollbar-gutter: stable;
 
     padding: 28px 32px 50px;
 
@@ -1102,4 +1105,24 @@
         font-size: 22px;
     }
 
+}
+
+
+.teal .kpi_icon {
+    background:
+        linear-gradient(
+            135deg,
+            #0f766e,
+            #14b8a6
+        );
+}
+
+
+.modern_kpi.teal {
+    background:
+        linear-gradient(
+            135deg,
+            #ccfbf1,
+            #99f6e4
+        );
 }
