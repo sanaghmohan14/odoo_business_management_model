@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="email_template_business_project_details" model="mail.template">
+        <field name="name">Business Project Details</field>
+        <field name="model_id" ref="model_business_project"/>
+        <field name="subject">Project details: {{ object.name }} ({{ object.reference }})</field>
+        <field name="email_from">{{ user.email_formatted or user.email }}</field>
+        <field name="email_to">{{ object.partner_id.email }}</field>
+        <field name="auto_delete" eval="False"/>
+        <field name="body_html" type="html">
+            <div style="margin: 0; padding: 0; font-family: Arial, sans-serif; color: #263238;">
+                <p>Dear <t t-out="object.partner_id.name or 'Customer'"/>,</p>
+
+                <p>
+                    Please find below the latest details for your project
+                    <strong><t t-out="object.name"/></strong>.
+                </p>
+
+                <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                    <tr style="background-color: #17365d; color: #ffffff;">
+                        <td colspan="2" style="padding: 12px; font-size: 16px;">
+                            Project Summary
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #dddddd; width: 35%;"><strong>Project</strong></td>
+                        <td style="padding: 8px; border-bottom: 1px solid #dddddd;"><t t-out="object.name"/></td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #dddddd;"><strong>Reference</strong></td>
+                        <td style="padding: 8px; border-bottom: 1px solid #dddddd;"><t t-out="object.reference"/></td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #dddddd;"><strong>Current Stage</strong></td>
+                        <td style="padding: 8px; border-bottom: 1px solid #dddddd;"><t t-out="object.stage_id.name or 'Not set'"/></td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #dddddd;"><strong>Priority</strong></td>
+                        <td style="padding: 8px; border-bottom: 1px solid #dddddd;"><t t-out="dict(object._fields['priority'].selection).get(object.priority, 'Not set')"/></td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #dddddd;"><strong>Department</strong></td>
+                        <td style="padding: 8px; border-bottom: 1px solid #dddddd;"><t t-out="object.department_id.name or 'Not set'"/></td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #dddddd;"><strong>Project Manager</strong></td>
+                        <td style="padding: 8px; border-bottom: 1px solid #dddddd;"><t t-out="object.project_manager_id.name or 'Not assigned'"/></td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #dddddd;"><strong>Start Date</strong></td>
+                        <td style="padding: 8px; border-bottom: 1px solid #dddddd;"><t t-out="format_date(object.start_date) if object.start_date else 'Not set'"/></td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px;"><strong>Expected End Date</strong></td>
+                        <td style="padding: 8px;"><t t-out="format_date(object.expected_end_date) if object.expected_end_date else 'Not set'"/></td>
+                    </tr>
+                </table>
+
+                <t t-if="object.description">
+                    <h3 style="color: #17365d;">Project Description</h3>
+                    <p style="white-space: pre-line;"><t t-out="object.description"/></p>
+                </t>
+
+                <h3 style="color: #17365d;">Sales and Qualification</h3>
+                <p>
+                    <t t-if="object.opportunity_id"><strong>Opportunity:</strong> <t t-out="object.opportunity_id.name"/><br/></t>
+                    <t t-if="object.sale_order_id"><strong>Sales Order:</strong> <t t-out="object.sale_order_id.name"/><br/></t>
+                    <t t-if="object.sales_person_id"><strong>Sales Person:</strong> <t t-out="object.sales_person_id.name"/><br/></t>
+                    <strong>Qualification:</strong>
+                    <t t-out="dict(object._fields['qualification_status'].selection).get(object.qualification_status, 'Not checked')"/>
+                    <t t-if="object.qualification_notes"><br/><strong>Qualification Notes:</strong> <t t-out="object.qualification_notes"/></t>
+                </p>
+
+                <t t-if="object.kickoff_completed or object.kickoff_date or object.kickoff_notes">
+                    <h3 style="color: #17365d;">Kick-off</h3>
+                    <p>
+                        <strong>Status:</strong>
+                        <t t-out="'Completed' if object.kickoff_completed else 'Pending'"/><br/>
+                        <t t-if="object.kickoff_date"><strong>Date:</strong> <t t-out="format_datetime(object.kickoff_date)"/><br/></t>
+                        <t t-if="object.kickoff_notes"><strong>Notes:</strong> <t t-out="object.kickoff_notes"/></t>
+                    </p>
+                </t>
+
+                <t t-if="object.team_member_ids">
+                    <h3 style="color: #17365d;">Project Team</h3>
+                    <ul>
+                        <li t-foreach="object.team_member_ids" t-as="member">
+                            <t t-out="member.user_id.name"/> — <t t-out="dict(member._fields['role'].selection).get(member.role, member.role or '')"/>
+                        </li>
+                    </ul>
+                </t>
+
+                <t t-if="object.task_ids">
+                    <h3 style="color: #17365d;">Tasks</h3>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr style="background-color: #eaf0f7;">
+                            <th style="padding: 8px; text-align: left;">Task</th>
+                            <th style="padding: 8px; text-align: left;">Stage</th>
+                            <th style="padding: 8px; text-align: left;">Assignees</th>
+                        </tr>
+                        <tr t-foreach="object.task_ids" t-as="task">
+                            <td style="padding: 8px; border-bottom: 1px solid #eeeeee;"><t t-out="task.name"/></td>
+                            <td style="padding: 8px; border-bottom: 1px solid #eeeeee;"><t t-out="task.stage_id.name or 'Not set'"/></td>
+                            <td style="padding: 8px; border-bottom: 1px solid #eeeeee;"><t t-out="', '.join(task.user_ids.mapped('name')) or 'Unassigned'"/></td>
+                        </tr>
+                    </table>
+                </t>
+
+                <t t-if="object.kra_ids">
+                    <h3 style="color: #17365d;">Key Result Areas</h3>
+                    <ul>
+                        <li t-foreach="object.kra_ids" t-as="kra">
+                            <strong><t t-out="kra.name"/></strong>
+                            <t t-if="kra.objective"> — <t t-out="kra.objective"/></t>
+                            <t t-if="kra.state"> (<t t-out="dict(kra._fields['state'].selection).get(kra.state, kra.state)"/>)</t>
+                        </li>
+                    </ul>
+                </t>
+
+                <t t-if="object.activity_plan_ids">
+                    <h3 style="color: #17365d;">Activity Plan</h3>
+                    <ul>
+                        <li t-foreach="object.activity_plan_ids" t-as="activity">
+                            <strong><t t-out="activity.name"/></strong>
+                            — <t t-out="dict(activity._fields['state'].selection).get(activity.state, activity.state)"/>
+                            <t t-if="activity.planned_start"> (<t t-out="format_date(activity.planned_start)"/><t t-if="activity.planned_end"> to <t t-out="format_date(activity.planned_end)"/></t>)</t>
+                        </li>
+                    </ul>
+                </t>
+
+                <t t-if="object.data_collection_ids">
+                    <h3 style="color: #17365d;">Data Collection</h3>
+                    <ul>
+                        <li t-foreach="object.data_collection_ids" t-as="item">
+                            <strong><t t-out="item.name"/></strong>
+                            — <t t-out="dict(item._fields['state'].selection).get(item.state, item.state)"/>
+                            <t t-if="item.source"> (Source: <t t-out="item.source"/>)</t>
+                        </li>
+                    </ul>
+                </t>
+
+                <t t-if="object.communication_notes">
+                    <h3 style="color: #17365d;">Communication Notes</h3>
+                    <p style="white-space: pre-line;"><t t-out="object.communication_notes"/></p>
+                </t>
+
+                <p style="margin-top: 24px;">Please contact us if you have any questions or need further information.</p>
+                <p>Kind regards,<br/><strong><t t-out="user.name"/></strong><br/><t t-out="object.company_id.name"/></p>
+            </div>
+        </field>
+    </record>
+</odoo>

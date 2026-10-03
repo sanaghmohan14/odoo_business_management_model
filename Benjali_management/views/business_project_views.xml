@@ -297,6 +297,12 @@
                                 <field name="communication_group_name"/>
                                 <field name="communication_created"/>
                                 <field name="communication_notes"/>
+                                <button name="action_send_email"
+                                        string="Send Email"
+                                        type="object"
+                                        class="btn-primary"
+                                        icon="fa-envelope"
+                                        invisible="communication_channel != 'email'"/>
                             </group>
                         </page>
 

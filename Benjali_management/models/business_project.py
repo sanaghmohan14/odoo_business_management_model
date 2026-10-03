@@ -874,4 +874,42 @@ class BusinessProject(models.Model):
             )
 
 
+    def action_send_email(self):
+        self.ensure_one()
+
+        if self.communication_channel != 'email':
+            raise UserError(
+                'Please select Email as the communication channel before '
+                'sending the project details.'
+            )
+
+        if not self.partner_id.email:
+            raise UserError(
+                'The project customer does not have an email address. '
+                'Please add one before sending the project details.'
+            )
+
+        template = self.env.ref(
+            'Benjali_management.email_template_business_project_details',
+            raise_if_not_found=False
+        )
+        if not template:
+            raise UserError('The project details email template is not configured.')
+
+        template.with_context(
+            lang=self.partner_id.lang or self.env.user.lang
+        ).send_mail(self.id, force_send=True)
+
+        self.message_post(
+            body=(
+                'Project details email sent to '
+                f'<b>{self.partner_id.email}</b>.'
+            ),
+            message_type='comment',
+            subtype_xmlid='mail.mt_note',
+        )
+
+        return True
+
+
 

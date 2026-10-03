@@ -23,6 +23,7 @@
         "data/approval_sequence.xml",
         "data/sequence_data.xml",
         "data/stage_data.xml",
+        "data/mail_template.xml",
         "wizard/report_wizard.xml",
         "report/report_view.xml",
         "report/business_report.xml",
