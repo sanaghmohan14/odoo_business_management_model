@@ -18,6 +18,11 @@ class CrmLead(models.Model):
         readonly=True
     )
 
+    business_project_count = fields.Integer(
+        string='Business Projects',
+        compute='_compute_business_project_count'
+    )
+
     project_task_id = fields.Many2one(
         'project.task',
         string='Project Task',
@@ -29,6 +34,32 @@ class CrmLead(models.Model):
         'Assign Project',
         readonly=True,
     )
+
+    @api.depends('partner_id')
+    def _compute_business_project_count(self):
+        BusinessProject = self.env['business.project']
+        for lead in self:
+            lead.business_project_count = (
+                BusinessProject.search_count([
+                    ('partner_id', '=', lead.partner_id.id),
+                ]) if lead.partner_id else 0
+            )
+
+    def action_view_business_projects(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Business Projects',
+            'res_model': 'business.project',
+            'view_mode': 'kanban,list,form',
+            'domain': [
+                ('partner_id', '=', self.partner_id.id),
+            ] if self.partner_id else [('id', '=', False)],
+            'context': {
+                'default_partner_id': self.partner_id.id,
+                'default_opportunity_id': self.id,
+            },
+        }
 
 
 
