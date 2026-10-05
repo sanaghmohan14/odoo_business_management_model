@@ -9,5 +9,6 @@
         <field name="report_file">Benjali_management.business_one</field>
         <field name="binding_model_id" ref="model_business_project"/>
         <field name="binding_type">report</field>
+        <field name="binding_view_types">form,kanban</field>
     </record>
 </odoo>

@@ -1,90 +1,92 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-    <!--    Report Template-->
     <template id="business_one">
         <t t-call="web.html_container">
-
-            <h2>Business Report</h2>
             <t t-foreach="docs" t-as="o">
                 <t t-call="web.external_layout">
                     <div class="page">
-                        <div class="oe_structure"/>
-                        <h2>Business Report</h2>
-                        <br></br>
+                        <h2>Business Project Details</h2>
 
+                        <table class="table table-sm table-bordered">
+                            <tbody>
+                                <tr>
+                                    <th>Project Name</th>
+                                    <td><span t-field="o.name"/></td>
+                                    <th>Reference</th>
+                                    <td><span t-field="o.reference"/></td>
+                                </tr>
+                                <tr>
+                                    <th>Client</th>
+                                    <td><span t-field="o.partner_id"/></td>
+                                    <th>Department</th>
+                                    <td><span t-field="o.department_id"/></td>
+                                </tr>
+                                <tr>
+                                    <th>Current Stage</th>
+                                    <td><span t-field="o.stage_id"/></td>
+                                    <th>Phase</th>
+                                    <td><span t-field="o.phase"/></td>
+                                </tr>
+                                <tr>
+                                    <th>Project Manager</th>
+                                    <td><span t-field="o.project_manager_id"/></td>
+                                    <th>Responsible User</th>
+                                    <td><span t-field="o.responsible_user_id"/></td>
+                                </tr>
+                                <tr>
+                                    <th>Start Date</th>
+                                    <td><span t-field="o.start_date"/></td>
+                                    <th>Expected End Date</th>
+                                    <td><span t-field="o.expected_end_date"/></td>
+                                </tr>
+                                <tr>
+                                    <th>Actual End Date</th>
+                                    <td><span t-field="o.actual_end_date"/></td>
+                                    <th>Priority</th>
+                                    <td><span t-field="o.priority"/></td>
+                                </tr>
+                            </tbody>
+                        </table>
 
-<!--                        <p>-->
-<!--                            <t t-if="docs.start_date" >-->
-<!--                            <strong>Start Date :</strong>-->
-<!--                            <span t-esc="docs.start_date"/>-->
-<!--                            </t>-->
+                        <h3>Description</h3>
+                        <div t-if="o.description" t-field="o.description"/>
+                        <p t-if="not o.description">No description provided.</p>
 
-<!--                        </p>-->
+                        <h3>KRAs</h3>
+                        <table class="table table-sm table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>KRA</th>
+                                    <th>Responsible User</th>
+                                    <th>KPI</th>
+                                    <th>Target</th>
+                                    <th>Unit</th>
+                                    <th>Weightage</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="o.kra_ids" t-as="kra">
+                                    <td><span t-field="kra.name"/></td>
+                                    <td><span t-field="kra.responsible_user_id"/></td>
+                                    <td><span t-field="kra.kpi"/></td>
+                                    <td><span t-field="kra.target"/></td>
+                                    <td><span t-field="kra.unit"/></td>
+                                    <td><span t-field="kra.weightage"/></td>
+                                    <td><span t-field="kra.state"/></td>
+                                </tr>
+                                <tr t-if="not o.kra_ids">
+                                    <td colspan="7">No KRAs configured.</td>
+                                </tr>
+                            </tbody>
+                        </table>
 
-<!--                        <p>-->
-<!--                            <t t-if="docs.end_date">-->
-<!--                            <strong>End Date : </strong>-->
-<!--                            <span t-esc="docs.end_date"/>-->
-<!--                            </t>-->
-<!--                        </p>-->
-                        <p>
-                            <!--                             Name :-->
-                            <!--                            <h5 t-field="o.partner_id.name"/>-->
-                            <!--                            <br></br>-->
-                            <!--                            Advisor Name:-->
-                            <!--                            <h5 t-field="o.advisor_id.name"/>-->
-                            <!--                            <br></br>-->
-                            <p>
-                                <table style="height: 100px; width: 850px;">
-                                    <thead style="font-weight:bold">
-                                        <tr>
-                                            <tr style="font-weight:bold">
-                                                <th>CLIENT</th>
-                                                <th>DEPARTMENT</th>
-                                                <th>PROJECT MANAGER</th>
-                                                <th>START DATE</th>
-                                                <th>END DATE</th>
-                                            </tr>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <t t-foreach="records" t-as="rec">
-                                            <tr style="text-align:center;">
-                                                <td>
-                                                    <span t-esc="rec['partner_id.name']"/>
-                                                </td>
-                                                <td>
-                                                    <span t-esc="rec['separtment_id.name']"/>
-                                                </td>
-                                                <td>
-                                                    <span t-esc="rec['project_manager_id.name']"/>
-                                                </td>
-                                                <!--                                        <td><span t-esc="rec['vechicle_model']"/></td>-->
-                                                <td>
-                                                    <span t-esc="rec['start_date']"/>
-                                                </td>
-                                                <td>
-                                                    <span t-esc="rec['expected_end_date']"/>
-                                                </td>
-                                            </tr>
-                                        </t>
-                                    </tbody>
-
-
-                                </table>
-
-                            </p>
-
-                            <br></br>
-
-
-                        </p>
-
+                        <h3>Internal Notes</h3>
+                        <div t-if="o.notes" t-field="o.notes"/>
+                        <p t-if="not o.notes">No internal notes provided.</p>
                     </div>
-
                 </t>
             </t>
         </t>
-
     </template>
 </odoo>

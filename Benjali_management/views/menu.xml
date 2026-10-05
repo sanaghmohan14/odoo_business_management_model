@@ -11,7 +11,7 @@
               parent="benjali_project_root" action="action_project_stage_one" sequence="4" ></menuitem>
 
     <menuitem id="menu_project_approval_action_one" name="Project Approval" parent="benjali_project_root"
-    action="business_project_approval_action" sequence="3"/>
+    action="business_project_approval_action" sequence="3" groups="Benjali_management.group_ceo"/>
 
      <menuitem id="menu_project_department_one" name="Departments" parent="benjali_project_root"
     action="action_business_departments" sequence="1"/>
