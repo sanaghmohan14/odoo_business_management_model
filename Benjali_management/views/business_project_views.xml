@@ -284,7 +284,6 @@
                                     <field name="kpi"/>
                                     <field name="target"/>
                                     <field name="unit"/>
-                                    <field name="weightage"/>
                                     <field name="frequency"/>
                                     <field name="measurement"/>
                                     <field name="state"/>

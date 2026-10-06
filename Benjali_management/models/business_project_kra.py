@@ -30,7 +30,6 @@ class BusinessProjectKRA(models.Model):
     target = fields.Float(string='Target', required=True, default=0.0)
     unit = fields.Char(string='Unit')
     measurement = fields.Char(string='Measurement')
-    weightage = fields.Float(string='Weightage (%)', default=0.0)
     frequency = fields.Selection([
         ('daily', 'Daily'), ('weekly', 'Weekly'), ('monthly', 'Monthly'),
     ], string='Frequency', default='daily', required=True)
@@ -48,32 +47,28 @@ class BusinessProjectKRA(models.Model):
                                  related='project_id.company_id', store=True,
                                  readonly=True, index=True)
     entry_ids = fields.One2many('business.project.kra.entry', 'kra_id',
-                                string='Daily Entries', copy=False)
+                                string='KRA Entries', copy=False)
     entry_count = fields.Integer(compute='_compute_entry_count', string='Entries')
-    achievement_percentage = fields.Float(compute='_compute_performance',
-                                          string='Achievement (%)', store=True)
-    weighted_performance = fields.Float(compute='_compute_performance',
-                                        string='Weighted Performance (%)', store=True)
+    achievement = fields.Float(compute='_compute_performance', string='Achievement',
+                               store=True)
+    progress_percentage = fields.Float(compute='_compute_performance',
+                                       string='Progress (%)', store=True)
 
     @api.depends('entry_ids')
     def _compute_entry_count(self):
         for kra in self:
             kra.entry_count = len(kra.entry_ids)
 
-    @api.depends('entry_ids.achievement', 'entry_ids.achievement_percentage',
-                 'target', 'weightage')
+    @api.depends('entry_ids.achievement', 'target')
     def _compute_performance(self):
         for kra in self:
-            percentages = kra.entry_ids.mapped('achievement_percentage')
-            average = sum(percentages) / len(percentages) if percentages else 0.0
-            kra.achievement_percentage = average
-            kra.weighted_performance = average * kra.weightage / 100.0
+            kra.achievement = sum(kra.entry_ids.mapped('achievement'))
+            percentage = kra.achievement / kra.target * 100 if kra.target else 0.0
+            kra.progress_percentage = min(max(percentage, 0.0), 100.0)
 
-    @api.constrains('weightage', 'target', 'start_date', 'end_date')
+    @api.constrains('target', 'start_date', 'end_date')
     def _check_kra_values(self):
         for kra in self:
-            if not 0 <= kra.weightage <= 100:
-                raise ValidationError('KRA weightage must be between 0 and 100.')
             if kra.target < 0:
                 raise ValidationError('KRA target cannot be negative.')
             if kra.end_date and kra.start_date and kra.end_date < kra.start_date:
@@ -130,10 +125,10 @@ class BusinessProjectKRAEntry(models.Model):
                               index=True)
     target = fields.Float(related='kra_id.target', readonly=True)
     achievement = fields.Float(string='Achievement', required=True, default=0.0)
-    achievement_percentage = fields.Float(string='Achievement (%)',
-                                          compute='_compute_percentage', store=True)
-    weighted_performance = fields.Float(string='Weighted Performance (%)',
-                                        compute='_compute_percentage', store=True)
+    frequency = fields.Selection(related='kra_id.frequency', store=True,
+                                 string='Frequency', readonly=True, index=True)
+    progress_percentage = fields.Float(string='Progress (%)',
+                                       compute='_compute_percentage', store=True)
     unit = fields.Char(related='kra_id.unit', readonly=True)
     notes = fields.Text(string='Notes')
     state = fields.Selection([
@@ -151,12 +146,11 @@ class BusinessProjectKRAEntry(models.Model):
             entry.week_start = date - timedelta(days=date.weekday()) if date else False
             entry.month_start = date.replace(day=1) if date else False
 
-    @api.depends('achievement', 'target', 'kra_id.weightage')
+    @api.depends('achievement', 'target')
     def _compute_percentage(self):
         for entry in self:
             percentage = entry.achievement / entry.target * 100 if entry.target else 0.0
-            entry.achievement_percentage = max(0.0, percentage)
-            entry.weighted_performance = min(percentage, 100.0) * entry.kra_id.weightage / 100.0
+            entry.progress_percentage = min(max(percentage, 0.0), 100.0)
 
     @api.constrains('achievement')
     def _check_achievement(self):

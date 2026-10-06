@@ -61,7 +61,8 @@
                                     <th>KPI</th>
                                     <th>Target</th>
                                     <th>Unit</th>
-                                    <th>Weightage</th>
+                                    <th>Achievement</th>
+                                    <th>Progress</th>
                                     <th>Status</th>
                                 </tr>
                             </thead>
@@ -70,13 +71,14 @@
                                     <td><span t-field="kra.name"/></td>
                                     <td><span t-field="kra.responsible_user_id"/></td>
                                     <td><span t-field="kra.kpi"/></td>
-                                    <td><span t-field="kra.target"/></td>
-                                    <td><span t-field="kra.unit"/></td>
-                                    <td><span t-field="kra.weightage"/></td>
-                                    <td><span t-field="kra.state"/></td>
+                                     <td><span t-field="kra.target"/></td>
+                                     <td><span t-field="kra.unit"/></td>
+                                     <td><span t-field="kra.achievement"/></td>
+                                     <td><span t-field="kra.progress_percentage"/>%</td>
+                                     <td><span t-field="kra.state"/></td>
                                 </tr>
                                 <tr t-if="not o.kra_ids">
-                                    <td colspan="7">No KRAs configured.</td>
+                                    <td colspan="8">No KRAs configured.</td>
                                 </tr>
                             </tbody>
                         </table>

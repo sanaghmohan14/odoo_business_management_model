@@ -212,11 +212,8 @@ class BenjaliManagementDashboard(models.AbstractModel):
 
         kra_records = KRA.search(kra_domain)
         kra_average_performance = (
-            sum(kra_records.mapped('achievement_percentage')) / len(kra_records)
+            sum(kra_records.mapped('progress_percentage')) / len(kra_records)
             if kra_records else 0.0
-        )
-        kra_weighted_performance = sum(
-            kra_records.mapped('weighted_performance')
         )
         kra_entries = self.env['business.project.kra.entry']
         total_kra_entries = kra_entries.search_count([
@@ -478,7 +475,6 @@ class BenjaliManagementDashboard(models.AbstractModel):
                 'projects_with_kra': projects_with_kra,
                 'entries': total_kra_entries,
                 'average_performance': kra_average_performance,
-                'weighted_performance': kra_weighted_performance,
             },
 
             'activities': {
