@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="business_consulting_deliverable_action" model="ir.actions.act_window">
+        <field name="name">Consulting Deliverables</field>
+        <field name="res_model">business.consulting.deliverable</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <record id="business_project_deliverable_action" model="ir.actions.act_window">
+        <field name="name">Project Deliverables</field>
+        <field name="res_model">business.consulting.deliverable.project</field>
+        <field name="view_mode">list,kanban,form</field>
+    </record>
+    <record id="business_project_sop_action" model="ir.actions.act_window">
+        <field name="name">SOPs</field>
+        <field name="res_model">business.project.sop</field>
+        <field name="view_mode">kanban,list,form</field>
+    </record>
+    <record id="business_project_sop_checklist_action" model="ir.actions.act_window">
+        <field name="name">SOP Checklists</field>
+        <field name="res_model">business.project.sop.checklist</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <record id="business_project_sop_compliance_action" model="ir.actions.act_window">
+        <field name="name">SOP Compliance</field>
+        <field name="res_model">business.project.sop.compliance</field>
+        <field name="view_mode">list,kanban,form</field>
+    </record>
+    <record id="business_project_sop_document_action" model="ir.actions.act_window">
+        <field name="name">SOP Formats and Documents</field>
+        <field name="res_model">business.project.sop.document</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <record id="business_project_monitoring_action" model="ir.actions.act_window">
+        <field name="name">Implementation Monitoring</field>
+        <field name="res_model">business.project.monitoring</field>
+        <field name="view_mode">list,kanban,form</field>
+    </record>
+    <record id="business_project_gap_action" model="ir.actions.act_window">
+        <field name="name">Gaps and Corrective Actions</field>
+        <field name="res_model">business.project.gap</field>
+        <field name="view_mode">list,kanban,form</field>
+    </record>
+
+    <record id="business_consulting_deliverable_list" model="ir.ui.view">
+        <field name="name">business.consulting.deliverable.list</field>
+        <field name="model">business.consulting.deliverable</field>
+        <field name="arch" type="xml"><list><field name="name"/><field name="department_id"/><field name="deliverable_type"/><field name="active"/></list></field>
+    </record>
+    <record id="business_consulting_deliverable_form" model="ir.ui.view">
+        <field name="name">business.consulting.deliverable.form</field>
+        <field name="model">business.consulting.deliverable</field>
+        <field name="arch" type="xml"><form><sheet><group><field name="name"/><field name="department_id"/><field name="deliverable_type"/><field name="sequence"/><field name="active"/></group><field name="description"/></sheet></form></field>
+    </record>
+
+    <record id="business_project_deliverable_list" model="ir.ui.view">
+        <field name="name">business.project.deliverable.list</field>
+        <field name="model">business.consulting.deliverable.project</field>
+        <field name="arch" type="xml"><list><field name="name"/><field name="project_id"/><field name="department_id"/><field name="deliverable_type"/><field name="responsible_user_id"/><field name="due_date"/><field name="state"/></list></field>
+    </record>
+    <record id="business_project_deliverable_form" model="ir.ui.view">
+        <field name="name">business.project.deliverable.form</field>
+        <field name="model">business.consulting.deliverable.project</field>
+        <field name="arch" type="xml"><form><sheet><group><field name="name"/><field name="project_id"/><field name="department_id"/><field name="deliverable_type"/><field name="responsible_user_id"/><field name="due_date"/><field name="state"/></group><field name="description"/></sheet></form></field>
+    </record>
+
+    <record id="business_project_sop_list" model="ir.ui.view">
+        <field name="name">business.project.sop.list</field>
+        <field name="model">business.project.sop</field>
+        <field name="arch" type="xml"><list><field name="name"/><field name="project_id"/><field name="department_id"/><field name="sop_type"/><field name="owner_id"/><field name="version"/><field name="state"/><field name="checklist_count"/><field name="compliance_count"/></list></field>
+    </record>
+    <record id="business_project_sop_kanban" model="ir.ui.view">
+        <field name="name">business.project.sop.kanban</field>
+        <field name="model">business.project.sop</field>
+        <field name="arch" type="xml"><kanban default_group_by="sop_type"><field name="name"/><field name="project_id"/><field name="department_id"/><field name="sop_type"/><field name="state"/><templates><t t-name="card"><div class="oe_kanban_global_click"><strong><field name="name"/></strong><div class="text-muted"><field name="project_id"/> · <field name="department_id"/></div><div class="mt-2"><field name="sop_type"/> · Version <field name="version"/></div><field name="state" widget="label_selection"/><div class="text-muted mt-1">Checklists: <field name="checklist_count"/> | Compliance checks: <field name="compliance_count"/></div></div></t></templates></kanban></field>
+    </record>
+    <record id="business_project_sop_form" model="ir.ui.view">
+        <field name="name">business.project.sop.form</field>
+        <field name="model">business.project.sop</field>
+        <field name="arch" type="xml"><form><header><button name="action_activate" string="Activate" type="object" class="btn-primary" invisible="state != 'draft'"/><button name="action_submit_review" string="Submit for Review" type="object" invisible="state != 'active'"/><button name="action_approve" string="Approve" type="object" class="btn-primary" invisible="state != 'review'"/><field name="state" widget="statusbar" statusbar_visible="draft,active,review,approved,obsolete"/></header><sheet><div class="oe_title"><h1><field name="name"/></h1></div><group><group><field name="project_id"/><field name="department_id"/><field name="sop_type"/><field name="owner_id"/></group><group><field name="version"/><field name="checklist_count"/><field name="compliance_count"/></group></group><group><field name="objective"/><field name="scope"/></group><notebook><page string="Checklists"><field name="checklist_ids"><list editable="bottom"><field name="name"/><field name="frequency"/><field name="responsible_user_id"/><field name="is_required"/><field name="active"/></list></field></page><page string="Formats and Documents"><field name="document_ids"><list editable="bottom"><field name="name"/><field name="document_type"/><field name="required"/><field name="attachment" filename="attachment_filename"/></list></field></page><page string="Compliance"><field name="compliance_ids"><list editable="bottom"><field name="checklist_id"/><field name="check_date"/><field name="employee_id"/><field name="status"/><field name="evidence"/></list></field></page></notebook></sheet></form></field>
+    </record>
+
+    <record id="business_project_sop_checklist_list" model="ir.ui.view"><field name="name">business.project.sop.checklist.list</field><field name="model">business.project.sop.checklist</field><field name="arch" type="xml"><list><field name="name"/><field name="sop_id"/><field name="frequency"/><field name="responsible_user_id"/><field name="is_required"/><field name="active"/></list></field></record>
+    <record id="business_project_sop_document_list" model="ir.ui.view"><field name="name">business.project.sop.document.list</field><field name="model">business.project.sop.document</field><field name="arch" type="xml"><list><field name="name"/><field name="sop_id"/><field name="document_type"/><field name="required"/><field name="attachment" filename="attachment_filename"/></list></field></record>
+    <record id="business_project_sop_compliance_list" model="ir.ui.view"><field name="name">business.project.sop.compliance.list</field><field name="model">business.project.sop.compliance</field><field name="arch" type="xml"><list><field name="check_date"/><field name="sop_id"/><field name="checklist_id"/><field name="frequency"/><field name="employee_id"/><field name="status"/><field name="project_id"/></list></field></record>
+    <record id="business_project_monitoring_list" model="ir.ui.view"><field name="name">business.project.monitoring.list</field><field name="model">business.project.monitoring</field><field name="arch" type="xml"><list><field name="monitoring_date"/><field name="project_id"/><field name="coordinator_id"/><field name="employee_id"/><field name="frequency"/><field name="status"/><field name="name"/></list></field></record>
+    <record id="business_project_monitoring_form" model="ir.ui.view"><field name="name">business.project.monitoring.form</field><field name="model">business.project.monitoring</field><field name="arch" type="xml"><form><sheet><group><field name="name"/><field name="project_id"/><field name="coordinator_id"/><field name="employee_id"/><field name="monitoring_date"/><field name="frequency"/><field name="status"/></group><field name="findings"/><field name="client_report"/><field name="gap_ids"><list editable="bottom"><field name="name"/><field name="severity"/><field name="employee_id"/><field name="due_date"/><field name="state"/></list></field></sheet></form></field></record>
+    <record id="business_project_gap_list" model="ir.ui.view"><field name="name">business.project.gap.list</field><field name="model">business.project.gap</field><field name="arch" type="xml"><list><field name="name"/><field name="project_id"/><field name="department_id"/><field name="employee_id"/><field name="severity"/><field name="due_date"/><field name="state"/></list></field></record>
+    <record id="business_project_gap_form" model="ir.ui.view"><field name="name">business.project.gap.form</field><field name="model">business.project.gap</field><field name="arch" type="xml"><form><sheet><group><field name="name"/><field name="project_id"/><field name="department_id"/><field name="employee_id"/><field name="severity"/><field name="state"/><field name="due_date"/></group><field name="description"/><field name="corrective_action"/><group><field name="monitoring_id"/><field name="compliance_id"/></group></sheet></form></field></record>
+
+    <record id="business_project_form_sop_extension" model="ir.ui.view">
+        <field name="name">business.project.form.sop.extension</field>
+        <field name="model">business.project</field>
+        <field name="inherit_id" ref="Benjali_management.project_form_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='partner_id']" position="after"><field name="client_implementation_coordinator_id"/></xpath>
+            <xpath expr="//notebook" position="inside">
+                <page string="Deliverables and SOPs"><field name="consulting_deliverable_ids"><list editable="bottom"><field name="name"/><field name="department_id"/><field name="deliverable_type"/><field name="responsible_user_id"/><field name="due_date"/><field name="state"/></list></field><field name="sop_ids"><list editable="bottom"><field name="name"/><field name="department_id"/><field name="sop_type"/><field name="owner_id"/><field name="state"/></list></field></page>
+                <page string="Implementation Monitoring"><field name="monitoring_ids"><list editable="bottom"><field name="monitoring_date"/><field name="employee_id"/><field name="frequency"/><field name="status"/><field name="name"/></list></field><field name="gap_ids"><list editable="bottom"><field name="name"/><field name="severity"/><field name="employee_id"/><field name="due_date"/><field name="state"/></list></field></page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

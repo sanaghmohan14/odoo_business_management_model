@@ -37,6 +37,7 @@
         "views/sale_order_views.xml",
         "views/business_project_approval_views.xml",
         "views/business_project_views.xml",
+        "views/business_project_sop_views.xml",
         "views/project_stage_views.xml",
         "views/menu.xml"
     ],

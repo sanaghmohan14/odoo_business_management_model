@@ -259,6 +259,28 @@ class BusinessProject(models.Model):
         string='Data Collection'
     )
 
+    consulting_deliverable_ids = fields.One2many(
+        'business.consulting.deliverable.project', 'project_id',
+        string='Consulting Deliverables'
+    )
+
+    sop_ids = fields.One2many(
+        'business.project.sop', 'project_id', string='SOPs'
+    )
+
+    monitoring_ids = fields.One2many(
+        'business.project.monitoring', 'project_id', string='Implementation Monitoring'
+    )
+
+    gap_ids = fields.One2many(
+        'business.project.gap', 'project_id', string='Gaps and Corrective Actions'
+    )
+
+    client_implementation_coordinator_id = fields.Many2one(
+        'res.partner', string='Client Implementation Coordinator',
+        tracking=True, ondelete='set null'
+    )
+
 
 
     task_ids = fields.One2many(

@@ -17,6 +17,33 @@ Benjali_management.access_business_wizard_one,access_business_wizard_one,Benjali
 
 
 
+Benjali_management.access_business_consulting_deliverable,access_business_consulting_deliverable,Benjali_management.model_business_consulting_deliverable,base.group_user,1,1,1,1
+Benjali_management.access_business_consulting_deliverable_project,access_business_consulting_deliverable_project,Benjali_management.model_business_consulting_deliverable_project,base.group_user,1,1,1,1
+
+Benjali_management.access_business_project_sop,access_business_project_sop,Benjali_management.model_business_project_sop,base.group_user,1,1,1,1
+
+Benjali_management.access_business_project_sop_checklist,access_business_project_sop_checklist,Benjali_management.model_business_project_sop_checklist,base.group_user,1,1,1,1
+
+Benjali_management.access_business_project_sop_document,access_business_project_sop_document,Benjali_management.model_business_project_sop_document,base.group_user,1,1,1,1
+
+Benjali_management.access_business_project_monitoring,access_business_project_monitoring,Benjali_management.model_business_project_monitoring,base.group_user,1,1,1,1
+
+Benjali_management.access_business_project_gap,access_business_project_gap,Benjali_management.model_business_project_gap,base.group_user,1,1,1,1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

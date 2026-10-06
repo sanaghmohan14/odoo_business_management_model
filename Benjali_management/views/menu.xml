@@ -19,12 +19,48 @@
     <menuitem id="menu_project_dashboard_one" name="Dashboard" parent="benjali_project_root"
     action="action_benjali_management_dashboard" sequence="5" groups="Benjali_management.group_ceo"/>
 
-    <menuitem id="menu_business_project_kra" name="KRAs" parent="benjali_project_root"
+
+    <menuitem id="menu_business_project_kra_one" name="KRA" parent="benjali_project_root"
+               sequence="6"/>
+
+    <menuitem id="menu_business_project_kra" name="KRAs" parent="menu_business_project_kra_one"
               action="business_project_kra_action" sequence="6"/>
 
     <menuitem id="menu_business_project_kra_entries" name="KRA Entries"
-              parent="benjali_project_root" action="business_project_kra_entry_action" sequence="7"/>
+              parent="menu_business_project_kra_one" action="business_project_kra_entry_action" sequence="7"/>
 
+
+
+    <menuitem id="menu_business_implementation" name="Implementation and SOP"
+              parent="benjali_project_root" sequence="7"/>
+
+    <menuitem id="menu_business_project_deliverables" name="Project Deliverables"
+              parent="menu_business_implementation" action="business_project_deliverable_action" sequence="1"/>
+
+    <menuitem id="menu_business_project_sops" name="SOPs"
+              parent="menu_business_implementation" action="business_project_sop_action" sequence="2"/>
+
+    <menuitem id="menu_business_sop_checklists" name="SOP Checklists"
+              parent="menu_business_implementation" action="business_project_sop_checklist_action" sequence="3"/>
+
+    <menuitem id="menu_business_sop_compliance" name="SOP Compliance"
+              parent="menu_business_implementation" action="business_project_sop_compliance_action" sequence="4"/>
+
+    <menuitem id="menu_business_implementation_monitoring" name="Implementation Monitoring"
+              parent="menu_business_implementation" action="business_project_monitoring_action" sequence="5"/>
+
+    <menuitem id="menu_business_project_gaps" name="Gaps and Corrective Actions"
+              parent="menu_business_implementation" action="business_project_gap_action" sequence="6"/>
+
+
+    <menuitem id="menu_business_implementation_configuration" name="Configuration"
+              parent="menu_business_implementation" sequence="10"/>
+
+    <menuitem id="menu_business_consulting_deliverables" name="Deliverable Templates"
+              parent="menu_business_implementation_configuration" action="business_consulting_deliverable_action" sequence="1"/>
+
+    <menuitem id="menu_business_sop_documents" name="Formats and Documents"
+              parent="menu_business_implementation_configuration" action="business_project_sop_document_action" sequence="2"/>
 
 
 
