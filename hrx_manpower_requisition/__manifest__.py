@@ -1,0 +1,20 @@
+{
+    'name': 'Manpower Requisition',
+    'version': '19.0.1.0.0',
+    'summary': 'Department manpower requests with HR review and management approval',
+    'category': 'Human Resources/Recruitment',
+    'depends': ['hr', 'hr_recruitment', 'mail'],
+    'data': [
+        'security/security.xml',
+        'security/ir.model.access.csv',
+        'data/sequence.xml',
+        'views/hr_job_views.xml',
+        'views/hr_applicant_views.xml',
+        'views/manpower_requisition_views.xml',
+        'wizard/reject_wizard_views.xml',
+        'views/menus.xml',
+    ],
+    'application': True,
+    'installable': True,
+    'license': 'LGPL-3',
+}

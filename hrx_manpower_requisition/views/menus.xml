@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_mpr_root" name="Manpower" sequence="45"
+              groups="hrx_manpower_requisition.group_mpr_dept_head,hrx_manpower_requisition.group_mpr_hr_exec,hrx_manpower_requisition.group_mpr_management"/>
+
+    <menuitem id="menu_mpr_my" name="My Requests" parent="menu_mpr_root"
+              action="action_mpr_my" sequence="10"
+              groups="hrx_manpower_requisition.group_mpr_dept_head"/>
+
+    <menuitem id="menu_mpr_all" name="All Requests" parent="menu_mpr_root"
+              action="action_mpr_all" sequence="20"
+              groups="hrx_manpower_requisition.group_mpr_hr_exec,hrx_manpower_requisition.group_mpr_management"/>
+
+    <menuitem id="menu_mpr_pending" name="Pending Approval" parent="menu_mpr_root"
+              action="action_mpr_pending" sequence="30"
+              groups="hrx_manpower_requisition.group_mpr_management"/>
+</odoo>

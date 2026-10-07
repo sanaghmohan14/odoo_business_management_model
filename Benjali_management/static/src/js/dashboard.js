@@ -85,27 +85,16 @@ export class BenjaliDashboard extends Component {
 
     async onDepartmentChange(event) {
 
-        const selectedValue = event.target.value;
+        const selectedValue = event.currentTarget.value;
 
-        if (!selectedValue) {
-
-            this.state.departmentId = false;
-
-        } else {
-
-            this.state.departmentId =
-                parseInt(selectedValue, 10);
-        }
+        this.state.departmentId = selectedValue
+            ? Number(selectedValue)
+            : false;
 
         console.log(
             "Selected Department ID:",
             this.state.departmentId
         );
-
-        // Clear old dashboard data first
-        // so old values are not displayed
-        // while the new values are loading.
-        this.state.data = null;
 
         await this.loadDashboardData();
     }

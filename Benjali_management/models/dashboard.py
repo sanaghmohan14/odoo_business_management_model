@@ -7,6 +7,14 @@ class BenjaliManagementDashboard(models.AbstractModel):
 
     def get_dashboard_data(self, department_id=False):
 
+        # The dashboard calls this method from JavaScript. Normalize the
+        # value before building domains so the selected department is always
+        # treated as an integer record ID.
+        try:
+            department_id = int(department_id) if department_id else False
+        except (TypeError, ValueError):
+            department_id = False
+
         Project = self.env['business.project']
         Stage = self.env['business.project.stage']
         Department = self.env['hr.department']
@@ -185,6 +193,16 @@ class BenjaliManagementDashboard(models.AbstractModel):
                 'name': department.name,
                 'count': department_count,
             })
+
+        # Keep every department available in the filter even when the
+        # department summary itself is limited to the selected department.
+        department_options = [
+            {
+                'id': department.id,
+                'name': department.name,
+            }
+            for department in Department.search([], order='name')
+        ]
 
         # KRA
 
@@ -422,28 +440,6 @@ class BenjaliManagementDashboard(models.AbstractModel):
         )
 
 
-        departments = self.env['hr.department'].search(
-            [],
-            order='name'
-        )
-
-        department_data = []
-
-        for department in departments:
-            department_project_domain = [
-                ('department_id', '=', department.id)
-            ]
-
-            department_project_count = Project.search_count(
-                department_project_domain
-            )
-
-            department_data.append({
-                'id': department.id,
-                'name': department.name,
-                'count': department_project_count,
-            })
-
         # RETURN DATA
 
 
@@ -451,6 +447,7 @@ class BenjaliManagementDashboard(models.AbstractModel):
 
             'selected_department': department_id or False,
             'departments': department_data,
+            'department_options': department_options,
 
             'projects': {
                 'total': total_projects,

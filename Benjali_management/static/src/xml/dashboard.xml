@@ -41,19 +41,24 @@
     <select
         t-if="state.data"
         t-on-change="onDepartmentChange"
-        t-att-value="state.departmentId || ''"
     >
 
-        <option value="">
+        <option
+            value=""
+            t-att-selected="!state.departmentId"
+        >
             All Departments
         </option>
 
         <t
-            t-foreach="state.data.departments"
+            t-foreach="state.data.department_options"
             t-as="department"
             t-key="department.id"
         >
-            <option t-att-value="department.id">
+            <option
+                t-att-value="department.id"
+                t-att-selected="state.departmentId === department.id"
+            >
                 <t t-esc="department.name"/>
             </option>
         </t>

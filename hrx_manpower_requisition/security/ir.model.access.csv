@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_mpr_dept_head,manpower.requisition dept head,model_manpower_requisition,group_mpr_dept_head,1,1,1,1
+access_mpr_hr_exec,manpower.requisition hr exec,model_manpower_requisition,group_mpr_hr_exec,1,1,1,0
+access_mpr_hr_manager,manpower.requisition hr manager,model_manpower_requisition,group_mpr_hr_manager,1,1,1,1
+access_mpr_management,manpower.requisition management,model_manpower_requisition,group_mpr_management,1,1,0,0

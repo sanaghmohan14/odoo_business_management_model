@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="hr_job_form_inherit_hrx_requisition" model="ir.ui.view">
+        <field name="name">hr.job.form.inherit.hrx.requisition</field>
+        <field name="model">hr.job</field>
+        <field name="inherit_id" ref="hr.view_hr_job_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group string="Manpower Requisitions"
+                       groups="hrx_manpower_requisition.group_mpr_hr_exec,hrx_manpower_requisition.group_mpr_management">
+                    <field name="hrx_requisition_ids" nolabel="1" colspan="2">
+                        <list>
+                            <field name="name"/>
+                            <field name="request_date"/>
+                            <field name="department_id"/>
+                            <field name="vacancies"/>
+                            <field name="state"/>
+                        </list>
+                    </field>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>
