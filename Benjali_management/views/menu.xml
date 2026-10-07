@@ -31,7 +31,7 @@
 
 
 
-    <menuitem id="menu_business_implementation" name="Implementation and SOP"
+    <menuitem id="menu_business_implementation" name="SOP"
               parent="benjali_project_root" sequence="7"/>
 
     <menuitem id="menu_business_project_deliverables" name="Project Deliverables"
