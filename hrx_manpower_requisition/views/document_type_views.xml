@@ -21,11 +21,4 @@
         <field name="view_mode">list</field>
     </record>
 
-    <menuitem id="menu_hrx_emp_doc_type"
-              name="Document Types"
-              parent="hr.menu_human_resources_configuration"
-              action="action_hrx_emp_doc_type"
-              sequence="90"
-              groups="hr.group_hr_manager"/>
-
 </odoo>

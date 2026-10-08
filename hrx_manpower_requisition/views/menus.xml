@@ -14,4 +14,41 @@
     <menuitem id="menu_mpr_pending" name="Pending Approval" parent="menu_mpr_root"
               action="action_mpr_pending" sequence="30"
               groups="hrx_manpower_requisition.group_mpr_management"/>
+
+
+     <menuitem id="menu_hrx_event" name="Lifecycle Events"
+              parent="hr.menu_hr_root" action="action_hrx_event"
+              sequence="25" groups="hrx_manpower_requisition.group_mpr_hr_exec,hrx_manpower_requisition.group_mpr_management"/>
+
+    <menuitem id="menu_hrx_emp_doc_type"
+              name="Document Types"
+              parent="hr.menu_human_resources_configuration"
+              action="action_hrx_emp_doc_type"
+              sequence="90"
+              groups="hrx_manpower_requisition.group_mpr_hr_exec,hrx_manpower_requisition.group_mpr_management"/>
+
+
+       <menuitem id="menu_hrx_attreq_root" name="Attendance Requests" sequence="47"
+              groups="hrx_manpower_requisition.group_mpr_hr_exec,hrx_manpower_requisition.group_mpr_management" parent="hr_attendance.menu_hr_attendance_root"/>
+
+    <menuitem id="menu_hrx_attreq_my" name="My Requests" parent="menu_hrx_attreq_root"
+              action="action_hrx_attreq_my" sequence="10" groups="base.group_user"/>
+
+    <menuitem id="menu_hrx_attreq_approve" name="To Approve" parent="menu_hrx_attreq_root"
+              action="action_hrx_attreq_approve" sequence="20" groups="hrx_manpower_requisition.group_mpr_hr_exec,hrx_manpower_requisition.group_mpr_management"/>
+    <menuitem id="menu_hrx_attreq_all" name="All Requests" parent="menu_hrx_attreq_root"
+              action="action_hrx_attreq_all" sequence="30" groups="hrx_manpower_requisition.group_mpr_hr_exec,hrx_manpower_requisition.group_mpr_management"/>
+
+     <!-- ============ Menus (parent defined in attendance_request_views.xml) ============ -->
+    <menuitem id="menu_hrx_attmonth" name="Monthly Attendance"
+              parent="menu_hrx_attreq_root" action="action_hrx_attmonth"
+              sequence="40" groups="hrx_manpower_requisition.group_mpr_hr_exec,hrx_manpower_requisition.group_mpr_management"/>
+    <menuitem id="menu_hrx_attline" name="Department-wise Summary"
+              parent="menu_hrx_attreq_root" action="action_hrx_attline"
+              sequence="50" groups="hrx_manpower_requisition.group_mpr_hr_exec,hrx_manpower_requisition.group_mpr_management"/>
+    <menuitem id="menu_hrx_attexc" name="Irregularities"
+              parent="menu_hrx_attreq_root" action="action_hrx_attexc"
+              sequence="60" groups="hrx_manpower_requisition.group_mpr_hr_exec,hrx_manpower_requisition.group_mpr_management"/>
+
+
 </odoo>

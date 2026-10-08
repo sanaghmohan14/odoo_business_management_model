@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ============ Monthly attendance ============ -->
+    <record id="view_hrx_attmonth_form" model="ir.ui.view">
+        <field name="name">hrx.attendance.month.form</field>
+        <field name="model">hrx.attendance.month</field>
+        <field name="arch" type="xml">
+            <form string="Monthly Attendance">
+                <header>
+                    <button name="action_compute" string="Compute" type="object"
+                            class="btn-primary" invisible="state == 'finalized'"/>
+                    <button name="action_finalize" string="Finalize Month" type="object"
+                            class="btn-primary" invisible="state != 'computed'"
+                            groups="hr.group_hr_manager"
+                            confirm="Finalizing locks the month for payroll. Continue?"/>
+                    <button name="action_reopen" string="Reopen" type="object"
+                            invisible="state != 'finalized'" groups="hr.group_hr_manager"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="date_from" readonly="state != 'draft'"/>
+                            <field name="date_to"/>
+                            <field name="company_id" groups="base.group_multi_company"
+                                   readonly="state != 'draft'"/>
+                        </group>
+                        <group string="Rules">
+                            <field name="grace_late" readonly="state == 'finalized'"/>
+                            <field name="grace_early" readonly="state == 'finalized'"/>
+                            <field name="late_limit" readonly="state == 'finalized'"/>
+                            <field name="absence_limit" readonly="state == 'finalized'"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group>
+                            <field name="line_count"/>
+                            <field name="irregular_count"/>
+                        </group>
+                        <group>
+                            <field name="computed_date"/>
+                            <field name="finalized_by" invisible="state != 'finalized'"/>
+                            <field name="finalized_date" invisible="state != 'finalized'"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Employees" name="lines">
+                            <field name="line_ids" readonly="state == 'finalized'">
+                                <list editable="bottom" create="false" delete="false"
+                                      decoration-danger="is_irregular">
+                                    <field name="is_irregular" column_invisible="1"/>
+                                    <field name="employee_id"/>
+                                    <field name="department_id" optional="show"/>
+                                    <field name="working_days"/>
+                                    <field name="present_days"/>
+                                    <field name="wfh_days"/>
+                                    <field name="leave_days"/>
+                                    <field name="lop_leave_days" optional="show"/>
+                                    <field name="absent_days"/>
+                                    <field name="late_count"/>
+                                    <field name="early_count"/>
+                                    <field name="no_checkout_count" optional="hide"/>
+                                    <field name="extra_days" optional="hide"/>
+                                    <field name="permission_hours" widget="float_time" optional="hide"/>
+                                    <field name="worked_hours" widget="float_time" optional="hide"/>
+                                    <field name="lop_adjustment"/>
+                                    <field name="lop_total"/>
+                                    <field name="remarks"/>
+                                    <field name="irregularity_summary" optional="hide"/>
+                                    <button name="action_view_exceptions" type="object"
+                                            icon="fa-list" title="View irregularities"
+                                            invisible="not is_irregular and not late_count and not early_count"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Irregularities" name="exceptions">
+                            <field name="exception_ids" readonly="1">
+                                <list>
+                                    <field name="date"/>
+                                    <field name="employee_id"/>
+                                    <field name="department_id"/>
+                                    <field name="type"/>
+                                    <field name="minutes"/>
+                                    <field name="note"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_hrx_attmonth_list" model="ir.ui.view">
+        <field name="name">hrx.attendance.month.list</field>
+        <field name="model">hrx.attendance.month</field>
+        <field name="arch" type="xml">
+            <list string="Monthly Attendance">
+                <field name="name"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="line_count"/>
+                <field name="irregular_count"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'computed'"
+                       decoration-success="state == 'finalized'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_hrx_attmonth" model="ir.actions.act_window">
+        <field name="name">Monthly Attendance</field>
+        <field name="res_model">hrx.attendance.month</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- ============ Department / employee summary ============ -->
+    <record id="view_hrx_attline_list" model="ir.ui.view">
+        <field name="name">hrx.attendance.month.line.list</field>
+        <field name="model">hrx.attendance.month.line</field>
+        <field name="arch" type="xml">
+            <list string="Attendance Summary" decoration-danger="is_irregular">
+                <field name="is_irregular" column_invisible="1"/>
+                <field name="month_id"/>
+                <field name="employee_id"/>
+                <field name="department_id"/>
+                <field name="working_days"/>
+                <field name="present_days"/>
+                <field name="wfh_days"/>
+                <field name="leave_days"/>
+                <field name="absent_days"/>
+                <field name="late_count"/>
+                <field name="early_count"/>
+                <field name="lop_total"/>
+                <field name="irregularity_summary"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_hrx_attline_pivot" model="ir.ui.view">
+        <field name="name">hrx.attendance.month.line.pivot</field>
+        <field name="model">hrx.attendance.month.line</field>
+        <field name="arch" type="xml">
+            <pivot string="Department-wise Attendance">
+                <field name="department_id" type="row"/>
+                <field name="month_id" type="col"/>
+                <field name="present_days" type="measure"/>
+                <field name="wfh_days" type="measure"/>
+                <field name="leave_days" type="measure"/>
+                <field name="absent_days" type="measure"/>
+                <field name="late_count" type="measure"/>
+                <field name="lop_total" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_hrx_attline_search" model="ir.ui.view">
+        <field name="name">hrx.attendance.month.line.search</field>
+        <field name="model">hrx.attendance.month.line</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="employee_id"/>
+                <field name="department_id"/>
+                <field name="month_id"/>
+                <filter name="irregular" string="Irregular" domain="[('is_irregular', '=', True)]"/>
+                <filter name="absent" string="Absent Without Approval" domain="[('absent_days', '>', 0)]"/>
+                <filter name="late" string="Late Coming" domain="[('late_count', '>', 0)]"/>
+                <filter name="wfh" string="WFH" domain="[('wfh_days', '>', 0)]"/>
+                <group>
+                    <filter name="g_month" string="Month" context="{'group_by': 'month_id'}"/>
+                    <filter name="g_dept" string="Department" context="{'group_by': 'department_id'}"/>
+                    <filter name="g_emp" string="Employee" context="{'group_by': 'employee_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_hrx_attline" model="ir.actions.act_window">
+        <field name="name">Department-wise Summary</field>
+        <field name="res_model">hrx.attendance.month.line</field>
+        <field name="view_mode">pivot,list</field>
+    </record>
+
+    <!-- ============ Irregularities ============ -->
+    <record id="view_hrx_attexc_list" model="ir.ui.view">
+        <field name="name">hrx.attendance.exception.list</field>
+        <field name="model">hrx.attendance.exception</field>
+        <field name="arch" type="xml">
+            <list string="Irregularities">
+                <field name="date"/>
+                <field name="employee_id"/>
+                <field name="department_id"/>
+                <field name="type"/>
+                <field name="minutes" sum="Minutes"/>
+                <field name="note"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_hrx_attexc_pivot" model="ir.ui.view">
+        <field name="name">hrx.attendance.exception.pivot</field>
+        <field name="model">hrx.attendance.exception</field>
+        <field name="arch" type="xml">
+            <pivot string="Irregularities">
+                <field name="department_id" type="row"/>
+                <field name="type" type="col"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_hrx_attexc_search" model="ir.ui.view">
+        <field name="name">hrx.attendance.exception.search</field>
+        <field name="model">hrx.attendance.exception</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="employee_id"/>
+                <field name="department_id"/>
+                <filter name="t_late" string="Late" domain="[('type', '=', 'late')]"/>
+                <filter name="t_early" string="Early Leaving" domain="[('type', '=', 'early')]"/>
+                <filter name="t_absent" string="Absent" domain="[('type', '=', 'absent')]"/>
+                <filter name="t_nco" string="Missing Check-out" domain="[('type', '=', 'no_checkout')]"/>
+                <filter name="t_extra" string="Worked on Off Days" domain="[('type', '=', 'extra')]"/>
+                <group>
+                    <filter name="g_type" string="Type" context="{'group_by': 'type'}"/>
+                    <filter name="g_dept" string="Department" context="{'group_by': 'department_id'}"/>
+                    <filter name="g_emp" string="Employee" context="{'group_by': 'employee_id'}"/>
+                    <filter name="g_month" string="Month" context="{'group_by': 'date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_hrx_attexc" model="ir.actions.act_window">
+        <field name="name">Irregularities</field>
+        <field name="res_model">hrx.attendance.exception</field>
+        <field name="view_mode">list,pivot</field>
+    </record>
+
+
+</odoo>

@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_hrx_attreq_form" model="ir.ui.view">
+        <field name="name">hrx.attendance.request.form</field>
+        <field name="model">hrx.attendance.request</field>
+        <field name="arch" type="xml">
+            <form string="Attendance Request">
+                <header>
+                    <button name="action_submit" string="Submit" type="object" class="btn-primary"
+                            invisible="state != 'draft' or not is_mine"/>
+                    <button name="action_approve" string="Approve" type="object" class="btn-primary"
+                            invisible="not can_approve"/>
+                    <button name="action_reject" string="Reject" type="object"
+                            invisible="not can_approve"/>
+                    <button name="action_cancel" string="Cancel" type="object"
+                            invisible="state not in ('draft', 'submitted') or not is_mine"/>
+                    <button name="action_reset_draft" string="Reset to Draft" type="object"
+                            invisible="state not in ('rejected', 'cancelled') or not is_mine"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,submitted,approved"/>
+                </header>
+                <sheet>
+                    <field name="can_approve" invisible="1"/>
+                    <field name="is_mine" invisible="1"/>
+                    <group>
+                        <group>
+                            <field name="request_type" readonly="state != 'draft'"/>
+                            <field name="employee_id" groups="hr.group_hr_user"
+                                   options="{'no_create': True}" readonly="state != 'draft'"/>
+                            <field name="employee_id" groups="!hr.group_hr_user"
+                                   readonly="1" force_save="1" options="{'no_open': True}"/>
+                            <field name="department_id"/>
+                        </group>
+                        <group>
+                            <!-- Correction -->
+                            <field name="check_in" invisible="request_type != 'correction'"
+                                   required="request_type == 'correction'"
+                                   readonly="state != 'draft'"/>
+                            <field name="check_out" invisible="request_type != 'correction'"
+                                   required="request_type == 'correction'"
+                                   readonly="state != 'draft'"/>
+                            <field name="attendance_id" invisible="request_type != 'correction'"
+                                   groups="hr.group_hr_user"
+                                   domain="[('employee_id', '=', employee_id)]"
+                                   options="{'no_create': True}"/>
+                            <!-- Dates -->
+                            <field name="date_from"
+                                   readonly="request_type == 'correction' or state != 'draft'"/>
+                            <field name="date_to" invisible="request_type != 'wfh'"
+                                   readonly="state != 'draft'"/>
+                            <!-- Permission -->
+                            <field name="hour_from" widget="float_time"
+                                   invisible="request_type != 'permission'"
+                                   readonly="state != 'draft'"/>
+                            <field name="hour_to" widget="float_time"
+                                   invisible="request_type != 'permission'"
+                                   readonly="state != 'draft'"/>
+                            <field name="days" invisible="request_type != 'wfh'"/>
+                            <field name="hours" widget="float_time"
+                                   invisible="request_type != 'permission'"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="reason" readonly="state != 'draft'"/>
+                    </group>
+                    <group string="Decision" invisible="state == 'draft'">
+                        <field name="decision_note" readonly="not can_approve"
+                               placeholder="Required when rejecting"/>
+                        <field name="approved_by"/>
+                        <field name="approval_date"/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_hrx_attreq_list" model="ir.ui.view">
+        <field name="name">hrx.attendance.request.list</field>
+        <field name="model">hrx.attendance.request</field>
+        <field name="arch" type="xml">
+            <list string="Attendance Requests" decoration-muted="state == 'cancelled'">
+                <field name="date_from"/>
+                <field name="employee_id"/>
+                <field name="department_id"/>
+                <field name="request_type"/>
+                <field name="days" sum="Days"/>
+                <field name="hours" widget="float_time" sum="Hours"/>
+                <field name="reason"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'submitted'"
+                       decoration-success="state == 'approved'"
+                       decoration-danger="state == 'rejected'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_hrx_attreq_pivot" model="ir.ui.view">
+        <field name="name">hrx.attendance.request.pivot</field>
+        <field name="model">hrx.attendance.request</field>
+        <field name="arch" type="xml">
+            <pivot string="Attendance Requests">
+                <field name="department_id" type="row"/>
+                <field name="request_type" type="col"/>
+                <field name="days" type="measure"/>
+                <field name="hours" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_hrx_attreq_search" model="ir.ui.view">
+        <field name="name">hrx.attendance.request.search</field>
+        <field name="model">hrx.attendance.request</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="employee_id"/>
+                <field name="department_id"/>
+                <filter name="my" string="My Requests" domain="[('employee_user_id', '=', uid)]"/>
+                <separator/>
+                <filter name="t_corr" string="Corrections" domain="[('request_type', '=', 'correction')]"/>
+                <filter name="t_wfh" string="Work From Home" domain="[('request_type', '=', 'wfh')]"/>
+                <filter name="t_perm" string="Permission" domain="[('request_type', '=', 'permission')]"/>
+                <separator/>
+                <filter name="s_submitted" string="Pending Approval" domain="[('state', '=', 'submitted')]"/>
+                <filter name="s_approved" string="Approved" domain="[('state', '=', 'approved')]"/>
+                <filter name="s_rejected" string="Rejected" domain="[('state', '=', 'rejected')]"/>
+                <group>
+                    <filter name="g_emp" string="Employee" context="{'group_by': 'employee_id'}"/>
+                    <filter name="g_dept" string="Department" context="{'group_by': 'department_id'}"/>
+                    <filter name="g_type" string="Type" context="{'group_by': 'request_type'}"/>
+                    <filter name="g_month" string="Month" context="{'group_by': 'date_from:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_hrx_attreq_my" model="ir.actions.act_window">
+        <field name="name">My Requests</field>
+        <field name="res_model">hrx.attendance.request</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('employee_user_id', '=', uid)]</field>
+    </record>
+
+    <record id="action_hrx_attreq_approve" model="ir.actions.act_window">
+        <field name="name">To Approve</field>
+        <field name="res_model">hrx.attendance.request</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('state', '=', 'submitted'), ('employee_user_id', '!=', uid)]</field>
+    </record>
+
+    <record id="action_hrx_attreq_all" model="ir.actions.act_window">
+        <field name="name">All Requests</field>
+        <field name="res_model">hrx.attendance.request</field>
+        <field name="view_mode">list,pivot,form</field>
+    </record>
+
+
+
+
+</odoo>

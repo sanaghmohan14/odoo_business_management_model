@@ -75,6 +75,7 @@ class ManpowerRequisition(models.Model):
     experience_min = fields.Float('Min Experience (years)')
     experience_max = fields.Float('Max Experience (years)')
     qualification = fields.Text('Required Qualification')
+    skills = fields.Text('Skills')
     currency_id = fields.Many2one(
         'res.currency', default=lambda s: s.env.company.currency_id)
     salary_min = fields.Monetary('Salary Range (From)', currency_field='currency_id')

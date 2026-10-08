@@ -1,10 +1,18 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+
 access_mpr_dept_head,manpower.requisition dept head,model_manpower_requisition,group_mpr_dept_head,1,1,1,1
 access_mpr_hr_exec,manpower.requisition hr exec,model_manpower_requisition,group_mpr_hr_exec,1,1,1,0
 access_mpr_hr_manager,manpower.requisition hr manager,model_manpower_requisition,group_mpr_hr_manager,1,1,1,1
 access_mpr_management,manpower.requisition management,model_manpower_requisition,group_mpr_management,1,1,0,0
-access_hrx_emp_doc_type_user,hrx.emp.doc.type user,model_hrx_emp_doc_type,hr.group_hr_user,1,0,0,0
-access_hrx_emp_doc_type_manager,hrx.emp.doc.type manager,model_hrx_emp_doc_type,hr.group_hr_manager,1,1,1,1
-access_hrx_emp_doc_user,hrx.emp.doc user,model_hrx_emp_doc,hr.group_hr_user,1,1,1,1
-access_hrx_event_user,hrx.employee.event user,model_hrx_employee_event,hr.group_hr_user,1,1,1,1
-access_hrx_event_manager,hrx.employee.event manager,model_hrx_employee_event,hr.group_hr_manager,1,1,1,1
+access_hrx_emp_doc_type_user,hrx.emp.doc.type user,model_hrx_emp_doc_type,group_mpr_hr_exec,1,0,0,0
+access_hrx_emp_doc_type_manager,hrx.emp.doc.type manager,model_hrx_emp_doc_type,group_mpr_hr_exec,1,1,1,1
+access_hrx_emp_doc_user,hrx.emp.doc user,model_hrx_emp_doc,group_mpr_hr_exec,1,1,1,1
+access_hrx_event_user,hrx.employee.event user,model_hrx_employee_event,group_mpr_hr_exec,1,1,1,1
+access_hrx_event_manager,hrx.employee.event manager,model_hrx_employee_event,group_mpr_hr_exec,1,1,1,1
+
+access_hrx_attreq_user,hrx.attendance.request user,model_hrx_attendance_request,base.group_user,1,1,1,1
+
+access_hrx_attmonth_hr,hrx.attendance.month hr,model_hrx_attendance_month,group_mpr_hr_exec,1,1,1,0
+access_hrx_attmonth_mgr,hrx.attendance.month manager,model_hrx_attendance_month,group_mpr_hr_exec,1,1,1,1
+access_hrx_attline_hr,hrx.attendance.month.line hr,model_hrx_attendance_month_line,group_mpr_hr_exec,1,1,0,0
+access_hrx_attexc_hr,hrx.attendance.exception hr,model_hrx_attendance_exception,group_mpr_hr_exec,1,0,0,0

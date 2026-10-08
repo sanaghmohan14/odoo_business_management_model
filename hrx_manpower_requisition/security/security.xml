@@ -73,5 +73,41 @@
             <field name="model_id" ref="model_hrx_employee_event"/>
             <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
         </record>
+                <record id="rule_hrx_attreq_company" model="ir.rule">
+            <field name="name">Attendance Request: multi-company</field>
+            <field name="model_id" ref="model_hrx_attendance_request"/>
+            <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+        </record>
+
+        <record id="rule_hrx_attreq_user" model="ir.rule">
+            <field name="name">Attendance Request: own, or team I approve</field>
+            <field name="model_id" ref="model_hrx_attendance_request"/>
+            <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+            <field name="domain_force">['|', '|', ('employee_user_id', '=', user.id), ('manager_user_id', '=', user.id), ('head_user_id', '=', user.id)]</field>
+        </record>
+
+        <record id="rule_hrx_attreq_hr" model="ir.rule">
+            <field name="name">Attendance Request: HR sees all</field>
+            <field name="model_id" ref="model_hrx_attendance_request"/>
+            <field name="groups" eval="[(4, ref('hr.group_hr_user'))]"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+        </record>
+
+                <record id="rule_hrx_attmonth_company" model="ir.rule">
+            <field name="name">Attendance Month: multi-company</field>
+            <field name="model_id" ref="model_hrx_attendance_month"/>
+            <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+        </record>
+        <record id="rule_hrx_attmonth_line_company" model="ir.rule">
+            <field name="name">Attendance Month Line: multi-company</field>
+            <field name="model_id" ref="model_hrx_attendance_month_line"/>
+            <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+        </record>
+        <record id="rule_hrx_attexc_company" model="ir.rule">
+            <field name="name">Attendance Exception: multi-company</field>
+            <field name="model_id" ref="model_hrx_attendance_exception"/>
+            <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+        </record>
+
     </data>
 </odoo>

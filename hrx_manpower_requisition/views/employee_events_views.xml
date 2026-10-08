@@ -114,7 +114,5 @@
         <field name="view_mode">list,form</field>
     </record>
 
-    <menuitem id="menu_hrx_event" name="Lifecycle Events"
-              parent="hr.menu_hr_root" action="action_hrx_event"
-              sequence="25" groups="hr.group_hr_user"/>
+
 </odoo>
