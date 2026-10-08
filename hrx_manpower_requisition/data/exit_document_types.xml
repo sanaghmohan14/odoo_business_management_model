@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="dt_exit_resignation" model="hrx.emp.doc.type">
+        <field name="name">Resignation Letter</field>
+        <field name="category">exit</field>
+        <field name="required" eval="True"/>
+        <field name="auto_add" eval="False"/>
+        <field name="sequence">10</field>
+    </record>
+    <record id="dt_exit_acceptance" model="hrx.emp.doc.type">
+        <field name="name">Acceptance of Resignation</field>
+        <field name="category">exit</field>
+        <field name="required" eval="True"/>
+        <field name="auto_add" eval="False"/>
+        <field name="sequence">20</field>
+    </record>
+    <record id="dt_exit_nodues" model="hrx.emp.doc.type">
+        <field name="name">No-Dues Clearance</field>
+        <field name="category">exit</field>
+        <field name="required" eval="True"/>
+        <field name="auto_add" eval="False"/>
+        <field name="sequence">30</field>
+    </record>
+    <record id="dt_exit_fnf" model="hrx.emp.doc.type">
+        <field name="name">Full and Final Settlement</field>
+        <field name="category">exit</field>
+        <field name="required" eval="True"/>
+        <field name="auto_add" eval="False"/>
+        <field name="sequence">40</field>
+    </record>
+    <record id="dt_exit_relieving" model="hrx.emp.doc.type">
+        <field name="name">Relieving Letter</field>
+        <field name="category">exit</field>
+        <field name="required" eval="True"/>
+        <field name="auto_add" eval="False"/>
+        <field name="sequence">50</field>
+    </record>
+    <record id="dt_exit_experience" model="hrx.emp.doc.type">
+        <field name="name">Experience Letter</field>
+        <field name="category">exit</field>
+        <field name="required" eval="False"/>
+        <field name="auto_add" eval="False"/>
+        <field name="sequence">60</field>
+    </record>
+</odoo>

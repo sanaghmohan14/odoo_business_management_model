@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_employee_form_inherit_hrx" model="ir.ui.view">
+        <field name="name">hr.employee.form.inherit.hrx</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+
+            <!-- Events smart button -->
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_hrx_view_events" type="object" class="oe_stat_button"
+                        icon="fa-history" groups="hr.group_hr_user">
+                    <field name="hrx_event_count" widget="statinfo" string="Events"/>
+                </button>
+            </xpath>
+
+            <xpath expr="//notebook" position="inside">
+                <!-- HR Details page -->
+                <page string="HR Details" name="hrx_details" groups="hr.group_hr_user">
+                    <group>
+                        <group string="Pre-Joining">
+                            <field name="hrx_offer_accepted_date"/>
+                            <field name="hrx_joining_date"/>
+                            <field name="hrx_joining_confirmed"/>
+                        </group>
+                        <group string="Identity">
+                            <field name="hrx_aadhaar_no" placeholder="12 digits"/>
+                            <field name="hrx_pan_no" placeholder="ABCDE1234F"/>
+                        </group>
+                    </group>
+                    <group string="Salary" groups="hr.group_hr_manager">
+                        <field name="hrx_currency_id" invisible="1"/>
+                        <field name="hrx_salary"/>
+                    </group>
+
+                    <separator string="Joining Documents"/>
+                    <div class="d-flex align-items-center gap-3 mb-2">
+                        <field name="hrx_docs_summary" nolabel="1" class="fw-bold"/>
+                        <button name="action_hrx_add_documents" type="object"
+                                string="Add Missing Documents" class="btn btn-secondary"/>
+                    </div>
+                    <field name="hrx_document_ids" context="{'default_category': 'joining'}">
+                        <list editable="bottom">
+                            <field name="type_id" options="{'no_create': True}"
+                                   domain="[('category', '=', 'joining')]"/>
+                            <field name="is_required" widget="boolean" readonly="1"/>
+                            <field name="file" filename="file_name"/>
+                            <field name="file_name" column_invisible="1"/>
+                            <field name="state" widget="badge" readonly="1"
+                                   decoration-info="state == 'received'"
+                                   decoration-success="state == 'verified'"
+                                   decoration-danger="state == 'rejected'"/>
+                            <field name="remarks"/>
+                            <button name="action_verify" type="object" icon="fa-check"
+                                    title="Verify" invisible="state == 'verified' or not file"/>
+                            <button name="action_reject" type="object" icon="fa-times"
+                                    title="Reject" invisible="state == 'rejected' or not file"/>
+                        </list>
+                    </field>
+
+                    <separator string="Exit Documents"/>
+                    <div class="d-flex align-items-center gap-3 mb-2">
+                        <field name="hrx_exit_docs_summary" nolabel="1" class="fw-bold"/>
+                        <button name="action_hrx_add_exit_documents" type="object"
+                                string="Add Exit Documents" class="btn btn-secondary"/>
+                    </div>
+                    <field name="hrx_exit_document_ids">
+                        <list editable="bottom">
+                            <field name="type_id" options="{'no_create': True}"
+                                   domain="[('category', '=', 'exit')]"/>
+                            <field name="is_required" widget="boolean" readonly="1"/>
+                            <field name="file" filename="file_name"/>
+                            <field name="file_name" column_invisible="1"/>
+                            <field name="state" widget="badge" readonly="1"
+                                   decoration-info="state == 'received'"
+                                   decoration-success="state == 'verified'"
+                                   decoration-danger="state == 'rejected'"/>
+                            <field name="remarks"/>
+                            <button name="action_verify" type="object" icon="fa-check"
+                                    title="Verify" invisible="state == 'verified' or not file"/>
+                            <button name="action_reject" type="object" icon="fa-times"
+                                    title="Reject" invisible="state == 'rejected' or not file"/>
+                        </list>
+                    </field>
+
+                    <separator string="Other HR Notes"/>
+                    <field name="hrx_notes" placeholder="Any other HR details..."/>
+                </page>
+
+                <!-- Lifecycle page -->
+                <page string="Lifecycle" name="hrx_lifecycle" groups="hr.group_hr_user">
+                    <group string="Probation and Confirmation">
+                        <group>
+                            <field name="hrx_probation_state"/>
+                            <field name="hrx_probation_start"/>
+                        </group>
+                        <group>
+                            <field name="hrx_probation_end"/>
+                            <field name="hrx_confirmation_date"/>
+                        </group>
+                    </group>
+                    <separator string="History"/>
+                    <field name="hrx_event_ids" context="{'default_employee_id': id}">
+                        <list>
+                            <field name="date"/>
+                            <field name="event_type"/>
+                            <field name="reason"/>
+                            <field name="state" widget="badge"
+                                   decoration-info="state == 'draft'"
+                                   decoration-success="state == 'approved'"/>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

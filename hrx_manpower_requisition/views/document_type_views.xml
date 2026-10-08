@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_hrx_emp_doc_type_list" model="ir.ui.view">
+        <field name="name">hrx.emp.doc.type.list</field>
+        <field name="model">hrx.emp.doc.type</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="category"/>
+                <field name="required"/>
+                <field name="auto_add"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_hrx_emp_doc_type" model="ir.actions.act_window">
+        <field name="name">Document Types</field>
+        <field name="res_model">hrx.emp.doc.type</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <menuitem id="menu_hrx_emp_doc_type"
+              name="Document Types"
+              parent="hr.menu_human_resources_configuration"
+              action="action_hrx_emp_doc_type"
+              sequence="90"
+              groups="hr.group_hr_manager"/>
+
+</odoo>

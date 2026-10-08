@@ -3,3 +3,8 @@ access_mpr_dept_head,manpower.requisition dept head,model_manpower_requisition,g
 access_mpr_hr_exec,manpower.requisition hr exec,model_manpower_requisition,group_mpr_hr_exec,1,1,1,0
 access_mpr_hr_manager,manpower.requisition hr manager,model_manpower_requisition,group_mpr_hr_manager,1,1,1,1
 access_mpr_management,manpower.requisition management,model_manpower_requisition,group_mpr_management,1,1,0,0
+access_hrx_emp_doc_type_user,hrx.emp.doc.type user,model_hrx_emp_doc_type,hr.group_hr_user,1,0,0,0
+access_hrx_emp_doc_type_manager,hrx.emp.doc.type manager,model_hrx_emp_doc_type,hr.group_hr_manager,1,1,1,1
+access_hrx_emp_doc_user,hrx.emp.doc user,model_hrx_emp_doc,hr.group_hr_user,1,1,1,1
+access_hrx_event_user,hrx.employee.event user,model_hrx_employee_event,hr.group_hr_user,1,1,1,1
+access_hrx_event_manager,hrx.employee.event manager,model_hrx_employee_event,hr.group_hr_manager,1,1,1,1

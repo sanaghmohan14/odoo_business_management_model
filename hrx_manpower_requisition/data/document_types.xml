@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo >
+    <record id="dt_id_proof" model="hrx.emp.doc.type">
+        <field name="name">Aadhaar / ID Proof</field>
+        <field name="required" eval="True"/>
+        <field name="sequence">10</field>
+    </record>
+    <record id="dt_pan" model="hrx.emp.doc.type">
+        <field name="name">PAN</field>
+        <field name="required" eval="True"/>
+        <field name="sequence">20</field>
+    </record>
+    <record id="dt_education" model="hrx.emp.doc.type">
+        <field name="name">Educational Certificates</field>
+        <field name="required" eval="True"/>
+        <field name="sequence">30</field>
+    </record>
+    <record id="dt_experience" model="hrx.emp.doc.type">
+        <field name="name">Experience Certificates</field>
+        <field name="required" eval="False"/>
+        <field name="sequence">40</field>
+    </record>
+    <record id="dt_bank" model="hrx.emp.doc.type">
+        <field name="name">Bank Details</field>
+        <field name="required" eval="True"/>
+        <field name="sequence">50</field>
+    </record>
+    <record id="dt_address" model="hrx.emp.doc.type">
+        <field name="name">Address Proof</field>
+        <field name="required" eval="True"/>
+        <field name="sequence">60</field>
+    </record>
+    <record id="dt_photo" model="hrx.emp.doc.type">
+        <field name="name">Passport-size Photo</field>
+        <field name="required" eval="True"/>
+        <field name="sequence">70</field>
+    </record>
+    <record id="dt_other" model="hrx.emp.doc.type">
+        <field name="name">Other Company-required Documents</field>
+        <field name="required" eval="False"/>
+        <field name="auto_add" eval="False"/>
+        <field name="sequence">80</field>
+    </record>
+</odoo>

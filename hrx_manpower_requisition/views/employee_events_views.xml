@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_hrx_event_form" model="ir.ui.view">
+        <field name="name">hrx.employee.event.form</field>
+        <field name="model">hrx.employee.event</field>
+        <field name="arch" type="xml">
+            <form string="Lifecycle Event">
+                <header>
+                    <button name="action_approve" string="Approve and Apply" type="object"
+                            class="btn-primary" invisible="state != 'draft'"
+                            groups="hr.group_hr_manager"/>
+                    <button name="action_cancel" string="Cancel" type="object"
+                            invisible="state != 'draft'"/>
+                    <button name="action_reset_draft" string="Reset to Draft" type="object"
+                            invisible="state != 'cancelled'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,approved"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="employee_id" options="{'no_create': True}"
+                                   readonly="state != 'draft'"/>
+                            <field name="event_type" readonly="state != 'draft'"/>
+                            <field name="date" readonly="state != 'draft'"/>
+                            <field name="date_to" invisible="event_type != 'probation_start'"
+                                   required="event_type == 'probation_start'"
+                                   readonly="state != 'draft'"/>
+                        </group>
+                        <group>
+                            <field name="reason" readonly="state != 'draft'"/>
+                            <field name="approved_by"/>
+                            <field name="approval_date"/>
+                        </group>
+                    </group>
+                    <group string="Change Requested"
+                           invisible="event_type not in ('promotion', 'role_change', 'transfer', 'increment', 'salary_revision')">
+                        <group>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="new_job_id" options="{'no_create': True}"
+                                   invisible="event_type not in ('promotion', 'role_change')"
+                                   readonly="state != 'draft'"/>
+                            <field name="new_department_id" options="{'no_create': True}"
+                                   invisible="event_type != 'transfer'"
+                                   readonly="state != 'draft'"/>
+                            <field name="new_manager_id" options="{'no_create': True}"
+                                   invisible="event_type != 'transfer'"
+                                   readonly="state != 'draft'"/>
+                            <field name="new_salary"
+                                   invisible="event_type not in ('promotion', 'increment', 'salary_revision')"
+                                   readonly="state != 'draft'"/>
+                        </group>
+                    </group>
+                    <group string="Before the Change" invisible="state != 'approved'">
+                        <group>
+                            <field name="old_job_id"/>
+                            <field name="old_department_id"/>
+                            <field name="old_manager_id"/>
+                            <field name="old_salary"/>
+                        </group>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_hrx_event_list" model="ir.ui.view">
+        <field name="name">hrx.employee.event.list</field>
+        <field name="model">hrx.employee.event</field>
+        <field name="arch" type="xml">
+            <list string="Lifecycle Events"
+                  decoration-muted="state == 'cancelled'">
+                <field name="date"/>
+                <field name="employee_id"/>
+                <field name="department_id"/>
+                <field name="event_type"/>
+                <field name="reason"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'draft'"
+                       decoration-success="state == 'approved'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_hrx_event_search" model="ir.ui.view">
+        <field name="name">hrx.employee.event.search</field>
+        <field name="model">hrx.employee.event</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="employee_id"/>
+                <field name="department_id"/>
+                <field name="event_type"/>
+                <filter name="f_draft" string="Pending Approval" domain="[('state', '=', 'draft')]"/>
+                <filter name="f_approved" string="Approved" domain="[('state', '=', 'approved')]"/>
+                <separator/>
+                <filter name="f_promo" string="Promotions and Increments"
+                        domain="[('event_type', 'in', ('promotion', 'increment', 'salary_revision'))]"/>
+                <filter name="f_probation" string="Probation and Confirmation"
+                        domain="[('event_type', 'in', ('probation_start', 'probation_end', 'confirmation'))]"/>
+                <filter name="f_exit" string="Resignation and Exit"
+                        domain="[('event_type', 'in', ('resignation', 'exit'))]"/>
+                <group>
+                    <filter name="group_type" string="Event Type" context="{'group_by': 'event_type'}"/>
+                    <filter name="group_dept" string="Department" context="{'group_by': 'department_id'}"/>
+                    <filter name="group_month" string="Month" context="{'group_by': 'date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_hrx_event" model="ir.actions.act_window">
+        <field name="name">Lifecycle Events</field>
+        <field name="res_model">hrx.employee.event</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_hrx_event" name="Lifecycle Events"
+              parent="hr.menu_hr_root" action="action_hrx_event"
+              sequence="25" groups="hr.group_hr_user"/>
+</odoo>

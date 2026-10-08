@@ -39,15 +39,6 @@
         </record>
 
 
-
-
-
-
-
-
-
-
-
         <!-- Record rules -->
         <record id="rule_mpr_company" model="ir.rule">
             <field name="name">Manpower Requisition: multi-company</field>
@@ -67,6 +58,20 @@
             <field name="model_id" ref="model_manpower_requisition"/>
             <field name="groups" eval="[(4, ref('group_mpr_hr_exec')), (4, ref('group_mpr_management'))]"/>
             <field name="domain_force">[(1, '=', 1)]</field>
+        </record>
+
+        <record id="rule_hrx_emp_doc_company" model="ir.rule">
+            <field name="name">Employee Document: multi-company</field>
+            <field name="model_id" ref="model_hrx_emp_doc"/>
+            <field name="domain_force">['|', ('employee_id.company_id', '=', False), ('employee_id.company_id', 'in',
+                company_ids)]
+            </field>
+        </record>
+
+        <record id="rule_hrx_event_company" model="ir.rule">
+            <field name="name">Lifecycle Event: multi-company</field>
+            <field name="model_id" ref="model_hrx_employee_event"/>
+            <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
         </record>
     </data>
 </odoo>
