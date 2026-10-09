@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- FORM -->
+    <record id="view_hrx_process_improvement_form" model="ir.ui.view">
+        <field name="name">hrx.process.improvement.form</field>
+        <field name="model">hrx.process.improvement</field>
+        <field name="arch" type="xml">
+            <form string="Process Improvement">
+                <header>
+                    <button name="action_propose" string="Propose Improvement" type="object" class="btn-primary"
+                            invisible="state != 'identified'"/>
+                    <button name="action_approve" string="Approve (CEO)" type="object" class="btn-primary"
+                            invisible="state != 'proposed'" groups="hrx_manpower_requisition.group_hrx_ceo"/>
+                    <button name="action_implement" string="Begin Implementation" type="object" class="btn-primary"
+                            invisible="state != 'approved'" groups="hrx_manpower_requisition.group_hrx_hr"/>
+                    <button name="action_monitor" string="Move to Monitoring" type="object" class="btn-primary"
+                            invisible="state != 'implementation'" groups="hrx_manpower_requisition.group_hrx_hr"/>
+                    <button name="action_record_result" string="Record Outcome / Result" type="object" class="btn-primary"
+                            invisible="state != 'monitoring'" groups="hrx_manpower_requisition.group_hrx_hr"/>
+                    <button name="action_cancel" string="Cancel" type="object"
+                            invisible="state in ('result', 'cancelled')"/>
+                    <field name="state" widget="statusbar" statusbar_visible="identified,proposed,approved,implementation,monitoring,result"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" placeholder="e.g. Digitalize Employee Clearance Process"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="responsible_id"/>
+                            <field name="target_date"/>
+                        </group>
+                        <group>
+                            <field name="approved_by"/>
+                            <field name="approval_date"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                    <group string="Process &amp; Issue Analysis">
+                        <field name="existing_process"/>
+                        <field name="problem_identified"/>
+                    </group>
+                    <group string="Proposed Improvement &amp; Expected Gain">
+                        <field name="proposed_improvement"/>
+                        <field name="expected_result"/>
+                    </group>
+                    <group string="Actual Outcome Achieved" invisible="state not in ('monitoring', 'result')">
+                        <field name="actual_result" nolabel="1" colspan="2"/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- LIST -->
+    <record id="view_hrx_process_improvement_list" model="ir.ui.view">
+        <field name="name">hrx.process.improvement.list</field>
+        <field name="model">hrx.process.improvement</field>
+        <field name="arch" type="xml">
+            <list string="Operational Efficiency Initiatives">
+                <field name="name"/>
+                <field name="responsible_id"/>
+                <field name="target_date"/>
+                <field name="approved_by" optional="show"/>
+                <field name="state" widget="badge"
+                       decoration-info="state in ('identified', 'proposed')"
+                       decoration-warning="state in ('approved', 'implementation', 'monitoring')"
+                       decoration-success="state == 'result'"
+                       decoration-danger="state == 'cancelled'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- SEARCH -->
+    <record id="view_hrx_process_improvement_search" model="ir.ui.view">
+        <field name="name">hrx.process.improvement.search</field>
+        <field name="model">hrx.process.improvement</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="responsible_id"/>
+                <filter name="in_progress" string="In Progress" domain="[('state', 'in', ('approved', 'implementation', 'monitoring'))]"/>
+                <filter name="achieved" string="Results Achieved" domain="[('state', '=', 'result')]"/>
+                <group>
+                    <filter name="group_responsible" string="Responsible" context="{'group_by': 'responsible_id'}"/>
+                    <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ACTION -->
+    <record id="action_hrx_process_improvement" model="ir.actions.act_window">
+        <field name="name">Operational Efficiency</field>
+        <field name="res_model">hrx.process.improvement</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

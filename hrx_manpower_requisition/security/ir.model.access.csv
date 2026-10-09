@@ -1,18 +1,60 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_mpr_user,manpower.requisition employee,model_manpower_requisition,base.group_user,1,1,1,0
+access_mpr_hr,manpower.requisition hr,model_manpower_requisition,group_hrx_hr,1,1,1,1
+access_mpr_ceo,manpower.requisition ceo,model_manpower_requisition,group_hrx_ceo,1,1,1,1
 
-access_mpr_dept_head,manpower.requisition dept head,model_manpower_requisition,group_mpr_dept_head,1,1,1,1
-access_mpr_hr_exec,manpower.requisition hr exec,model_manpower_requisition,group_mpr_hr_exec,1,1,1,0
-access_mpr_hr_manager,manpower.requisition hr manager,model_manpower_requisition,group_mpr_hr_manager,1,1,1,1
-access_mpr_management,manpower.requisition management,model_manpower_requisition,group_mpr_management,1,1,0,0
-access_hrx_emp_doc_type_user,hrx.emp.doc.type user,model_hrx_emp_doc_type,group_mpr_hr_exec,1,0,0,0
-access_hrx_emp_doc_type_manager,hrx.emp.doc.type manager,model_hrx_emp_doc_type,group_mpr_hr_exec,1,1,1,1
-access_hrx_emp_doc_user,hrx.emp.doc user,model_hrx_emp_doc,group_mpr_hr_exec,1,1,1,1
-access_hrx_event_user,hrx.employee.event user,model_hrx_employee_event,group_mpr_hr_exec,1,1,1,1
-access_hrx_event_manager,hrx.employee.event manager,model_hrx_employee_event,group_mpr_hr_exec,1,1,1,1
+access_hrx_emp_doc_type_user,hrx.emp.doc.type user,model_hrx_emp_doc_type,base.group_user,1,0,0,0
+access_hrx_emp_doc_type_hr,hrx.emp.doc.type hr,model_hrx_emp_doc_type,group_hrx_hr,1,1,1,1
+access_hrx_emp_doc_type_ceo,hrx.emp.doc.type ceo,model_hrx_emp_doc_type,group_hrx_ceo,1,1,1,1
+
+access_hrx_emp_doc_user,hrx.emp.doc user,model_hrx_emp_doc,base.group_user,1,1,1,0
+access_hrx_emp_doc_hr,hrx.emp.doc hr,model_hrx_emp_doc,group_hrx_hr,1,1,1,1
+access_hrx_emp_doc_ceo,hrx.emp.doc ceo,model_hrx_emp_doc,group_hrx_ceo,1,1,1,1
+
+access_hrx_event_user,hrx.employee.event user,model_hrx_employee_event,base.group_user,1,0,0,0
+access_hrx_event_hr,hrx.employee.event hr,model_hrx_employee_event,group_hrx_hr,1,1,1,1
+access_hrx_event_ceo,hrx.employee.event ceo,model_hrx_employee_event,group_hrx_ceo,1,1,1,1
 
 access_hrx_attreq_user,hrx.attendance.request user,model_hrx_attendance_request,base.group_user,1,1,1,1
+access_hrx_attreq_hr,hrx.attendance.request hr,model_hrx_attendance_request,group_hrx_hr,1,1,1,1
+access_hrx_attreq_ceo,hrx.attendance.request ceo,model_hrx_attendance_request,group_hrx_ceo,1,1,1,1
 
-access_hrx_attmonth_hr,hrx.attendance.month hr,model_hrx_attendance_month,group_mpr_hr_exec,1,1,1,0
-access_hrx_attmonth_mgr,hrx.attendance.month manager,model_hrx_attendance_month,group_mpr_hr_exec,1,1,1,1
-access_hrx_attline_hr,hrx.attendance.month.line hr,model_hrx_attendance_month_line,group_mpr_hr_exec,1,1,0,0
-access_hrx_attexc_hr,hrx.attendance.exception hr,model_hrx_attendance_exception,group_mpr_hr_exec,1,0,0,0
+access_hrx_attmonth_hr,hrx.attendance.month hr,model_hrx_attendance_month,group_hrx_hr,1,1,1,1
+access_hrx_attmonth_ceo,hrx.attendance.month ceo,model_hrx_attendance_month,group_hrx_ceo,1,1,1,1
+
+access_hrx_attline_hr,hrx.attendance.month.line hr,model_hrx_attendance_month_line,group_hrx_hr,1,1,1,0
+access_hrx_attline_ceo,hrx.attendance.month.line ceo,model_hrx_attendance_month_line,group_hrx_ceo,1,1,1,0
+
+access_hrx_attexc_hr,hrx.attendance.exception hr,model_hrx_attendance_exception,group_hrx_hr,1,1,0,0
+access_hrx_attexc_ceo,hrx.attendance.exception ceo,model_hrx_attendance_exception,group_hrx_ceo,1,1,0,0
+
+access_hrx_disc_user,hrx.discipline.case user,model_hrx_discipline_case,base.group_user,1,1,1,0
+access_hrx_disc_hr,hrx.discipline.case hr,model_hrx_discipline_case,group_hrx_hr,1,1,1,1
+access_hrx_disc_ceo,hrx.discipline.case ceo,model_hrx_discipline_case,group_hrx_ceo,1,1,1,1
+
+access_hrx_induction_user,hrx.employee.induction user,model_hrx_employee_induction,base.group_user,1,1,0,0
+access_hrx_induction_hr,hrx.employee.induction hr,model_hrx_employee_induction,group_hrx_hr,1,1,1,1
+access_hrx_induction_ceo,hrx.employee.induction ceo,model_hrx_employee_induction,group_hrx_ceo,1,1,1,1
+
+access_hrx_kra_user,hrx.pms.kra user,model_hrx_pms_kra,base.group_user,1,1,1,0
+access_hrx_kra_hr,hrx.pms.kra hr,model_hrx_pms_kra,group_hrx_hr,1,1,1,1
+access_hrx_kra_ceo,hrx.pms.kra ceo,model_hrx_pms_kra,group_hrx_ceo,1,1,1,1
+
+access_hrx_kpi_user,hrx.pms.kpi user,model_hrx_pms_kpi,base.group_user,1,1,0,0
+access_hrx_kpi_hr,hrx.pms.kpi hr,model_hrx_pms_kpi,group_hrx_hr,1,1,1,1
+access_hrx_kpi_ceo,hrx.pms.kpi ceo,model_hrx_pms_kpi,group_hrx_ceo,1,1,1,1
+
+access_hrx_weekly_report_user,hrx.pms.weekly.report user,model_hrx_pms_weekly_report,base.group_user,1,1,1,0
+access_hrx_weekly_report_hr,hrx.pms.weekly.report hr,model_hrx_pms_weekly_report,group_hrx_hr,1,1,1,1
+access_hrx_weekly_report_ceo,hrx.pms.weekly.report ceo,model_hrx_pms_weekly_report,group_hrx_ceo,1,1,1,1
+
+access_hrx_emp_req_user,hrx.employee.request user,model_hrx_employee_request,base.group_user,1,1,1,0
+access_hrx_emp_req_hr,hrx.employee.request hr,model_hrx_employee_request,group_hrx_hr,1,1,1,1
+access_hrx_emp_req_ceo,hrx.employee.request ceo,model_hrx_employee_request,group_hrx_ceo,1,1,1,1
+
+access_hrx_task_hr,hrx.hr.task hr,model_hrx_hr_task,group_hrx_hr,1,1,1,1
+access_hrx_task_ceo,hrx.hr.task ceo,model_hrx_hr_task,group_hrx_ceo,1,1,1,1
+
+access_hrx_improv_user,hrx.process.improvement user,model_hrx_process_improvement,base.group_user,1,1,1,0
+access_hrx_improv_hr,hrx.process.improvement hr,model_hrx_process_improvement,group_hrx_hr,1,1,1,1
+access_hrx_improv_ceo,hrx.process.improvement ceo,model_hrx_process_improvement,group_hrx_ceo,1,1,1,1

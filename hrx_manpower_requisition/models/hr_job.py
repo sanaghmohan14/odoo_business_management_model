@@ -7,6 +7,6 @@ class HrJob(models.Model):
     hrx_requisition_ids = fields.One2many(
         'manpower.requisition', 'job_id',
         string='Manpower Requisitions', readonly=True,
-        groups='hrx_manpower_requisition.group_mpr_hr_exec,'
-               'hrx_manpower_requisition.group_mpr_management',
+        groups='hrx_manpower_requisition.group_hrx_hr,'
+               'hrx_manpower_requisition.group_hrx_ceo',
     )

@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_hrx_disc_form" model="ir.ui.view">
+        <field name="name">hrx.discipline.case.form</field>
+        <field name="model">hrx.discipline.case</field>
+        <field name="arch" type="xml">
+            <form string="Discipline Case">
+                <header>
+                    <button name="action_submit" string="Submit for HR Review" type="object"
+                            class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_request_explanation" string="Request Explanation" type="object"
+                            class="btn-primary"
+                            invisible="state != 'review' or case_type == 'recognition'"
+                            groups="hrx_manpower_requisition.group_hrx_hr"/>
+                    <button name="action_submit_explanation" string="Submit Explanation" type="object"
+                            class="btn-primary"
+                            invisible="state != 'explanation' or not can_edit_explanation or explanation_date"/>
+                    <button name="action_send_decision" string="Send for Management Decision" type="object"
+                            class="btn-primary" invisible="state not in ('review', 'explanation')"
+                            groups="hrx_manpower_requisition.group_hrx_hr"/>
+                    <button name="action_decide" string="Confirm Decision" type="object"
+                            class="btn-primary" invisible="not can_decide"
+                            groups="hrx_manpower_requisition.group_hrx_ceo"/>
+                    <button name="action_record_followup" string="Record Action and Follow-up" type="object"
+                            class="btn-primary" invisible="state != 'action'"
+                            groups="hrx_manpower_requisition.group_hrx_hr"/>
+                    <button name="action_record_close" string="Record Action and Close" type="object"
+                            invisible="state != 'action'" groups="hrx_manpower_requisition.group_hrx_hr"/>
+                    <button name="action_close" string="Close Case" type="object"
+                            class="btn-primary" invisible="state != 'followup'"
+                            groups="hrx_manpower_requisition.group_hrx_hr"/>
+                    <button name="action_cancel" string="Cancel" type="object"
+                            invisible="state in ('closed', 'cancelled') or (state != 'draft' and not is_hr)"
+                            groups="hrx_manpower_requisition.group_hrx_hr"
+                            confirm="Cancel this case?"/>
+                    <button name="action_reset_draft" string="Reset to Reported" type="object"
+                            invisible="state != 'cancelled'" groups="hrx_manpower_requisition.group_hrx_hr"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,review,explanation,decision,action,followup,closed"/>
+                </header>
+                <sheet>
+                    <field name="is_hr" invisible="1"/>
+                    <field name="is_subject" invisible="1"/>
+                    <field name="can_edit_explanation" invisible="1"/>
+                    <field name="can_decide" invisible="1"/>
+                    <div class="oe_title"><h1><field name="name"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="employee_id" options="{'no_create': True}"
+                                   readonly="state not in ('draft', 'review')"/>
+                            <field name="department_id"/>
+                            <field name="case_type" readonly="state not in ('draft', 'review')"/>
+                            <field name="severity" invisible="case_type == 'recognition'"
+                                   readonly="state not in ('draft', 'review')"/>
+                        </group>
+                        <group>
+                            <field name="incident_date" readonly="state not in ('draft', 'review')"/>
+                            <field name="reported_by"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                    <group string="Details">
+                        <field name="description" nolabel="1" colspan="2"
+                               readonly="state not in ('draft', 'review')"/>
+                    </group>
+
+                    <group string="HR Review"
+                           groups="hrx_manpower_requisition.group_hrx_hr,hrx_manpower_requisition.group_hrx_ceo"
+                           invisible="state == 'draft'">
+                        <field name="hr_review_note" readonly="state not in ('review', 'explanation')"/>
+                    </group>
+
+                    <group string="Employee Explanation"
+                           invisible="case_type == 'recognition' or state in ('draft', 'review')">
+                        <field name="explanation_deadline"
+                               readonly="state != 'explanation' or not is_hr"/>
+                        <field name="explanation" readonly="not can_edit_explanation"/>
+                        <field name="explanation_date"/>
+                    </group>
+
+                    <group string="Management Decision"
+                           invisible="state not in ('decision', 'action', 'followup', 'closed')">
+                        <field name="decision" readonly="not can_decide"/>
+                        <field name="decision_note"
+                               groups="hrx_manpower_requisition.group_hrx_hr,hrx_manpower_requisition.group_hrx_ceo"
+                               readonly="not can_decide"/>
+                        <field name="decided_by"/>
+                        <field name="decision_date"/>
+                    </group>
+
+                    <group string="HR Action"
+                           invisible="state not in ('action', 'followup', 'closed')">
+                        <group>
+                            <field name="action_taken" readonly="state != 'action' or not is_hr"/>
+                            <field name="action_date" readonly="state != 'action' or not is_hr"/>
+                            <field name="action_by"/>
+                        </group>
+                        <group>
+                            <field name="followup_date" readonly="state != 'action' or not is_hr"/>
+                            <field name="followup_note" readonly="state not in ('action', 'followup') or not is_hr"/>
+                        </group>
+                    </group>
+
+                    <group string="Closure" invisible="state not in ('action', 'followup', 'closed')">
+                        <field name="closure_note" readonly="state not in ('action', 'followup') or not is_hr"/>
+                        <field name="closed_by"/>
+                        <field name="closed_date"/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_hrx_disc_list" model="ir.ui.view">
+        <field name="name">hrx.discipline.case.list</field>
+        <field name="model">hrx.discipline.case</field>
+        <field name="arch" type="xml">
+            <list string="Discipline Cases" decoration-muted="state == 'cancelled'">
+                <field name="name"/>
+                <field name="incident_date"/>
+                <field name="employee_id"/>
+                <field name="department_id"/>
+                <field name="case_type"/>
+                <field name="severity" optional="show"/>
+                <field name="decision" optional="show"/>
+                <field name="followup_date" optional="hide"/>
+                <field name="state" widget="badge"
+                       decoration-info="state in ('review', 'explanation', 'decision')"
+                       decoration-warning="state in ('action', 'followup')"
+                       decoration-success="state == 'closed'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_hrx_disc_pivot" model="ir.ui.view">
+        <field name="name">hrx.discipline.case.pivot</field>
+        <field name="model">hrx.discipline.case</field>
+        <field name="arch" type="xml">
+            <pivot string="Discipline Cases">
+                <field name="department_id" type="row"/>
+                <field name="case_type" type="col"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_hrx_disc_search" model="ir.ui.view">
+        <field name="name">hrx.discipline.case.search</field>
+        <field name="model">hrx.discipline.case</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="employee_id"/>
+                <field name="department_id"/>
+                <filter name="f_open" string="Open"
+                        domain="[('state', 'not in', ('closed', 'cancelled'))]"/>
+                <filter name="f_pending_hr" string="Pending HR Action"
+                        domain="[('state', 'in', ('review', 'action'))]"/>
+                <filter name="f_followup" string="Follow-up"
+                        domain="[('state', '=', 'followup')]"/>
+                <filter name="f_closed" string="Closed" domain="[('state', '=', 'closed')]"/>
+                <separator/>
+                <filter name="t_violation" string="Violations"
+                        domain="[('case_type', '!=', 'recognition')]"/>
+                <filter name="t_recog" string="Recognition"
+                        domain="[('case_type', '=', 'recognition')]"/>
+                <group>
+                    <filter name="g_dept" string="Department" context="{'group_by': 'department_id'}"/>
+                    <filter name="g_emp" string="Employee" context="{'group_by': 'employee_id'}"/>
+                    <filter name="g_type" string="Type" context="{'group_by': 'case_type'}"/>
+                    <filter name="g_state" string="Status" context="{'group_by': 'state'}"/>
+                    <filter name="g_month" string="Month" context="{'group_by': 'incident_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_hrx_disc_my" model="ir.actions.act_window">
+        <field name="name">My Cases</field>
+        <field name="res_model">hrx.discipline.case</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('employee_user_id', '=', uid)]</field>
+    </record>
+
+    <record id="action_hrx_disc_all" model="ir.actions.act_window">
+        <field name="name">All Cases</field>
+        <field name="res_model">hrx.discipline.case</field>
+        <field name="view_mode">list,pivot,form</field>
+        <field name="context">{'search_default_f_open': 1}</field>
+    </record>
+
+    <record id="action_hrx_disc_decision" model="ir.actions.act_window">
+        <field name="name">Pending Decision</field>
+        <field name="res_model">hrx.discipline.case</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('state', '=', 'decision')]</field>
+    </record>
+
+    <record id="action_hrx_disc_followup" model="ir.actions.act_window">
+        <field name="name">Follow-ups</field>
+        <field name="res_model">hrx.discipline.case</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('state', '=', 'followup')]</field>
+    </record>
+
+
+</odoo>

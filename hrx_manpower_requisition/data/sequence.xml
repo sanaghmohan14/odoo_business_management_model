@@ -7,4 +7,20 @@
         <field name="padding">4</field>
         <field name="company_id" eval="False"/>
     </record>
+
+    <record id="seq_hrx_discipline_case" model="ir.sequence">
+        <field name="name">Discipline Case</field>
+        <field name="code">hrx.discipline.case</field>
+        <field name="prefix">DIS/%(year)s/</field>
+        <field name="padding">4</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <record id="seq_hrx_employee_request" model="ir.sequence">
+        <field name="name">Employee HR Request</field>
+        <field name="code">hrx.employee.request</field>
+        <field name="prefix">REQ/%(year)s/</field>
+        <field name="padding">4</field>
+        <field name="company_id" eval="False"/>
+    </record>
 </odoo>

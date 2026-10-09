@@ -8,26 +8,24 @@
             <form string="Manpower Requisition">
                 <header>
                     <button name="action_submit" string="Submit to HR" type="object" class="btn-primary"
-                            invisible="state != 'draft'"
-                            groups="hrx_manpower_requisition.group_mpr_dept_head,hrx_manpower_requisition.group_mpr_hr_exec"/>
+                            invisible="state != 'draft'"/>
                     <button name="action_send_for_approval" string="Send for Approval" type="object" class="btn-primary"
                             invisible="state != 'submitted'"
-                            groups="hrx_manpower_requisition.group_mpr_hr_exec"/>
+                            groups="hrx_manpower_requisition.group_hrx_hr"/>
                     <button name="action_approve" string="Approve" type="object" class="btn-primary"
                             invisible="state != 'pending_approval'"
-                            groups="hrx_manpower_requisition.group_mpr_management"/>
+                            groups="hrx_manpower_requisition.group_hrx_ceo"/>
                     <button name="action_reject" string="Reject" type="object"
                             invisible="state != 'submitted'"
-                            groups="hrx_manpower_requisition.group_mpr_hr_exec"/>
+                            groups="hrx_manpower_requisition.group_hrx_hr"/>
                     <button name="action_reject" string="Reject" type="object"
                             invisible="state != 'pending_approval'"
-                            groups="hrx_manpower_requisition.group_mpr_management"/>
+                            groups="hrx_manpower_requisition.group_hrx_ceo"/>
                     <button name="action_open_job" string="Open Job in Recruitment" type="object" class="btn-primary"
                             invisible="state != 'approved'"
-                            groups="hrx_manpower_requisition.group_mpr_hr_exec"/>
+                            groups="hrx_manpower_requisition.group_hrx_hr"/>
                     <button name="action_reset_draft" string="Reset to Draft" type="object"
-                            invisible="state != 'rejected'"
-                            groups="hrx_manpower_requisition.group_mpr_dept_head,hrx_manpower_requisition.group_mpr_hr_exec"/>
+                            invisible="state != 'rejected'"/>
                     <field name="state" widget="statusbar"
                            statusbar_visible="draft,submitted,pending_approval,approved,done"/>
                 </header>
@@ -48,9 +46,9 @@
                         <group string="Reason">
                             <field name="reason" readonly="state != 'draft'"/>
                             <field name="replaced_employee_id" options="{'no_create': True}"
-                                   invisible="reason != 'replacement'"
-                                   required="reason == 'replacement'"
-                                   readonly="state != 'draft'"/>
+                                    invisible="reason != 'replacement'"
+                                    required="reason == 'replacement'"
+                                    readonly="state != 'draft'"/>
                             <field name="reason_note" readonly="state != 'draft'"/>
                             <field name="requested_by"/>
                             <field name="request_date"/>
@@ -58,7 +56,7 @@
                         </group>
                     </group>
                     <group string="HR Details"
-                           groups="hrx_manpower_requisition.group_mpr_hr_exec,hrx_manpower_requisition.group_mpr_management">
+                           groups="hrx_manpower_requisition.group_hrx_hr,hrx_manpower_requisition.group_hrx_ceo">
                         <group>
                             <label for="experience_min" string="Experience (years)"/>
                             <div class="o_row">

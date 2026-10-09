@@ -1,54 +1,143 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <!-- ========================================================= -->
+    <!-- 1. MANPOWER REQUISITIONS                                  -->
+    <!-- ========================================================= -->
     <menuitem id="menu_mpr_root" name="Manpower" sequence="45"
-              groups="hrx_manpower_requisition.group_mpr_dept_head,hrx_manpower_requisition.group_mpr_hr_exec,hrx_manpower_requisition.group_mpr_management"/>
+              groups="base.group_user"/>
 
     <menuitem id="menu_mpr_my" name="My Requests" parent="menu_mpr_root"
               action="action_mpr_my" sequence="10"
-              groups="hrx_manpower_requisition.group_mpr_dept_head"/>
+              groups="base.group_user"/>
 
     <menuitem id="menu_mpr_all" name="All Requests" parent="menu_mpr_root"
               action="action_mpr_all" sequence="20"
-              groups="hrx_manpower_requisition.group_mpr_hr_exec,hrx_manpower_requisition.group_mpr_management"/>
+              groups="hrx_manpower_requisition.group_hrx_hr,hrx_manpower_requisition.group_hrx_ceo"/>
 
-    <menuitem id="menu_mpr_pending" name="Pending Approval" parent="menu_mpr_root"
+    <menuitem id="menu_mpr_pending" name="Pending CEO Approval" parent="menu_mpr_root"
               action="action_mpr_pending" sequence="30"
-              groups="hrx_manpower_requisition.group_mpr_management"/>
+              groups="hrx_manpower_requisition.group_hrx_ceo"/>
 
+    <!-- ========================================================= -->
+    <!-- 2. INDUCTION & TRAINING                                   -->
+    <!-- ========================================================= -->
+    <menuitem id="menu_hrx_induction_root" name="Induction &amp; Training" sequence="46"
+              parent="hr.menu_hr_root" groups="base.group_user"/>
 
-     <menuitem id="menu_hrx_event" name="Lifecycle Events"
+    <menuitem id="menu_hrx_induction_my" name="My Induction Checklist" parent="menu_hrx_induction_root"
+              action="action_hrx_induction_my" sequence="10" groups="base.group_user"/>
+
+    <menuitem id="menu_hrx_induction_all" name="All Inductions &amp; Training" parent="menu_hrx_induction_root"
+              action="action_hrx_induction_all" sequence="20"
+              groups="hrx_manpower_requisition.group_hrx_hr,hrx_manpower_requisition.group_hrx_ceo"/>
+
+    <!-- ========================================================= -->
+    <!-- 3. LIFECYCLE & CONFIGURATION                              -->
+    <!-- ========================================================= -->
+    <menuitem id="menu_hrx_event" name="Lifecycle Events"
               parent="hr.menu_hr_root" action="action_hrx_event"
-              sequence="25" groups="hrx_manpower_requisition.group_mpr_hr_exec,hrx_manpower_requisition.group_mpr_management"/>
+              sequence="25" groups="hrx_manpower_requisition.group_hrx_hr,hrx_manpower_requisition.group_hrx_ceo"/>
 
-    <menuitem id="menu_hrx_emp_doc_type"
-              name="Document Types"
+    <menuitem id="menu_hrx_emp_doc_type" name="Document Types"
               parent="hr.menu_human_resources_configuration"
               action="action_hrx_emp_doc_type"
-              sequence="90"
-              groups="hrx_manpower_requisition.group_mpr_hr_exec,hrx_manpower_requisition.group_mpr_management"/>
+              sequence="90" groups="hrx_manpower_requisition.group_hrx_hr,hrx_manpower_requisition.group_hrx_ceo"/>
 
-
-       <menuitem id="menu_hrx_attreq_root" name="Attendance Requests" sequence="47"
-              groups="hrx_manpower_requisition.group_mpr_hr_exec,hrx_manpower_requisition.group_mpr_management" parent="hr_attendance.menu_hr_attendance_root"/>
+    <!-- ========================================================= -->
+    <!-- 4. ATTENDANCE REQUESTS & MONITORING                       -->
+    <!-- ========================================================= -->
+    <menuitem id="menu_hrx_attreq_root" name="Attendance Requests" sequence="47"
+              groups="base.group_user" parent="hr_attendance.menu_hr_attendance_root"/>
 
     <menuitem id="menu_hrx_attreq_my" name="My Requests" parent="menu_hrx_attreq_root"
               action="action_hrx_attreq_my" sequence="10" groups="base.group_user"/>
 
     <menuitem id="menu_hrx_attreq_approve" name="To Approve" parent="menu_hrx_attreq_root"
-              action="action_hrx_attreq_approve" sequence="20" groups="hrx_manpower_requisition.group_mpr_hr_exec,hrx_manpower_requisition.group_mpr_management"/>
-    <menuitem id="menu_hrx_attreq_all" name="All Requests" parent="menu_hrx_attreq_root"
-              action="action_hrx_attreq_all" sequence="30" groups="hrx_manpower_requisition.group_mpr_hr_exec,hrx_manpower_requisition.group_mpr_management"/>
+              action="action_hrx_attreq_approve" sequence="20"
+              groups="hrx_manpower_requisition.group_hrx_hr,hrx_manpower_requisition.group_hrx_ceo"/>
 
-     <!-- ============ Menus (parent defined in attendance_request_views.xml) ============ -->
+    <menuitem id="menu_hrx_attreq_all" name="All Requests" parent="menu_hrx_attreq_root"
+              action="action_hrx_attreq_all" sequence="30"
+              groups="hrx_manpower_requisition.group_hrx_hr,hrx_manpower_requisition.group_hrx_ceo"/>
+
     <menuitem id="menu_hrx_attmonth" name="Monthly Attendance"
               parent="menu_hrx_attreq_root" action="action_hrx_attmonth"
-              sequence="40" groups="hrx_manpower_requisition.group_mpr_hr_exec,hrx_manpower_requisition.group_mpr_management"/>
+              sequence="40" groups="hrx_manpower_requisition.group_hrx_hr,hrx_manpower_requisition.group_hrx_ceo"/>
+
     <menuitem id="menu_hrx_attline" name="Department-wise Summary"
               parent="menu_hrx_attreq_root" action="action_hrx_attline"
-              sequence="50" groups="hrx_manpower_requisition.group_mpr_hr_exec,hrx_manpower_requisition.group_mpr_management"/>
+              sequence="50" groups="hrx_manpower_requisition.group_hrx_hr,hrx_manpower_requisition.group_hrx_ceo"/>
+
     <menuitem id="menu_hrx_attexc" name="Irregularities"
               parent="menu_hrx_attreq_root" action="action_hrx_attexc"
-              sequence="60" groups="hrx_manpower_requisition.group_mpr_hr_exec,hrx_manpower_requisition.group_mpr_management"/>
+              sequence="60" groups="hrx_manpower_requisition.group_hrx_hr,hrx_manpower_requisition.group_hrx_ceo"/>
 
+    <!-- ========================================================= -->
+    <!-- 5. DISCIPLINE & HR ACTIONS                                -->
+    <!-- ========================================================= -->
+    <menuitem id="menu_hrx_disc_root" name="Discipline" sequence="48"
+              groups="base.group_user" parent="hr_attendance.menu_hr_attendance_root"/>
+
+    <menuitem id="menu_hrx_disc_my" name="My Cases" parent="menu_hrx_disc_root"
+              action="action_hrx_disc_my" sequence="10" groups="base.group_user"/>
+
+    <menuitem id="menu_hrx_disc_all" name="All Cases" parent="menu_hrx_disc_root"
+              action="action_hrx_disc_all" sequence="20"
+              groups="hrx_manpower_requisition.group_hrx_hr,hrx_manpower_requisition.group_hrx_ceo"/>
+
+    <menuitem id="menu_hrx_disc_decision" name="Pending CEO Decision" parent="menu_hrx_disc_root"
+              action="action_hrx_disc_decision" sequence="30"
+              groups="hrx_manpower_requisition.group_hrx_ceo"/>
+
+    <menuitem id="menu_hrx_disc_followup" name="Follow-ups" parent="menu_hrx_disc_root"
+              action="action_hrx_disc_followup" sequence="40"
+              groups="hrx_manpower_requisition.group_hrx_hr,hrx_manpower_requisition.group_hrx_ceo"/>
+
+    <!-- ========================================================= -->
+    <!-- 6. PMS, KRA & KPI MANAGEMENT                              -->
+    <!-- ========================================================= -->
+    <menuitem id="menu_hrx_pms_root" name="PMS &amp; KRAs" sequence="49"
+              groups="base.group_user"/>
+
+    <menuitem id="menu_hrx_pms_kra_my" name="My KRAs" parent="menu_hrx_pms_root"
+              action="action_hrx_pms_kra_my" sequence="10" groups="base.group_user"/>
+
+    <menuitem id="menu_hrx_pms_weekly_my" name="My Weekly Reports" parent="menu_hrx_pms_root"
+              action="action_hrx_pms_weekly_my" sequence="20" groups="base.group_user"/>
+
+    <menuitem id="menu_hrx_pms_kra_all" name="All KRAs" parent="menu_hrx_pms_root"
+              action="action_hrx_pms_kra_all" sequence="30"
+              groups="hrx_manpower_requisition.group_hrx_hr,hrx_manpower_requisition.group_hrx_ceo"/>
+
+    <menuitem id="menu_hrx_pms_weekly_all" name="All Weekly Reports" parent="menu_hrx_pms_root"
+              action="action_hrx_pms_weekly_all" sequence="40"
+              groups="hrx_manpower_requisition.group_hrx_hr,hrx_manpower_requisition.group_hrx_ceo"/>
+
+    <!-- ========================================================= -->
+    <!-- 7. INTERDEPARTMENTAL & EMPLOYEE SUPPORT                   -->
+    <!-- ========================================================= -->
+    <menuitem id="menu_hrx_emp_req_root" name="HR Support" sequence="50"
+              groups="base.group_user"/>
+
+    <menuitem id="menu_hrx_emp_req_my" name="My HR Requests" parent="menu_hrx_emp_req_root"
+              action="action_hrx_emp_req_my" sequence="10" groups="base.group_user"/>
+
+    <menuitem id="menu_hrx_emp_req_all" name="All Employee Requests" parent="menu_hrx_emp_req_root"
+              action="action_hrx_emp_req_all" sequence="20"
+              groups="hrx_manpower_requisition.group_hrx_hr,hrx_manpower_requisition.group_hrx_ceo"/>
+
+    <!-- ========================================================= -->
+    <!-- 8. HR TASKS (WORK PLANNING & EXECUTION)                   -->
+    <!-- ========================================================= -->
+    <menuitem id="menu_hrx_hr_task" name="HR Tasks" sequence="51"
+              parent="hr.menu_hr_root" action="action_hrx_hr_task"
+              groups="hrx_manpower_requisition.group_hrx_hr,hrx_manpower_requisition.group_hrx_ceo"/>
+
+    <!-- ========================================================= -->
+    <!-- 9. OPERATIONAL EFFICIENCY (CONTINUOUS IMPROVEMENT)        -->
+    <!-- ========================================================= -->
+    <menuitem id="menu_hrx_process_improvement" name="Process Improvement" sequence="52"
+              parent="hr.menu_hr_root" action="action_hrx_process_improvement"
+              groups="base.group_user"/>
 
 </odoo>

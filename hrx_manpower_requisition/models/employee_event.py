@@ -1,7 +1,9 @@
 from odoo import _, api, fields, models
 from odoo.exceptions import AccessError, UserError, ValidationError
 
-HR_MANAGER = 'hr.group_hr_manager'
+MOD = 'hrx_manpower_requisition'
+G_HR = f'{MOD}.group_hrx_hr'
+G_CEO = f'{MOD}.group_hrx_ceo'
 
 EVENT_TYPES = [
     ('joining', 'Joining'),
@@ -53,7 +55,7 @@ class HrxEmployeeEvent(models.Model):
     currency_id = fields.Many2one(
         'res.currency', related='employee_id.company_id.currency_id')
     new_salary = fields.Monetary('New Salary (Monthly)', currency_field='currency_id',
-                                 groups=HR_MANAGER)
+                                 groups=G_CEO)
 
     # Values before the change (set when approved)
     old_job_id = fields.Many2one('hr.job', string='Previous Position', readonly=True, copy=False)
@@ -62,7 +64,7 @@ class HrxEmployeeEvent(models.Model):
     old_manager_id = fields.Many2one('hr.employee', string='Previous Manager',
                                      readonly=True, copy=False)
     old_salary = fields.Monetary('Previous Salary', currency_field='currency_id',
-                                 readonly=True, copy=False, groups=HR_MANAGER)
+                                 readonly=True, copy=False, groups=G_CEO)
 
     # ------------------------------------------------------------------
     @api.depends('event_type', 'employee_id')
@@ -92,8 +94,15 @@ class HrxEmployeeEvent(models.Model):
 
     # ------------------------------------------------------------------
     def _require_manager(self):
-        if not (self.env.su or self.env.user.has_group(HR_MANAGER)):
-            raise AccessError(_("Only an HR Manager can approve events."))
+        user = self.env.user
+        if self.env.su or user.has_group('base.group_system'):
+            return
+        salary_types = ('increment', 'salary_revision', 'promotion')
+        needs_ceo = any(rec.event_type in salary_types for rec in self)
+        if needs_ceo and not user.has_group(G_CEO):
+            raise AccessError(_("Salary increments, promotions, and revisions require CEO approval."))
+        if not (user.has_group(G_HR) or user.has_group(G_CEO)):
+            raise AccessError(_("Only HR or CEO can approve lifecycle events."))
 
     def _validate_for_apply(self):
         self.ensure_one()

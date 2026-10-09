@@ -4,51 +4,61 @@ from datetime import timedelta
 from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError
 
-HR_USER = 'hr.group_hr_user'
-HR_MANAGER = 'hr.group_hr_manager'
+MOD = 'hrx_manpower_requisition'
+G_HR = f'{MOD}.group_hrx_hr'
+G_CEO = f'{MOD}.group_hrx_ceo'
 
 
 class HrEmployee(models.Model):
     _inherit = 'hr.employee'
 
     # ---------------- Pre-joining ----------------
-    hrx_offer_accepted_date = fields.Date('Offer Accepted On', groups=HR_USER)
-    hrx_joining_date = fields.Date('Date of Joining', groups=HR_USER)
-    hrx_joining_confirmed = fields.Boolean('Joining Confirmed', groups=HR_USER)
+    hrx_offer_accepted_date = fields.Date('Offer Accepted On', groups=G_HR)
+    hrx_joining_date = fields.Date('Date of Joining', groups=G_HR)
+    hrx_joining_confirmed = fields.Boolean('Joining Confirmed', groups=G_HR)
 
-    # ---------------- Salary (HR Manager only) ----------------
+    # ---------------- Salary (CEO only) ----------------
     hrx_currency_id = fields.Many2one(
         'res.currency', related='company_id.currency_id', string='Currency')
     hrx_salary = fields.Monetary(
-        'Salary (Monthly)', currency_field='hrx_currency_id', groups=HR_MANAGER)
+        'Salary (Monthly)', currency_field='hrx_currency_id', groups=G_CEO)
 
     # ---------------- Identity ----------------
-    hrx_aadhaar_no = fields.Char('Aadhaar Number', groups=HR_USER, copy=False)
-    hrx_pan_no = fields.Char('PAN Number', groups=HR_USER, copy=False)
+    hrx_aadhaar_no = fields.Char('Aadhaar Number', groups=G_HR, copy=False)
+    hrx_pan_no = fields.Char('PAN Number', groups=G_HR, copy=False)
 
     # ---------------- Documents ----------------
     hrx_document_ids = fields.One2many(
         'hrx.emp.doc', 'employee_id', string='Joining Documents',
-        domain=[('category', '=', 'joining')], groups=HR_USER)
+        domain=[('category', '=', 'joining')], groups=G_HR)
     hrx_exit_document_ids = fields.One2many(
         'hrx.emp.doc', 'employee_id', string='Exit Documents',
-        domain=[('category', '=', 'exit')], groups=HR_USER)
-    hrx_docs_summary = fields.Char(compute='_compute_hrx_docs_summary', groups=HR_USER)
-    hrx_exit_docs_summary = fields.Char(compute='_compute_hrx_docs_summary', groups=HR_USER)
-    hrx_notes = fields.Text('Other HR Notes', groups=HR_USER)
+        domain=[('category', '=', 'exit')], groups=G_HR)
+    hrx_docs_summary = fields.Char(compute='_compute_hrx_docs_summary', groups=G_HR)
+    hrx_exit_docs_summary = fields.Char(compute='_compute_hrx_docs_summary', groups=G_HR)
+    hrx_notes = fields.Text('Other HR Notes', groups=G_HR)
 
     # ---------------- Lifecycle ----------------
     hrx_event_ids = fields.One2many(
-        'hrx.employee.event', 'employee_id', string='Lifecycle Events', groups=HR_USER)
-    hrx_event_count = fields.Integer(compute='_compute_hrx_event_count', groups=HR_USER)
-    hrx_probation_start = fields.Date('Probation Start', groups=HR_USER, copy=False)
-    hrx_probation_end = fields.Date('Probation End', groups=HR_USER, copy=False)
-    hrx_confirmation_date = fields.Date('Confirmation Date', groups=HR_USER, copy=False)
+        'hrx.employee.event', 'employee_id', string='Lifecycle Events', groups=G_HR)
+    hrx_event_count = fields.Integer(compute='_compute_hrx_event_count', groups=G_HR)
+    hrx_probation_start = fields.Date('Probation Start', groups=G_HR, copy=False)
+    hrx_probation_end = fields.Date('Probation End', groups=G_HR, copy=False)
+    hrx_confirmation_date = fields.Date('Confirmation Date', groups=G_HR, copy=False)
     hrx_probation_state = fields.Selection([
         ('not_set', 'Not Set'),
         ('on_probation', 'On Probation'),
         ('confirmed', 'Confirmed'),
-    ], compute='_compute_hrx_probation_state', string='Probation Status', groups=HR_USER)
+    ], compute='_compute_hrx_probation_state', string='Probation Status', groups=G_HR)
+
+    hrx_discipline_count = fields.Integer(
+        compute='_compute_hrx_discipline_count', groups=G_HR)
+
+    # ---------------- Induction & Training ----------------
+    hrx_induction_ids = fields.One2many(
+        'hrx.employee.induction', 'employee_id', string='Induction & Training', groups=G_HR)
+    hrx_induction_count = fields.Integer(
+        compute='_compute_hrx_induction_count', groups=G_HR)
 
     # ------------------------------------------------------------------
     # Computes
@@ -163,6 +173,8 @@ class HrEmployee(models.Model):
         records = super().create(vals_list)
         records._hrx_add_documents('joining', only_auto=True)
         records.action_hrx_create_joining_events()
+        for emp in records:
+            self.env['hrx.employee.induction'].create_default_induction(emp)
         return records
 
     # ------------------------------------------------------------------
@@ -176,7 +188,7 @@ class HrEmployee(models.Model):
             ('hrx_probation_end', '<=', today + timedelta(days=days)),
             ('hrx_confirmation_date', '=', False),
         ])
-        group = self.env.ref('hr.group_hr_manager').sudo()
+        group = self.env.ref(G_CEO, raise_if_not_found=False) or self.env.ref('hr.group_hr_manager').sudo()
         users = self.env['res.users']
         for fname in ('all_user_ids', 'user_ids', 'users'):
             if fname in group._fields:
@@ -194,3 +206,37 @@ class HrEmployee(models.Model):
                     date_deadline=emp.hrx_probation_end, summary=summary,
                     note=_("Probation of %(name)s ends on %(date)s. Decide on confirmation.",
                            name=emp.name, date=emp.hrx_probation_end))
+
+    def _compute_hrx_discipline_count(self):
+        data = self.env['hrx.discipline.case']._read_group(
+            [('employee_id', 'in', self.ids), ('state', '!=', 'cancelled')],
+            ['employee_id'], ['__count'])
+        counts = {emp.id: count for emp, count in data}
+        for emp in self:
+            emp.hrx_discipline_count = counts.get(emp.id, 0)
+
+    def action_hrx_view_discipline(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _("Discipline Cases"),
+            'res_model': 'hrx.discipline.case',
+            'view_mode': 'list,form',
+            'domain': [('employee_id', '=', self.id)],
+            'context': {'default_employee_id': self.id},
+        }
+
+    def _compute_hrx_induction_count(self):
+        for emp in self:
+            emp.hrx_induction_count = len(emp.hrx_induction_ids)
+
+    def action_hrx_view_induction(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _("Induction & Training"),
+            'res_model': 'hrx.employee.induction',
+            'view_mode': 'list,form',
+            'domain': [('employee_id', '=', self.id)],
+            'context': {'default_employee_id': self.id},
+        }

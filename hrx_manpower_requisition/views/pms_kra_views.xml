@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- KRA FORM -->
+    <record id="view_hrx_pms_kra_form" model="ir.ui.view">
+        <field name="name">hrx.pms.kra.form</field>
+        <field name="model">hrx.pms.kra</field>
+        <field name="arch" type="xml">
+            <form string="Performance KRA">
+                <header>
+                    <button name="action_submit" string="Submit for Approval" type="object" class="btn-primary"
+                            invisible="state != 'draft'"/>
+                    <button name="action_approve" string="Approve (CEO)" type="object" class="btn-primary"
+                            invisible="state != 'submitted'" groups="hrx_manpower_requisition.group_hrx_ceo"/>
+                    <button name="action_start" string="Set Active" type="object" class="btn-primary"
+                            invisible="state != 'approved'" groups="hrx_manpower_requisition.group_hrx_hr"/>
+                    <button name="action_review" string="Record Review" type="object" class="btn-secondary"
+                            invisible="state != 'in_progress'" groups="hrx_manpower_requisition.group_hrx_hr"/>
+                    <button name="action_close" string="Close KRA" type="object"
+                            invisible="state not in ('in_progress', 'reviewed')"
+                            groups="hrx_manpower_requisition.group_hrx_hr,hrx_manpower_requisition.group_hrx_ceo"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,submitted,approved,in_progress,closed"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" placeholder="e.g. Core Product Architecture &amp; Delivery"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="employee_id" options="{'no_create': True}" readonly="state != 'draft'"/>
+                            <field name="department_id"/>
+                            <field name="manager_user_id"/>
+                        </group>
+                        <group>
+                            <field name="period_start" readonly="state != 'draft'"/>
+                            <field name="period_end" readonly="state != 'draft'"/>
+                            <field name="weightage" readonly="state != 'draft'"/>
+                            <field name="completion_rate" widget="progressbar"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                    <group string="Objective &amp; Target Details">
+                        <field name="target_description" nolabel="1" colspan="2" readonly="state != 'draft'"/>
+                    </group>
+                    <notebook>
+                        <page string="KPIs" name="kpis">
+                            <field name="kpi_ids" readonly="state not in ('draft', 'submitted')">
+                                <list editable="bottom">
+                                    <field name="name"/>
+                                    <field name="target_value"/>
+                                    <field name="actual_value"/>
+                                    <field name="uom"/>
+                                    <field name="score" widget="progressbar"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Weekly Reports" name="weekly_reports">
+                            <field name="weekly_report_ids">
+                                <list>
+                                    <field name="week_start_date"/>
+                                    <field name="week_end_date"/>
+                                    <field name="progress_percentage" widget="progressbar"/>
+                                    <field name="achievements"/>
+                                    <field name="state" widget="badge"
+                                           decoration-info="state == 'draft'"
+                                           decoration-success="state == 'reviewed'"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Performance Assessment &amp; Feedback" name="review">
+                            <group>
+                                <field name="monthly_rating"/>
+                                <field name="performance_feedback"/>
+                                <field name="improvement_plan"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- KRA LIST -->
+    <record id="view_hrx_pms_kra_list" model="ir.ui.view">
+        <field name="name">hrx.pms.kra.list</field>
+        <field name="model">hrx.pms.kra</field>
+        <field name="arch" type="xml">
+            <list string="KRAs &amp; Goals">
+                <field name="name"/>
+                <field name="employee_id"/>
+                <field name="department_id"/>
+                <field name="period_start"/>
+                <field name="period_end"/>
+                <field name="weightage"/>
+                <field name="completion_rate" widget="progressbar"/>
+                <field name="monthly_rating" optional="show"/>
+                <field name="state" widget="badge"
+                       decoration-info="state in ('submitted', 'approved')"
+                       decoration-success="state in ('in_progress', 'closed')"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- KRA SEARCH -->
+    <record id="view_hrx_pms_kra_search" model="ir.ui.view">
+        <field name="name">hrx.pms.kra.search</field>
+        <field name="model">hrx.pms.kra</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="employee_id"/>
+                <field name="department_id"/>
+                <filter name="my_kras" string="My KRAs" domain="[('employee_id.user_id', '=', uid)]"/>
+                <filter name="active_kras" string="Active" domain="[('state', '=', 'in_progress')]"/>
+                <group>
+                    <filter name="group_emp" string="Employee" context="{'group_by': 'employee_id'}"/>
+                    <filter name="group_dept" string="Department" context="{'group_by': 'department_id'}"/>
+                    <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- WEEKLY REPORT FORM -->
+    <record id="view_hrx_pms_weekly_report_form" model="ir.ui.view">
+        <field name="name">hrx.pms.weekly.report.form</field>
+        <field name="model">hrx.pms.weekly.report</field>
+        <field name="arch" type="xml">
+            <form string="Weekly KRA Report">
+                <header>
+                    <button name="action_submit" string="Submit Report" type="object" class="btn-primary"
+                            invisible="state != 'draft'"/>
+                    <button name="action_review" string="Mark Reviewed" type="object" class="btn-primary"
+                            invisible="state != 'submitted'" groups="hrx_manpower_requisition.group_hrx_hr"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,submitted,reviewed"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="kra_id" options="{'no_create': True}" readonly="state != 'draft'"/>
+                            <field name="employee_id"/>
+                        </group>
+                        <group>
+                            <field name="week_start_date" readonly="state != 'draft'"/>
+                            <field name="week_end_date" readonly="state != 'draft'"/>
+                            <field name="progress_percentage" readonly="state != 'draft'"/>
+                        </group>
+                    </group>
+                    <group string="Key Achievements">
+                        <field name="achievements" nolabel="1" colspan="2" readonly="state != 'draft'"/>
+                    </group>
+                    <group string="Challenges &amp; Blockers">
+                        <field name="challenges" nolabel="1" colspan="2" readonly="state != 'draft'"/>
+                    </group>
+                    <group string="Plan for Next Week">
+                        <field name="plan_next_week" nolabel="1" colspan="2" readonly="state != 'draft'"/>
+                    </group>
+                    <group string="Reviewer &amp; HR Feedback">
+                        <field name="manager_feedback" nolabel="1" colspan="2"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- WEEKLY REPORT LIST -->
+    <record id="view_hrx_pms_weekly_report_list" model="ir.ui.view">
+        <field name="name">hrx.pms.weekly.report.list</field>
+        <field name="model">hrx.pms.weekly.report</field>
+        <field name="arch" type="xml">
+            <list string="Weekly Reports">
+                <field name="employee_id"/>
+                <field name="kra_id"/>
+                <field name="week_start_date"/>
+                <field name="week_end_date"/>
+                <field name="progress_percentage" widget="progressbar"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'draft'"
+                       decoration-warning="state == 'submitted'"
+                       decoration-success="state == 'reviewed'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ACTIONS -->
+    <record id="action_hrx_pms_kra_my" model="ir.actions.act_window">
+        <field name="name">My KRAs</field>
+        <field name="res_model">hrx.pms.kra</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('employee_id.user_id', '=', uid)]</field>
+    </record>
+
+    <record id="action_hrx_pms_kra_all" model="ir.actions.act_window">
+        <field name="name">All KRAs</field>
+        <field name="res_model">hrx.pms.kra</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="action_hrx_pms_weekly_my" model="ir.actions.act_window">
+        <field name="name">My Weekly Reports</field>
+        <field name="res_model">hrx.pms.weekly.report</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('employee_id.user_id', '=', uid)]</field>
+    </record>
+
+    <record id="action_hrx_pms_weekly_all" model="ir.actions.act_window">
+        <field name="name">All Weekly Reports</field>
+        <field name="res_model">hrx.pms.weekly.report</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

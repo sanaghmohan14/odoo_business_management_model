@@ -8,4 +8,9 @@ from . import employee_event
 from . import attendance_request
 from . import attendance_month
 from . import hr_leave_type
-
+from . import discipline_case
+from . import employee_induction
+from . import pms_kra
+from . import employee_request
+from . import hr_task
+from . import process_improvement

@@ -6,17 +6,27 @@
         <field name="inherit_id" ref="hr.view_employee_form"/>
         <field name="arch" type="xml">
 
-            <!-- Events smart button -->
+            <!-- Smart buttons -->
             <xpath expr="//div[@name='button_box']" position="inside">
                 <button name="action_hrx_view_events" type="object" class="oe_stat_button"
-                        icon="fa-history" groups="hr.group_hr_user">
+                        icon="fa-history" groups="hrx_manpower_requisition.group_hrx_hr">
                     <field name="hrx_event_count" widget="statinfo" string="Events"/>
+                </button>
+
+                <button name="action_hrx_view_discipline" type="object" class="oe_stat_button"
+                        icon="fa-gavel" groups="hrx_manpower_requisition.group_hrx_hr">
+                    <field name="hrx_discipline_count" widget="statinfo" string="Discipline"/>
+                </button>
+
+                <button name="action_hrx_view_induction" type="object" class="oe_stat_button"
+                        icon="fa-graduation-cap" groups="hrx_manpower_requisition.group_hrx_hr">
+                    <field name="hrx_induction_count" widget="statinfo" string="Induction"/>
                 </button>
             </xpath>
 
             <xpath expr="//notebook" position="inside">
                 <!-- HR Details page -->
-                <page string="HR Details" name="hrx_details" groups="hr.group_hr_user">
+                <page string="HR Details" name="hrx_details" groups="hrx_manpower_requisition.group_hrx_hr">
                     <group>
                         <group string="Pre-Joining">
                             <field name="hrx_offer_accepted_date"/>
@@ -28,7 +38,7 @@
                             <field name="hrx_pan_no" placeholder="ABCDE1234F"/>
                         </group>
                     </group>
-                    <group string="Salary" groups="hr.group_hr_manager">
+                    <group string="Salary (Authorized Only)" groups="hrx_manpower_requisition.group_hrx_ceo">
                         <field name="hrx_currency_id" invisible="1"/>
                         <field name="hrx_salary"/>
                     </group>
@@ -52,9 +62,9 @@
                                    decoration-danger="state == 'rejected'"/>
                             <field name="remarks"/>
                             <button name="action_verify" type="object" icon="fa-check"
-                                    title="Verify" invisible="state == 'verified' or not file"/>
+                                     title="Verify" invisible="state == 'verified' or not file"/>
                             <button name="action_reject" type="object" icon="fa-times"
-                                    title="Reject" invisible="state == 'rejected' or not file"/>
+                                     title="Reject" invisible="state == 'rejected' or not file"/>
                         </list>
                     </field>
 
@@ -77,9 +87,9 @@
                                    decoration-danger="state == 'rejected'"/>
                             <field name="remarks"/>
                             <button name="action_verify" type="object" icon="fa-check"
-                                    title="Verify" invisible="state == 'verified' or not file"/>
+                                     title="Verify" invisible="state == 'verified' or not file"/>
                             <button name="action_reject" type="object" icon="fa-times"
-                                    title="Reject" invisible="state == 'rejected' or not file"/>
+                                     title="Reject" invisible="state == 'rejected' or not file"/>
                         </list>
                     </field>
 
@@ -87,8 +97,25 @@
                     <field name="hrx_notes" placeholder="Any other HR details..."/>
                 </page>
 
+                <!-- Induction & Training page -->
+                <page string="Induction &amp; Training" name="hrx_induction" groups="hrx_manpower_requisition.group_hrx_hr">
+                    <field name="hrx_induction_ids" context="{'default_employee_id': id}">
+                        <list editable="bottom">
+                            <field name="category"/>
+                            <field name="name"/>
+                            <field name="responsible_id"/>
+                            <field name="date_scheduled"/>
+                            <field name="completion_date"/>
+                            <field name="employee_acknowledged" widget="boolean"/>
+                            <field name="state" widget="badge"
+                                   decoration-info="state == 'in_progress'"
+                                   decoration-success="state == 'completed'"/>
+                        </list>
+                    </field>
+                </page>
+
                 <!-- Lifecycle page -->
-                <page string="Lifecycle" name="hrx_lifecycle" groups="hr.group_hr_user">
+                <page string="Lifecycle" name="hrx_lifecycle" groups="hrx_manpower_requisition.group_hrx_hr">
                     <group string="Probation and Confirmation">
                         <group>
                             <field name="hrx_probation_state"/>

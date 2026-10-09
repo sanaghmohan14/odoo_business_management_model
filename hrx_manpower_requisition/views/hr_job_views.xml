@@ -7,7 +7,7 @@
         <field name="arch" type="xml">
             <xpath expr="//sheet" position="inside">
                 <group string="Manpower Requisitions"
-                       groups="hrx_manpower_requisition.group_mpr_hr_exec,hrx_manpower_requisition.group_mpr_management">
+                       groups="hrx_manpower_requisition.group_hrx_hr,hrx_manpower_requisition.group_hrx_ceo">
                     <field name="hrx_requisition_ids" nolabel="1" colspan="2">
                         <list>
                             <field name="name"/>

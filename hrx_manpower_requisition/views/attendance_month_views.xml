@@ -11,10 +11,11 @@
                             class="btn-primary" invisible="state == 'finalized'"/>
                     <button name="action_finalize" string="Finalize Month" type="object"
                             class="btn-primary" invisible="state != 'computed'"
-                            groups="hr.group_hr_manager"
+                            groups="hrx_manpower_requisition.group_hrx_hr,hrx_manpower_requisition.group_hrx_ceo"
                             confirm="Finalizing locks the month for payroll. Continue?"/>
                     <button name="action_reopen" string="Reopen" type="object"
-                            invisible="state != 'finalized'" groups="hr.group_hr_manager"/>
+                            invisible="state != 'finalized'"
+                            groups="hrx_manpower_requisition.group_hrx_hr,hrx_manpower_requisition.group_hrx_ceo"/>
                     <field name="state" widget="statusbar"/>
                 </header>
                 <sheet>

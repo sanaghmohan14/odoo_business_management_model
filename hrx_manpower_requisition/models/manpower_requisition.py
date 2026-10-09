@@ -5,9 +5,9 @@ from odoo.exceptions import AccessError, UserError, ValidationError
 
 
 MOD = 'hrx_manpower_requisition'
-G_HEAD = f'{MOD}.group_mpr_dept_head'
-G_HR = f'{MOD}.group_mpr_hr_exec'
-G_MGMT = f'{MOD}.group_mpr_management'
+G_EMP = 'base.group_user'
+G_HR = f'{MOD}.group_hrx_hr'
+G_CEO = f'{MOD}.group_hrx_ceo'
 
 
 class ManpowerRequisition(models.Model):
@@ -108,23 +108,18 @@ class ManpowerRequisition(models.Model):
 
     @api.constrains('department_id')
     def _check_head_department(self):
-        """A department head may only raise requests for the department they manage."""
-        if self._is_head_only():
-            for rec in self:
-                if rec.department_id.sudo().manager_id.user_id.id != self.env.user.id:
-                    raise ValidationError(
-                        _("You can only raise requisitions for the department you head."))
+        """Employees can raise manpower requisitions for any department, or HR reviews."""
+        pass
 
     # ------------------------------------------------------------------
     # Helpers
     # ------------------------------------------------------------------
-    def _is_head_only(self):
+    def _is_employee_only(self):
         user = self.env.user
         return (
             not self.env.su
-            and user.has_group(G_HEAD)
             and not user.has_group(G_HR)
-            and not user.has_group(G_MGMT)
+            and not user.has_group(G_CEO)
             and not user.has_group('base.group_system')
         )
 
@@ -139,7 +134,10 @@ class ManpowerRequisition(models.Model):
         return self.with_context(wf_write=True).write(vals)
 
     def _notify_group(self, xmlid, summary):
-        group = self.env.ref(xmlid).sudo()
+        group = self.env.ref(xmlid, raise_if_not_found=False)
+        if not group:
+            return
+        group = group.sudo()
         users = self.env['res.users']
         for fname in ('all_user_ids', 'user_ids', 'users'):
             if fname in group._fields:
@@ -172,7 +170,7 @@ class ManpowerRequisition(models.Model):
         return super().create(vals_list)
 
     def write(self, vals):
-        if self._is_head_only() and not self.env.context.get('wf_write'):
+        if self._is_employee_only() and not self.env.context.get('wf_write'):
             if any(rec.state != 'draft' for rec in self):
                 raise UserError(_("Only draft requisitions can be edited."))
         return super().write(vals)
@@ -186,7 +184,7 @@ class ManpowerRequisition(models.Model):
     # Workflow
     # ------------------------------------------------------------------
     def action_submit(self):
-        self._require(G_HEAD, G_HR)
+        self._require(G_EMP, G_HR)
         for rec in self:
             if rec.state != 'draft':
                 raise UserError(_("Only draft requisitions can be submitted."))
@@ -215,11 +213,11 @@ class ManpowerRequisition(models.Model):
                                   ", ".join(missing)))
         self._close_activities()
         self._wf_write({'state': 'pending_approval'})
-        self._notify_group(G_MGMT, _("Approve manpower requisition"))
+        self._notify_group(G_CEO, _("Approve manpower requisition"))
         return True
 
     def action_approve(self):
-        self._require(G_MGMT)
+        self._require(G_CEO)
         for rec in self:
             if rec.state != 'pending_approval':
                 raise UserError(_("Only requisitions pending approval can be approved."))
@@ -250,7 +248,7 @@ class ManpowerRequisition(models.Model):
             if rec.state == 'submitted':
                 rec._require(G_HR)
             elif rec.state == 'pending_approval':
-                rec._require(G_MGMT)
+                rec._require(G_CEO)
             else:
                 raise UserError(_("This requisition cannot be rejected in its current state."))
         self._close_activities()
@@ -263,7 +261,7 @@ class ManpowerRequisition(models.Model):
         self._notify_requester(_("Your manpower requisition was rejected. Reason: %s", reason))
 
     def action_reset_draft(self):
-        self._require(G_HEAD, G_HR)
+        self._require(G_EMP, G_HR)
         for rec in self:
             if rec.state != 'rejected':
                 raise UserError(_("Only rejected requisitions can be reset to draft."))
