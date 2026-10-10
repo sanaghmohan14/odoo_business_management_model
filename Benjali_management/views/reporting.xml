@@ -2,6 +2,9 @@
 
 <odoo>
 
+    <!-- Shared application root menu. It must be loaded before reporting menus. -->
+    <menuitem id="benjali_project_root" name="Business Consulting"/>
+
     <!-- Reporting Root Menu -->
 
     <menuitem

@@ -4,7 +4,7 @@
 
     <t t-name="BenjaliManagement.Dashboard">
 
-        <div class="benjali_dashboard">
+        <div t-att-class="'benjali_dashboard ' + (state.theme === 'dark' ? 'dashboard_dark' : 'dashboard_light')">
 
 
             <!-- HEADER -->
@@ -33,6 +33,18 @@
 
 
                 <div class="dashboard_filters">
+
+                    <button
+                        type="button"
+                        class="dashboard_theme_toggle"
+                        t-on-click="toggleTheme"
+                        t-att-title="state.theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'"
+                    >
+                        <i t-att-class="state.theme === 'dark' ? 'fa fa-sun-o' : 'fa fa-moon-o'"/>
+                        <span>
+                            <t t-esc="state.theme === 'dark' ? 'Light mode' : 'Dark mode'"/>
+                        </span>
+                    </button>
 
                     <div class="filter_box">
 

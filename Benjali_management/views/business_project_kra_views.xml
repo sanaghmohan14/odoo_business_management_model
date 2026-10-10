@@ -13,6 +13,102 @@
         <field name="context">{'search_default_group_frequency': 1}</field>
     </record>
 
+    <record id="business_project_kpi_action" model="ir.actions.act_window">
+        <field name="name">KPI Definitions</field>
+        <field name="res_model">business.project.kpi</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_group_employee': 1}</field>
+    </record>
+
+    <record id="business_project_kpi_list" model="ir.ui.view">
+        <field name="name">business.project.kpi.list</field>
+        <field name="model">business.project.kpi</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="kra_id"/>
+                <field name="project_id"/>
+                <field name="department_id"/>
+                <field name="employee_id"/>
+                <field name="measurement_type"/>
+                <field name="frequency"/>
+                <field name="target"/>
+                <field name="achievement"/>
+                <field name="performance_percentage" widget="progressbar"/>
+                <field name="weighted_contribution" widget="progressbar"/>
+                <field name="active" column_invisible="True"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="business_project_kpi_form" model="ir.ui.view">
+        <field name="name">business.project.kpi.form</field>
+        <field name="model">business.project.kpi</field>
+        <field name="arch" type="xml">
+            <form string="KPI Definition">
+                <sheet>
+                    <div class="oe_title"><h1><field name="name"/></h1></div>
+                    <group>
+                        <group string="Scope">
+                            <field name="kra_id"/>
+                            <field name="project_id"/>
+                            <field name="department_id"/>
+                            <field name="employee_id"/>
+                        </group>
+                        <group string="Measurement">
+                            <field name="code"/>
+                            <field name="measurement_type"/>
+                            <field name="frequency"/>
+                            <field name="target"/>
+                            <field name="unit"/>
+                            <field name="weight" string="Weightage (%)"/>
+                        </group>
+                    </group>
+                    <group string="Result">
+                        <field name="entry_count"/>
+                        <field name="achievement"/>
+                        <field name="performance_percentage" widget="progressbar"/>
+                        <field name="weighted_contribution" widget="progressbar"/>
+                    </group>
+                    <field name="description"/>
+                    <notebook>
+                        <page string="Performance Entries">
+                            <field name="entry_ids">
+                                <list editable="bottom">
+                                    <field name="date"/>
+                                    <field name="period_type"/>
+                                    <field name="task_id"/>
+                                    <field name="employee_id"/>
+                                    <field name="achievement"/>
+                                    <field name="progress_percentage" widget="progressbar"/>
+                                    <field name="state"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="business_project_kpi_search" model="ir.ui.view">
+        <field name="name">business.project.kpi.search</field>
+        <field name="model">business.project.kpi</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="kra_id"/>
+                <field name="project_id"/>
+                <field name="department_id"/>
+                <field name="employee_id"/>
+                <filter name="group_project" string="Project" context="{'group_by': 'project_id'}"/>
+                <filter name="group_department" string="Department" context="{'group_by': 'department_id'}"/>
+                <filter name="group_employee" string="Employee" context="{'group_by': 'employee_id'}"/>
+                <filter name="group_frequency" string="Frequency" context="{'group_by': 'frequency'}"/>
+            </search>
+        </field>
+    </record>
+
     <record id="business_project_kra_list" model="ir.ui.view">
         <field name="name">business.project.kra.list</field>
         <field name="model">business.project.kra</field>
@@ -23,11 +119,13 @@
                 <field name="project_id"/>
                 <field name="department_id"/>
                 <field name="user_id"/>
+                <field name="employee_ids" widget="many2many_tags"/>
                 <field name="kpi"/>
                 <field name="target"/>
                 <field name="unit"/>
                 <field name="achievement"/>
                 <field name="progress_percentage" widget="progressbar"/>
+                <field name="task_completion_percentage" widget="progressbar"/>
                 <field name="state"/>
                 <field name="active" column_invisible="True"/>
             </list>
@@ -60,6 +158,7 @@
                             <field name="department_id"/>
                             <field name="user_id"/>
                             <field name="manager_id"/>
+                            <field name="employee_ids" widget="many2many_tags"/>
                         </group>
                         <group string="Target">
                             <field name="kpi"/>
@@ -77,9 +176,16 @@
                     </group>
                     <group string="Performance" col="4">
                         <field name="entry_count"/>
+                        <field name="task_count"/>
+                        <field name="completed_task_count"/>
+                        <field name="pending_task_count"/>
+                        <field name="on_hold_task_count"/>
                         <field name="target"/>
                         <field name="achievement"/>
                         <field name="progress_percentage" widget="progressbar"/>
+                        <field name="task_completion_percentage" widget="progressbar"/>
+                        <field name="kpi_weight_total" string="Total KPI Weightage (%)"/>
+                        <field name="weighted_kpi_score" widget="progressbar"/>
                     </group>
                     <notebook>
                         <page string="Description">
@@ -97,6 +203,30 @@
                                     <field name="progress_percentage" widget="progressbar"/>
                                     <field name="state"/>
                                     <field name="notes"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="KPI Definitions">
+                            <field name="kpi_ids">
+                                <list editable="bottom">
+                                    <field name="name"/>
+                                    <field name="employee_id"/>
+                                    <field name="measurement_type"/>
+                                    <field name="frequency"/>
+                                    <field name="target"/>
+                                    <field name="unit"/>
+                                    <field name="weight" string="Weightage (%)"/>
+                                    <field name="weighted_contribution" widget="progressbar"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Project Tasks">
+                            <field name="task_ids">
+                                <list editable="bottom">
+                                    <field name="name"/>
+                                    <field name="assigned_employee_id"/>
+                                    <field name="performance_status"/>
+                                    <field name="stage_id"/>
                                 </list>
                             </field>
                         </page>
@@ -173,13 +303,17 @@
                 <field name="week_start"/>
                 <field name="month_start"/>
                 <field name="kra_id"/>
+                <field name="kpi_id"/>
+                <field name="task_id"/>
                 <field name="project_id"/>
                 <field name="department_id"/>
-                <field name="user_id"/>
+                <field name="employee_id"/>
+                <field name="period_type"/>
                 <field name="frequency"/>
                 <field name="target"/>
                 <field name="achievement"/>
                 <field name="progress_percentage" widget="progressbar"/>
+                <field name="task_status"/>
                 <field name="state"/>
             </list>
         </field>
@@ -237,15 +371,20 @@
                     <group>
                         <group>
                             <field name="kra_id"/>
+                            <field name="kpi_id" domain="[('kra_id', '=', kra_id)]"/>
+                            <field name="task_id" domain="[('kra_id', '=', kra_id)]"/>
                             <field name="project_id"/>
                             <field name="department_id"/>
-                            <field name="user_id"/>
+                            <field name="employee_id"/>
                         </group>
                         <group>
                             <field name="date"/>
+                            <field name="period_type"/>
                             <field name="target"/>
                             <field name="achievement"/>
                             <field name="unit"/>
+                            <field name="task_status"/>
+                            <field name="completion_date"/>
                         </group>
                     </group>
                     <group string="Calculated Performance">
@@ -268,10 +407,14 @@
             <search string="KRA Performance">
                 <field name="date"/>
                 <field name="kra_id"/>
+                <field name="kpi_id"/>
+                <field name="task_id"/>
                 <field name="project_id"/>
                 <field name="department_id"/>
-                <field name="user_id"/>
+                <field name="employee_id"/>
+                <field name="period_type"/>
                 <field name="state"/>
+                <field name="task_status"/>
                 <filter name="today" string="Today" domain="[('date', '=', context_today())]"/>
                 <filter name="this_week" string="This Week" domain="[('week_start', '=', context_today().strftime('%%Y-%%m-%%d'))]"/>
                 <filter name="this_month" string="This Month" domain="[('month_start', '=', context_today().replace(day=1).strftime('%%Y-%%m-%%d'))]"/>
@@ -284,8 +427,12 @@
                 <filter name="group_user" string="Responsible User" context="{'group_by': 'user_id'}"/>
                 <filter name="group_project" string="Business Project" context="{'group_by': 'project_id'}"/>
                 <filter name="group_kra" string="KRA" context="{'group_by': 'kra_id'}"/>
+                <filter name="group_kpi" string="KPI" context="{'group_by': 'kpi_id'}"/>
+                <filter name="group_task" string="Task" context="{'group_by': 'task_id'}"/>
+                <filter name="group_period" string="Performance Period" context="{'group_by': 'period_type'}"/>
                 <filter name="group_frequency" string="Frequency" context="{'group_by': 'frequency'}"/>
                 <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
+                <filter name="group_task_status" string="Task Status" context="{'group_by': 'task_status'}"/>
             </search>
         </field>
     </record>

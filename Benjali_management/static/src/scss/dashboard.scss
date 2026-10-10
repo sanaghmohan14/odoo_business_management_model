@@ -1126,3 +1126,102 @@
             #99f6e4
         );
 }
+
+
+/* ========================================================= */
+/* THEME TOGGLE */
+/* ========================================================= */
+
+.dashboard_theme_toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 10px 13px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #334155;
+    cursor: pointer;
+    font-size: 13px;
+    box-shadow: 0 3px 12px rgba(15, 23, 42, 0.05);
+}
+
+.dashboard_theme_toggle:hover {
+    background: #f8fafc;
+}
+
+.dashboard_dark {
+    background: linear-gradient(135deg, #0f172a 0%, #111827 50%, #172554 100%);
+}
+
+.dashboard_dark .dashboard_title h1,
+.dashboard_dark .card_header span,
+.dashboard_dark .kpi_information strong,
+.dashboard_dark .donut_center strong,
+.dashboard_dark .bar_value,
+.dashboard_dark .pipeline_item strong,
+.dashboard_dark .phase_name strong,
+.dashboard_dark .legend_item strong,
+.dashboard_dark .mini_kpi strong {
+    color: #f8fafc;
+}
+
+.dashboard_dark .dashboard_title p,
+.dashboard_dark .kpi_information span,
+.dashboard_dark .kpi_information small,
+.dashboard_dark .legend_item,
+.dashboard_dark .donut_center span,
+.dashboard_dark .bar_label,
+.dashboard_dark .pipeline_name,
+.dashboard_dark .phase_name,
+.dashboard_dark .mini_kpi span {
+    color: #cbd5e1;
+}
+
+.dashboard_dark .dashboard_theme_toggle,
+.dashboard_dark .filter_box,
+.dashboard_dark .dashboard_card,
+.dashboard_dark .dashboard_error {
+    background: #1e293b;
+    border-color: #334155;
+    color: #e2e8f0;
+}
+
+.dashboard_dark .dashboard_theme_toggle:hover,
+.dashboard_dark .pipeline_item:hover {
+    background: #334155;
+}
+
+.dashboard_dark .filter_box select {
+    color: #e2e8f0;
+}
+
+.dashboard_dark .filter_box select option {
+    background: #1e293b;
+    color: #e2e8f0;
+}
+
+.dashboard_dark .donut_chart::after {
+    background: #1e293b;
+}
+
+.dashboard_dark .bar_chart {
+    border-bottom-color: #334155;
+}
+
+.dashboard_dark .pipeline_bar,
+.dashboard_dark .phase_track {
+    background: #334155;
+}
+
+.dashboard_dark .stage_badge {
+    background: #312e81;
+    color: #c4b5fd;
+}
+
+.dashboard_dark .blue_light,
+.dashboard_dark .green_light,
+.dashboard_dark .purple_light,
+.dashboard_dark .orange_light {
+    background: #263449;
+}

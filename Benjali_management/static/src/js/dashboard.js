@@ -26,11 +26,17 @@ export class BenjaliDashboard extends Component {
 
             // false means All Departments
             departmentId: false,
+            theme: window.localStorage.getItem("benjali_dashboard_theme") || "light",
         });
 
         onWillStart(async () => {
             await this.loadDashboardData();
         });
+    }
+
+    toggleTheme() {
+        this.state.theme = this.state.theme === "dark" ? "light" : "dark";
+        window.localStorage.setItem("benjali_dashboard_theme", this.state.theme);
     }
 
     // LOAD DASHBOARD
