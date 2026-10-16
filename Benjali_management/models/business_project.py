@@ -574,9 +574,9 @@ class BusinessProject(models.Model):
                         )
         return super().write(vals)
 
-    # ---------------------------------------------------------
+
     # NEXT STAGE
-    # ---------------------------------------------------------
+
 
     def action_next_stage(self):
         for record in self:
@@ -806,9 +806,9 @@ class BusinessProject(models.Model):
 
         return True
 
-    # ---------------------------------------------------------
+
     # CANCEL
-    # ---------------------------------------------------------
+
 
     def action_cancel(self):
 

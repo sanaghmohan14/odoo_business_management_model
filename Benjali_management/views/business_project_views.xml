@@ -90,7 +90,7 @@
                             invisible="is_on_hold or is_cancelled or is_completed"/>
 
                     <button name="action_hold"
-                            string="Put On Hold"
+                            string="Hold"
                             type="object"
                             class="btn-secondary"
                             icon="fa-pause"
