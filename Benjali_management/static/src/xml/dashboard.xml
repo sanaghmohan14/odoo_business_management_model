@@ -52,6 +52,7 @@
 
     <select
         t-if="state.data"
+        t-att-value="state.departmentId || ''"
         t-on-change="onDepartmentChange"
     >
 
@@ -583,7 +584,7 @@
                                 <i class="fa fa-bullseye purple_icon"/>
 
                                 <span>
-                                    KRA Overview
+                                    Department KRA &amp; KPI
                                 </span>
 
                             </div>
@@ -628,16 +629,16 @@
                             </div>
 
 
-                            <div class="mini_kpi purple_light">
+                            <div class="mini_kpi purple_light" t-on-click="openKpis">
 
                                 <i class="fa fa-link"/>
 
                                 <span>
-                                    Projects With KRAs
+                                    KPI Definitions
                                 </span>
 
                                 <strong>
-                                    <t t-esc="state.data.kra.projects_with_kra"/>
+                                    <t t-esc="state.data.kra.total_kpis || 0"/>
                                 </strong>
 
                             </div>
@@ -650,7 +651,7 @@
                                 </strong>
                             </div>
 
-                            <div class="mini_kpi green_light">
+                            <div class="mini_kpi green_light" t-on-click="openKraEntries">
                                 <i class="fa fa-calendar-check-o"/>
                                 <span>Entries</span>
                                 <strong>

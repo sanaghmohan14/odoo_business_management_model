@@ -2,11 +2,6 @@
 
 <odoo>
 
-
-    <!-- =========================
-         ONBOARDING & PROJECT INITIATION
-    ========================== -->
-
     <record id="stage_client_onboarding" model="business.project.stage">
         <field name="name">Client Onboarding</field>
         <field name="sequence">70</field>
@@ -20,7 +15,7 @@
 
 
     <record id="stage_project_creation" model="business.project.stage">
-        <field name="name">Project Creation</field>
+        <field name="name">Project Creation/Client connection</field>
         <field name="sequence">80</field>
         <field name="phase">onboarding</field>
         <field name="responsible_role">Project Manager</field>

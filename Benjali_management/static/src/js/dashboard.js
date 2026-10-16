@@ -34,6 +34,57 @@ export class BenjaliDashboard extends Component {
         });
     }
 
+    async openKpis() {
+        const domain = [];
+        if (this.state.departmentId) {
+            domain.push([
+                "department_id",
+                "=",
+                this.state.departmentId,
+            ]);
+        }
+        await this.action.doAction({
+            type: "ir.actions.act_window",
+            name: "Department KPIs",
+            res_model: "business.project.kpi",
+            views: [
+                [false, "list"],
+                [false, "form"],
+            ],
+            domain: domain,
+            context: {
+                default_department_id: this.state.departmentId || false,
+            },
+        });
+    }
+
+    async openKraEntries() {
+        const domain = [];
+        if (this.state.departmentId) {
+            domain.push([
+                "department_id",
+                "=",
+                this.state.departmentId,
+            ]);
+        }
+        await this.action.doAction({
+            type: "ir.actions.act_window",
+            name: "Performance Entries",
+            res_model: "business.project.kra.entry",
+            views: [
+                [false, "list"],
+                [false, "kanban"],
+                [false, "pivot"],
+                [false, "graph"],
+                [false, "form"],
+            ],
+            domain: domain,
+            context: {
+                default_department_id: this.state.departmentId || false,
+            },
+        });
+    }
+
     toggleTheme() {
         this.state.theme = this.state.theme === "dark" ? "light" : "dark";
         window.localStorage.setItem("benjali_dashboard_theme", this.state.theme);
@@ -91,10 +142,10 @@ export class BenjaliDashboard extends Component {
 
     async onDepartmentChange(event) {
 
-        const selectedValue = event.currentTarget.value;
+        const selectedValue = event.target ? event.target.value : event.currentTarget.value;
 
         this.state.departmentId = selectedValue
-            ? Number(selectedValue)
+            ? parseInt(selectedValue, 10)
             : false;
 
         console.log(
@@ -310,6 +361,10 @@ export class BenjaliDashboard extends Component {
             ],
 
             domain: domain,
+            context: {
+                active_test: false,
+                default_department_id: this.state.departmentId || false,
+            },
         });
     }
 
@@ -351,6 +406,7 @@ export class BenjaliDashboard extends Component {
             domain: domain,
             context: {
                 active_test: false,
+                default_department_id: this.state.departmentId || false,
             },
         });
     }
@@ -390,6 +446,9 @@ export class BenjaliDashboard extends Component {
             ],
 
             domain: domain,
+            context: {
+                default_department_id: this.state.departmentId || false,
+            },
         });
     }
 
@@ -405,7 +464,7 @@ export class BenjaliDashboard extends Component {
         if (this.state.departmentId) {
 
             domain.push([
-                "project_id.department_id",
+                "department_id",
                 "=",
                 this.state.departmentId,
             ]);

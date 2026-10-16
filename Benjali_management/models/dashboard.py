@@ -1,15 +1,24 @@
-from odoo import models
+from odoo import api, models
 
 
 class BenjaliManagementDashboard(models.AbstractModel):
     _name = 'benjali.management.dashboard'
     _description = 'Benjali Management Dashboard'
 
-    def get_dashboard_data(self, department_id=False):
+    @api.model
+    def get_dashboard_data(self, *args, **kwargs):
 
         # The dashboard calls this method from JavaScript. Normalize the
         # value before building domains so the selected department is always
         # treated as an integer record ID.
+        department_id = False
+        if args:
+            department_id = args[0]
+        elif 'department_id' in kwargs:
+            department_id = kwargs['department_id']
+        elif self.ids:
+            department_id = self.ids[0]
+
         try:
             department_id = int(department_id) if department_id else False
         except (TypeError, ValueError):
@@ -211,7 +220,7 @@ class BenjaliManagementDashboard(models.AbstractModel):
 
         if department_id:
             kra_domain.append(
-                ('project_id.department_id', '=', department_id)
+                ('department_id', '=', department_id)
             )
 
         total_kras = KRA.search_count(kra_domain)
@@ -234,9 +243,12 @@ class BenjaliManagementDashboard(models.AbstractModel):
             if kra_records else 0.0
         )
         kra_entries = self.env['business.project.kra.entry']
-        total_kra_entries = kra_entries.search_count([
-            ('kra_id', 'in', kra_records.ids)
-        ])
+        entry_domain = [('department_id', '=', department_id)] if department_id else []
+        total_kra_entries = kra_entries.search_count(entry_domain)
+
+        KPI = self.env['business.project.kpi']
+        kpi_domain = [('department_id', '=', department_id)] if department_id else []
+        total_kpis = KPI.search_count(kpi_domain)
 
         # ACTIVITIES
 
@@ -472,6 +484,7 @@ class BenjaliManagementDashboard(models.AbstractModel):
                 'projects_with_kra': projects_with_kra,
                 'entries': total_kra_entries,
                 'average_performance': kra_average_performance,
+                'total_kpis': total_kpis,
             },
 
             'activities': {
