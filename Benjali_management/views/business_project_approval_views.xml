@@ -106,6 +106,18 @@
                        decoration-danger="state == 'rejected'"
                        decoration-success="state ==  'approved'"
                        decoration-warning="state == 'pending'"/>
+                <button name="action_approve"
+                        string="Approve"
+                        type="object"
+                        class="btn-success btn-sm"
+                        icon="fa-check"
+                        invisible="state != 'pending'"/>
+                <button name="action_reject"
+                        string="Reject"
+                        type="object"
+                        class="btn-danger btn-sm"
+                        icon="fa-times"
+                        invisible="state != 'pending'"/>
             </list>
         </field>
     </record>

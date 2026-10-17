@@ -1,4 +1,4 @@
-from odoo import models, fields
+from odoo import models, fields, api
 
 
 class BusinessProjectStage(models.Model):
@@ -55,12 +55,24 @@ class BusinessProjectStage(models.Model):
     )
 
     approval_type = fields.Selection([
-        ('proposal', 'Proposal Approval'),
         ('management_review', 'Management Review'),
         ('kra', 'KRA Approval'),
         ('activity_plan', 'Activity Plan Approval'),
         ('other', 'Other'),
     ], string='Approval Type')
+
+    @api.onchange('requires_approval', 'name')
+    def _onchange_requires_approval(self):
+        if self.requires_approval and not self.approval_type:
+            name_lower = (self.name or '').lower()
+            if 'management' in name_lower or 'review' in name_lower:
+                self.approval_type = 'management_review'
+            elif 'kra' in name_lower:
+                self.approval_type = 'kra'
+            elif 'activity' in name_lower:
+                self.approval_type = 'activity_plan'
+            else:
+                self.approval_type = 'other'
 
     approver_id = fields.Many2one(
         'res.users',

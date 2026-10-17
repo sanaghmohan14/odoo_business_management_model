@@ -82,12 +82,33 @@
                             icon="fa-arrow-left"
                             invisible="is_on_hold or is_cancelled or is_completed"/>
 
+                    <button name="action_request_approval"
+                            string="Request CEO Approval"
+                            type="object"
+                            class="btn-primary"
+                            icon="fa-paper-plane"
+                            invisible="not stage_requires_approval or has_pending_approval or is_stage_approved or is_on_hold or is_cancelled or is_completed"/>
+
+                    <button name="action_approve_pending"
+                            string="Approve (CEO)"
+                            type="object"
+                            class="btn-success"
+                            icon="fa-check"
+                            invisible="not has_pending_approval or not is_current_user_ceo or is_on_hold or is_cancelled or is_completed"/>
+
+                    <button name="action_reject_pending"
+                            string="Reject (CEO)"
+                            type="object"
+                            class="btn-danger"
+                            icon="fa-times"
+                            invisible="not has_pending_approval or not is_current_user_ceo or is_on_hold or is_cancelled or is_completed"/>
+
                     <button name="action_next_stage"
                             string="Confirm"
                             type="object"
                             class="btn-primary"
                             icon="fa-arrow-right"
-                            invisible="is_on_hold or is_cancelled or is_completed"/>
+                            invisible="is_on_hold or is_cancelled or is_completed or (stage_requires_approval and not is_stage_approved)"/>
 
                     <button name="action_hold"
                             string="Hold"
@@ -124,6 +145,10 @@
                     <field name="is_team_allocation_stage" invisible="1"/>
                     <field name="is_kickoff_stage" invisible="1"/>
                     <field name="is_communication_stage" invisible="1"/>
+                    <field name="stage_requires_approval" invisible="1"/>
+                    <field name="has_pending_approval" invisible="1"/>
+                    <field name="is_stage_approved" invisible="1"/>
+                    <field name="is_current_user_ceo" invisible="1"/>
 
                 </header>
 
@@ -131,6 +156,11 @@
                 <!-- ================= FORM BODY ================= -->
 
                 <sheet>
+
+                    <div class="alert alert-warning text-center" role="alert"
+                         invisible="not has_pending_approval">
+                        <strong>Approval Pending:</strong> This project is currently waiting for CEO review and approval before proceeding to the next stage.
+                    </div>
 
                     <div class="oe_button_box" name="button_box">
                         <button name="action_view_meetings"
@@ -190,13 +220,13 @@
                             <field name="responsible_user_id"/>
                         </group>
                     </group>
-                    <group string="Lead Qualification">
+<!--                    <group string="Lead Qualification">-->
 
-                        <field name="qualification_status"/>
+<!--                        <field name="qualification_status"/>-->
 
-                        <field name="qualification_notes"
-                               placeholder="Enter qualification details..."/>
-                    </group>
+<!--                        <field name="qualification_notes"-->
+<!--                               placeholder="Enter qualification details..."/>-->
+<!--                    </group>-->
                     <notebook>
 
                         <page string="Notes">
@@ -217,22 +247,33 @@
                         </page>
 
                         <page string="Approvals">
-                            <field name="approval_ids"
-                                   readonly="1">
-
-                                <list>
-
+                            <field name="approval_ids">
+                                <list create="false">
                                     <field name="name"/>
                                     <field name="approval_type"/>
+                                    <field name="requested_by"/>
                                     <field name="approver_id"/>
                                     <field name="requested_date"/>
                                     <field name="approval_date"/>
-                                    <field name="state"/>
-
+                                    <field name="state"
+                                           widget="badge"
+                                           decoration-danger="state == 'rejected'"
+                                           decoration-success="state == 'approved'"
+                                           decoration-warning="state == 'pending'"/>
+                                    <button name="action_approve"
+                                            string="Approve"
+                                            type="object"
+                                            class="btn-success btn-sm"
+                                            icon="fa-check"
+                                            invisible="state != 'pending'"/>
+                                    <button name="action_reject"
+                                            string="Reject"
+                                            type="object"
+                                            class="btn-danger btn-sm"
+                                            icon="fa-times"
+                                            invisible="state != 'pending'"/>
                                 </list>
-
                             </field>
-
                         </page>
                         <page string="Team Allocation" invisible="not is_team_allocation_stage">
                             <field name="team_member_ids">

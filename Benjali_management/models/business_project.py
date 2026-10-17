@@ -79,6 +79,23 @@ class BusinessProject(models.Model):
         string='Requires Approval',
         default=False
     )
+    stage_requires_approval = fields.Boolean(
+        related='stage_id.requires_approval',
+        string='Stage Requires Approval',
+        readonly=True
+    )
+    has_pending_approval = fields.Boolean(
+        string='Has Pending Approval',
+        compute='_compute_approval_state'
+    )
+    is_stage_approved = fields.Boolean(
+        string='Is Stage Approved',
+        compute='_compute_approval_state'
+    )
+    is_current_user_ceo = fields.Boolean(
+        string='Is Current User CEO',
+        compute='_compute_is_current_user_ceo'
+    )
 
     # CUSTOMER
 
@@ -337,15 +354,15 @@ class BusinessProject(models.Model):
         string='Approvals'
     )
 
-    qualification_status = fields.Selection([
-        ('not_checked', 'Not Checked'),
-        ('qualified', 'Qualified'),
-        ('not_qualified', 'Not Qualified'),
-    ], string='Qualification Status', default='not_checked', tracking=True)
-
-    qualification_notes = fields.Text(
-        string='Qualification Notes'
-    )
+    # qualification_status = fields.Selection([
+    #     ('not_checked', 'Not Checked'),
+    #     ('qualified', 'Qualified'),
+    #     ('not_qualified', 'Not Qualified'),
+    # ], string='Qualification Status', default='not_checked', tracking=True)
+    #
+    # qualification_notes = fields.Text(
+    #     string='Qualification Notes'
+    # )
 
     meeting_count = fields.Integer(
         string='Meetings',
@@ -414,7 +431,7 @@ class BusinessProject(models.Model):
     @api.model
     def _read_group_stage_ids(self, stages, domain):
         return self.env['business.project.stage'].search(
-            [('active', '=', True)],
+            [('active', '=', True), ('name', 'not ilike', 'proposal')],
             order='sequence, id'
         )
 
@@ -493,8 +510,123 @@ class BusinessProject(models.Model):
                 stage_name == 'project communication setup'
             )
 
-    def _check_stage_requirements(self):
-        """Validate requirements before leaving the current stage."""
+    def _compute_is_current_user_ceo(self):
+        is_ceo = self.env.user.has_group('Benjali_management.group_ceo') or self.env.is_admin()
+        for record in self:
+            record.is_current_user_ceo = is_ceo
+
+    @api.depends('stage_id', 'approval_ids.state', 'approval_ids.approval_type')
+    def _compute_approval_state(self):
+        for record in self:
+            stage = record.stage_id
+            requires = stage.requires_approval or (
+                stage.name and 'management review' in stage.name.lower()
+            )
+            if not requires:
+                record.has_pending_approval = False
+                record.is_stage_approved = False
+                continue
+
+            approval_type = stage.approval_type or 'management_review'
+            pending = record.approval_ids.filtered(
+                lambda a: a.approval_type == approval_type and a.state == 'pending'
+            )
+            approved = record.approval_ids.filtered(
+                lambda a: a.approval_type == approval_type and a.state == 'approved'
+            )
+            record.has_pending_approval = bool(pending)
+            record.is_stage_approved = bool(approved)
+
+    def action_request_approval(self):
+        for record in self:
+            record._check_basic_stage_requirements()
+
+            approval_type = record.stage_id.approval_type
+            if not approval_type:
+                name_lower = (record.stage_id.name or '').lower()
+                if 'management' in name_lower or 'review' in name_lower:
+                    approval_type = 'management_review'
+                elif 'kra' in name_lower:
+                    approval_type = 'kra'
+                elif 'activity' in name_lower:
+                    approval_type = 'activity_plan'
+                else:
+                    approval_type = 'other'
+                record.stage_id.sudo().write({
+                    'approval_type': approval_type,
+                    'requires_approval': True,
+                })
+
+            pending = self.env['business.project.approval'].search([
+                ('project_id', '=', record.id),
+                ('approval_type', '=', approval_type),
+                ('state', '=', 'pending'),
+            ], limit=1)
+            if pending:
+                raise UserError(
+                    f'An approval request ({pending.name}) is already pending for stage "{record.stage_id.name}".'
+                )
+
+            approver = record.stage_id.approver_id
+            if not approver:
+                ceo_group = self.env.ref('Benjali_management.group_ceo', raise_if_not_found=False)
+                if ceo_group and ceo_group.users:
+                    approver = ceo_group.users[0]
+                else:
+                    approver = self.env.ref('base.user_admin', raise_if_not_found=False) or self.env.user
+
+            approval = self.env['business.project.approval'].create({
+                'project_id': record.id,
+                'approval_type': approval_type,
+                'approver_id': approver.id,
+                'requires_approval': True,
+                'company_id': record.company_id.id or self.env.company.id,
+            })
+
+            record.message_post(
+                body=(
+                    f'Approval request <b>{approval.name}</b> submitted to '
+                    f'<b>{approver.name}</b> (CEO) for stage <b>{record.stage_id.name}</b>.'
+                )
+            )
+
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': 'Approval Requested',
+                'message': 'Approval request submitted to CEO.',
+                'sticky': False,
+                'type': 'success',
+            }
+        }
+
+    def action_approve_pending(self):
+        self.ensure_one()
+        approval_type = self.stage_id.approval_type or 'management_review'
+        pending = self.approval_ids.filtered(
+            lambda a: a.approval_type == approval_type and a.state == 'pending'
+        )
+        if not pending:
+            pending = self.approval_ids.filtered(lambda a: a.state == 'pending')
+        if not pending:
+            raise UserError('No pending approval request found for this project.')
+        pending[:1].action_approve()
+
+    def action_reject_pending(self):
+        self.ensure_one()
+        approval_type = self.stage_id.approval_type or 'management_review'
+        pending = self.approval_ids.filtered(
+            lambda a: a.approval_type == approval_type and a.state == 'pending'
+        )
+        if not pending:
+            pending = self.approval_ids.filtered(lambda a: a.state == 'pending')
+        if not pending:
+            raise UserError('No pending approval request found for this project.')
+        pending[:1].action_reject()
+
+    def _check_basic_stage_requirements(self):
+        """Validate non-approval stage requirements."""
         for record in self:
             if record.is_cancelled:
                 raise UserError(
@@ -508,6 +640,51 @@ class BusinessProject(models.Model):
                 raise UserError(
                     'Resume the project before moving to another stage.'
                 )
+
+    def _check_stage_requirements(self):
+        """Validate requirements before leaving the current stage."""
+        for record in self:
+            record._check_basic_stage_requirements()
+
+            # Check approval requirements
+            stage_needs_approval = record.stage_id.requires_approval or (
+                record.stage_id.name and 'management review' in record.stage_id.name.lower()
+            )
+            if stage_needs_approval:
+                approval_type = record.stage_id.approval_type or 'management_review'
+                if not record.stage_id.approval_type:
+                    record.stage_id.sudo().write({
+                        'approval_type': approval_type,
+                        'requires_approval': True,
+                    })
+
+                approved_approval = self.env['business.project.approval'].search([
+                    ('project_id', '=', record.id),
+                    ('approval_type', '=', approval_type),
+                    ('state', '=', 'approved'),
+                ], limit=1)
+
+                if not approved_approval:
+                    pending_approval = self.env['business.project.approval'].search([
+                        ('project_id', '=', record.id),
+                        ('approval_type', '=', approval_type),
+                        ('state', '=', 'pending'),
+                    ], limit=1)
+
+                    if pending_approval:
+                        raise UserError(
+                            f'Stage "{record.stage_id.name}" is waiting for CEO approval ({pending_approval.name}). '
+                            'The project can move to the next stage only after approval.'
+                        )
+
+                    # Auto-create approval request if none exists
+                    record.action_request_approval()
+                    raise UserError(
+                        f'CEO Approval is required for stage "{record.stage_id.name}". '
+                        'An approval request has now been submitted to the CEO. '
+                        'The stage will advance once approved.'
+                    )
+
             if record.stage_id.name == 'Team Allocation' and not record.team_member_ids:
                 raise UserError(
                     'Please allocate at least one team member before '
@@ -519,7 +696,7 @@ class BusinessProject(models.Model):
                     'Please complete the client kick-off before moving '
                     'to the next stage.'
                 )
-            if record.stage_id.name == 'System Study &  Collection':
+            if record.stage_id.name in ('System Study & Data Collection', 'System Study &  Collection'):
                 if not record.data_collection_ids:
                     raise UserError(
                         'Please add at least one data collection item '
@@ -539,16 +716,6 @@ class BusinessProject(models.Model):
                     'Please complete the project communication setup '
                     'before moving to the next stage.'
                 )
-            if record.stage_id.name == 'Lead Screening & Qualification':
-                if record.qualification_status == 'not_checked':
-                    raise UserError(
-                        'Please complete the lead qualification before '
-                        'moving to the next stage.'
-                    )
-                if record.qualification_status == 'not_qualified':
-                    raise UserError(
-                        'This lead is not qualified and cannot proceed.'
-                    )
 
     def write(self, vals):
         if 'stage_id' in vals and not self.env.context.get(
@@ -556,74 +723,20 @@ class BusinessProject(models.Model):
             for record in self:
                 if vals['stage_id'] != record.stage_id.id:
                     record._check_stage_requirements()
-                    if record.stage_id.requires_approval:
-                        pending_approval = self.env[
-                            'business.project.approval'
-                        ].search([
-                            ('project_id', '=', record.id),
-                            ('approval_type', '=', record.stage_id.approval_type),
-                            ('state', '=', 'pending'),
-                        ], limit=1)
-                        if pending_approval:
-                            raise UserError(
-                                'This stage is waiting for approval.'
-                            )
-                        raise UserError(
-                            'Approval is required before moving to the next '
-                            'stage. Use the Next Stage button to request it.'
-                        )
         return super().write(vals)
 
-
     # NEXT STAGE
-
 
     def action_next_stage(self):
         for record in self:
             record._check_stage_requirements()
-            # Check whether current stage needs approval
-            if record.stage_id.requires_approval:
-
-                pending_approval = self.env[
-                    'business.project.approval'
-                ].search([
-                    ('project_id', '=', record.id),
-                    ('approval_type', '=', record.stage_id.approval_type),
-                    ('state', '=', 'pending'),
-                ], limit=1)
-
-                if pending_approval:
-                    raise UserError(
-                        'This stage is waiting for approval.'
-                    )
-
-                # Create approval request
-                if not record.stage_id.approver_id:
-                    raise UserError(
-                        'Please configure an approver for this stage.'
-                    )
-
-                self.env['business.project.approval'].create({
-                    'project_id': record.id,
-                    'approval_type': record.stage_id.approval_type,
-                    'approver_id': record.stage_id.approver_id.id,
-                })
-
-                record.message_post(
-                    body=(
-                        f'Approval request created for '
-                        f'<b>{record.stage_id.name}</b>.'
-                    )
-                )
-
-                return True
 
             # Normal stage movement
-
             next_stage = self.env['business.project.stage'].search([
                 ('sequence', '>', record.stage_id.sequence),
                 ('active', '=', True),
                 ('name', 'not in', ['On Hold', 'Cancelled']),
+                ('name', 'not ilike', 'proposal'),
             ], order='sequence asc', limit=1)
 
             if not next_stage:
@@ -659,9 +772,9 @@ class BusinessProject(models.Model):
             ].search([
                 ('sequence', '>', current_stage.sequence),
                 ('active', '=', True),
+                ('name', 'not in', ['On Hold', 'Cancelled']),
+                ('name', 'not ilike', 'proposal'),
             ], order='sequence asc', limit=1)
-
-
 
             if not next_stage:
                 raise UserError(
@@ -706,6 +819,7 @@ class BusinessProject(models.Model):
                     ('active', '=', True),
                     ('sequence', '<', record.stage_id.sequence),
                     ('name', 'not in', ['On Hold', 'Cancelled']),
+                    ('name', 'not ilike', 'proposal'),
                 ],
                 order='sequence desc',
                 limit=1

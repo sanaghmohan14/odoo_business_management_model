@@ -96,6 +96,8 @@
         <field name="phase">planning</field>
         <field name="responsible_role">COO / CEO</field>
         <field name="approver_role">CEO</field>
+        <field name="requires_approval">True</field>
+        <field name="approval_type">management_review</field>
         <field name="description">
             Review and approve the project plan.
         </field>

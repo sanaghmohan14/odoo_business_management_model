@@ -19,7 +19,6 @@ class BusinessProjectApproval(models.Model):
     )
 
     approval_type = fields.Selection([
-        ('proposal', 'Proposal Approval'),
         ('management_review', 'Management Review'),
         ('kra', 'KRA Approval'),
         ('activity_plan', 'Activity Plan Approval'),
@@ -83,23 +82,28 @@ class BusinessProjectApproval(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
+            if not vals.get('approval_type'):
+                project = self.env['business.project'].browse(vals.get('project_id')) if vals.get('project_id') else None
+                if project and project.stage_id and project.stage_id.approval_type:
+                    vals['approval_type'] = project.stage_id.approval_type
+                else:
+                    vals['approval_type'] = 'management_review'
+
+            if not vals.get('approver_id'):
+                ceo_group = self.env.ref('Benjali_management.group_ceo', raise_if_not_found=False)
+                if ceo_group and ceo_group.users:
+                    vals['approver_id'] = ceo_group.users[0].id
+                else:
+                    vals['approver_id'] = self.env.user.id
 
             sequence = self.env['ir.sequence'].next_by_code(
                 'business.project.approval'
             )
 
-            print("================================")
-            print("CREATE VALS:", vals)
-            print("CURRENT COMPANY:", self.env.company)
-            print("SEQUENCE:", sequence)
-            print("================================")
-
             if not vals.get('name') or vals.get('name') == 'New':
-                vals['name'] = sequence
+                vals['name'] = sequence or 'New'
 
         return super().create(vals_list)
-
-
 
     def action_test_sequence(self):
         sequence = self.env['ir.sequence'].search([
@@ -135,8 +139,6 @@ class BusinessProjectApproval(models.Model):
 
         raise UserError(message)
 
-
-
     def action_approve(self):
         for approval in self:
 
@@ -145,9 +147,11 @@ class BusinessProjectApproval(models.Model):
                     'Only pending approval requests can be approved.'
                 )
 
-            if approval.approver_id != self.env.user:
+            is_ceo = self.env.user.has_group('Benjali_management.group_ceo')
+            is_admin = self.env.is_admin()
+            if approval.approver_id != self.env.user and not is_ceo and not is_admin:
                 raise UserError(
-                    'Only the assigned approver can approve this request.'
+                    'Only the assigned approver or a CEO can approve this request.'
                 )
 
             approval.write({
@@ -166,9 +170,6 @@ class BusinessProjectApproval(models.Model):
                 )
             )
 
-
-
-
     def action_reject(self):
         for approval in self:
 
@@ -177,9 +178,11 @@ class BusinessProjectApproval(models.Model):
                     'Only pending approval requests can be rejected.'
                 )
 
-            if approval.approver_id != self.env.user:
+            is_ceo = self.env.user.has_group('Benjali_management.group_ceo')
+            is_admin = self.env.is_admin()
+            if approval.approver_id != self.env.user and not is_ceo and not is_admin:
                 raise UserError(
-                    'Only the assigned approver can reject this request.'
+                    'Only the assigned approver or a CEO can reject this request.'
                 )
 
             approval.write({

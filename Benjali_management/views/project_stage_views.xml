@@ -44,7 +44,8 @@
                             <field name="requires_approval"/>
 
                             <field name="approval_type"
-                                   invisible="not requires_approval"/>
+                                   invisible="not requires_approval"
+                                   required="requires_approval"/>
 
                             <field name="approver_id"
                                    invisible="not requires_approval"/>
