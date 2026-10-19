@@ -21,10 +21,13 @@ class BusinessProjectStage(models.Model):
             ('sales', 'Sales & Business Development'),
             ('onboarding', 'Onboarding & Project Initiation'),
             ('planning', 'Planning & Analysis'),
+            ('execution', 'Execution & SOP Development'),
+            ('governance', 'Implementation & Audit'),
+            ('closure', 'Project Closure'),
         ],
         string='Phase',
         required=True,
-        default='sales'
+        default='onboarding'
     )
 
     description = fields.Text(
@@ -58,6 +61,10 @@ class BusinessProjectStage(models.Model):
         ('management_review', 'Management Review'),
         ('kra', 'KRA Approval'),
         ('activity_plan', 'Activity Plan Approval'),
+        ('system_study', 'System Study Report Approval'),
+        ('strategic_foundation', 'Strategic Foundation Approval'),
+        ('deliverables', 'Consulting Deliverables Approval'),
+        ('project_closure', 'Project Closure Approval'),
         ('other', 'Other'),
     ], string='Approval Type')
 
@@ -71,6 +78,10 @@ class BusinessProjectStage(models.Model):
                 self.approval_type = 'kra'
             elif 'activity' in name_lower:
                 self.approval_type = 'activity_plan'
+            elif 'study' in name_lower or 'finding' in name_lower:
+                self.approval_type = 'system_study'
+            elif 'closure' in name_lower:
+                self.approval_type = 'project_closure'
             else:
                 self.approval_type = 'other'
 

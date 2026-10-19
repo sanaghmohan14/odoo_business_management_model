@@ -22,6 +22,10 @@ class BusinessProjectApproval(models.Model):
         ('management_review', 'Management Review'),
         ('kra', 'KRA Approval'),
         ('activity_plan', 'Activity Plan Approval'),
+        ('system_study', 'System Study Report Approval'),
+        ('strategic_foundation', 'Strategic Foundation Approval'),
+        ('deliverables', 'Consulting Deliverables Approval'),
+        ('project_closure', 'Project Closure Approval'),
         ('other', 'Other'),
     ], string='Approval Type', required=True)
 
@@ -90,9 +94,11 @@ class BusinessProjectApproval(models.Model):
                     vals['approval_type'] = 'management_review'
 
             if not vals.get('approver_id'):
-                ceo_group = self.env.ref('Benjali_management.group_ceo', raise_if_not_found=False)
-                if ceo_group and ceo_group.users:
-                    vals['approver_id'] = ceo_group.users[0].id
+                ceo_users = self.env['res.users'].search([]).filtered(
+                    lambda u: u.has_group('Benjali_management.group_ceo')
+                )
+                if ceo_users:
+                    vals['approver_id'] = ceo_users[0].id
                 else:
                     vals['approver_id'] = self.env.user.id
 

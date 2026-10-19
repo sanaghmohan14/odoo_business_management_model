@@ -109,7 +109,7 @@ class BusinessProject(models.Model):
 
     responsible_user_id = fields.Many2one(
         'res.users',
-        string='Responsible User',
+        string='Project Responsible',
         tracking=True
     )
 
@@ -285,6 +285,34 @@ class BusinessProject(models.Model):
         'business.project.sop', 'project_id', string='SOPs'
     )
 
+    sop_checklist_ids = fields.One2many(
+        'business.project.sop.checklist', 'project_id', string='All Checklists'
+    )
+
+    sop_daily_checklist_ids = fields.One2many(
+        'business.project.sop.checklist', 'project_id', string='Daily Checklists',
+        domain=[('frequency', '=', 'daily')]
+    )
+
+    sop_weekly_checklist_ids = fields.One2many(
+        'business.project.sop.checklist', 'project_id', string='Weekly Checklists',
+        domain=[('frequency', '=', 'weekly')]
+    )
+
+    sop_monthly_checklist_ids = fields.One2many(
+        'business.project.sop.checklist', 'project_id', string='Monthly Checklists',
+        domain=[('frequency', '=', 'monthly')]
+    )
+
+    sop_count = fields.Integer(string='Total SOPs', compute='_compute_sop_metrics')
+    sop_daily_count = fields.Integer(string='Daily Checklist Count', compute='_compute_sop_metrics')
+    sop_weekly_count = fields.Integer(string='Weekly Checklist Count', compute='_compute_sop_metrics')
+    sop_monthly_count = fields.Integer(string='Monthly Checklist Count', compute='_compute_sop_metrics')
+    sop_total_checklists = fields.Integer(string='Total Checklists', compute='_compute_sop_metrics')
+    sop_compliant_count = fields.Integer(string='Compliant Checklists', compute='_compute_sop_metrics')
+    sop_compliance_rate = fields.Float(string='SOP Compliance Rate (%)', compute='_compute_sop_metrics')
+    sop_open_gaps_count = fields.Integer(string='Open SOP Gaps', compute='_compute_sop_metrics')
+
     monitoring_ids = fields.One2many(
         'business.project.monitoring', 'project_id', string='Implementation Monitoring'
     )
@@ -348,6 +376,41 @@ class BusinessProject(models.Model):
         compute='_compute_workflow_status'
     )
 
+    is_client_onboarding_stage = fields.Boolean(
+        string='Client Onboarding Stage',
+        compute='_compute_workflow_status'
+    )
+
+    is_sop_development_stage = fields.Boolean(
+        string='SOP Development Stage',
+        compute='_compute_workflow_status'
+    )
+
+    is_sop_discussion_stage = fields.Boolean(
+        string='SOP Discussion Stage',
+        compute='_compute_workflow_status'
+    )
+
+    is_sop_rollout_stage = fields.Boolean(
+        string='SOP Rollout Stage',
+        compute='_compute_workflow_status'
+    )
+
+    is_consultant_verification_stage = fields.Boolean(
+        string='Consultant Verification Stage',
+        compute='_compute_workflow_status'
+    )
+
+    is_monthly_audit_stage = fields.Boolean(
+        string='Monthly Audit Stage',
+        compute='_compute_workflow_status'
+    )
+
+    is_sop_active_stage = fields.Boolean(
+        string='SOP Active Stage',
+        compute='_compute_workflow_status'
+    )
+
     approval_ids = fields.One2many(
         'business.project.approval',
         'project_id',
@@ -377,6 +440,7 @@ class BusinessProject(models.Model):
                 ('res_model', '=', self._name),
                 ('res_id', '=', record.id),
             ])
+
 
     def action_view_meetings(self):
         self.ensure_one()
@@ -422,9 +486,13 @@ class BusinessProject(models.Model):
     @api.model
     def _default_stage(self):
         stage = self.env.ref(
-            'Benjali_management.stage_new',
+            'Benjali_management.stage_client_onboarding',
             raise_if_not_found=False
         )
+        if not stage:
+            stage = self.env['business.project.stage'].search([
+                ('phase', '=', 'onboarding')
+            ], order='sequence asc', limit=1)
         return stage.id if stage else False
 
 
@@ -472,9 +540,7 @@ class BusinessProject(models.Model):
                 ) or 'New'
 
             if not vals.get('stage_id'):
-                vals['stage_id'] = self.env.ref(
-                    'Benjali_management.stage_new'
-                ).id
+                vals['stage_id'] = self._default_stage()
 
         projects = super().create(vals_list)
 
@@ -502,13 +568,97 @@ class BusinessProject(models.Model):
             record.is_on_hold = stage_name == 'on hold'
             record.is_cancelled = stage_name == 'cancelled'
             record.is_completed = stage_name == 'completed'
-            record.is_team_allocation_stage = stage_name == 'team allocation'
+            record.is_client_onboarding_stage = 'client onboarding' in stage_name
+            record.is_team_allocation_stage = 'team allocation' in stage_name or 'team designation' in stage_name
             record.is_kickoff_stage = (
-                stage_name == 'initial client contact & kick-off'
+                'kick-off' in stage_name or 'kickoff' in stage_name
             )
             record.is_communication_stage = (
-                stage_name == 'project communication setup'
+                'communication' in stage_name
             )
+            record.is_sop_development_stage = 'deliverables & sop' in stage_name or 'sop development' in stage_name
+            record.is_sop_discussion_stage = 'sop discussion' in stage_name
+            record.is_sop_rollout_stage = 'rollout' in stage_name
+            record.is_consultant_verification_stage = 'consultant verification' in stage_name
+            record.is_monthly_audit_stage = 'monthly audit' in stage_name or 'audit' in stage_name
+            record.is_sop_active_stage = any([
+                record.is_sop_development_stage,
+                record.is_sop_discussion_stage,
+                record.is_sop_rollout_stage,
+                record.is_consultant_verification_stage,
+                record.is_monthly_audit_stage,
+                record.stage_id.phase in ('execution', 'governance')
+            ])
+
+    @api.depends('sop_ids', 'sop_ids.checklist_ids', 'sop_ids.checklist_ids.status', 'gap_ids', 'gap_ids.state')
+    def _compute_sop_metrics(self):
+        for project in self:
+            sops = project.sop_ids
+            checklists = project.sop_checklist_ids
+            daily = checklists.filtered(lambda c: c.frequency == 'daily')
+            weekly = checklists.filtered(lambda c: c.frequency == 'weekly')
+            monthly = checklists.filtered(lambda c: c.frequency == 'monthly')
+            compliant = checklists.filtered(lambda c: c.status == 'compliant')
+            open_gaps = project.gap_ids.filtered(lambda g: g.state in ('open', 'in_progress'))
+
+            project.sop_count = len(sops)
+            project.sop_daily_count = len(daily)
+            project.sop_weekly_count = len(weekly)
+            project.sop_monthly_count = len(monthly)
+            project.sop_total_checklists = len(checklists)
+            project.sop_compliant_count = len(compliant)
+            project.sop_open_gaps_count = len(open_gaps)
+
+            evaluable = checklists.filtered(lambda c: c.status in ('compliant', 'partially_compliant', 'non_compliant'))
+            if evaluable:
+                score = sum(
+                    100.0 if c.status == 'compliant' else 50.0 if c.status == 'partially_compliant' else 0.0
+                    for c in evaluable
+                )
+                project.sop_compliance_rate = round(score / len(evaluable), 1)
+            else:
+                project.sop_compliance_rate = 0.0
+
+    def action_generate_project_sop_checklists(self):
+        for project in self:
+            if not project.sop_ids:
+                dept = project.department_id or self.env['hr.department'].search([], limit=1)
+                sop = self.env['business.project.sop'].create({
+                    'name': f'{dept.name or "Operations"} Standard Operating Procedure',
+                    'project_id': project.id,
+                    'department_id': dept.id,
+                    'stage_id': project.stage_id.id,
+                    'owner_id': project.responsible_user_id.id or self.env.user.id,
+                    'coordinator_id': project.client_implementation_coordinator_id.id if project.client_implementation_coordinator_id else False,
+                })
+                sop.action_generate_standard_checklists()
+            else:
+                for sop in project.sop_ids:
+                    sop.action_generate_standard_checklists()
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': 'SOP Checklists Generated',
+                'message': 'Standard Daily, Weekly, and Monthly checklists generated for project SOPs.',
+                'type': 'success',
+                'sticky': False,
+            }
+        }
+
+    def action_mark_all_sop_compliant(self):
+        for project in self:
+            pending = project.sop_checklist_ids.filtered(lambda c: c.status == 'pending')
+            pending.write({
+                'status': 'compliant',
+                'last_verified_date': fields.Date.today(),
+                'verified_by_id': self.env.user.id,
+                'verification_notes': 'Verified compliant during project review.',
+            })
+            for sop in project.sop_ids:
+                if sop.state in ('rollout', 'verification'):
+                    sop.state = 'active'
+        return True
 
     def _compute_is_current_user_ceo(self):
         is_ceo = self.env.user.has_group('Benjali_management.group_ceo') or self.env.is_admin()
@@ -550,6 +700,14 @@ class BusinessProject(models.Model):
                     approval_type = 'kra'
                 elif 'activity' in name_lower:
                     approval_type = 'activity_plan'
+                elif 'study' in name_lower or 'finding' in name_lower:
+                    approval_type = 'system_study'
+                elif 'strategic' in name_lower or 'foundation' in name_lower:
+                    approval_type = 'strategic_foundation'
+                elif 'deliverable' in name_lower or 'sop' in name_lower:
+                    approval_type = 'deliverables'
+                elif 'closure' in name_lower:
+                    approval_type = 'project_closure'
                 else:
                     approval_type = 'other'
                 record.stage_id.sudo().write({
@@ -569,9 +727,11 @@ class BusinessProject(models.Model):
 
             approver = record.stage_id.approver_id
             if not approver:
-                ceo_group = self.env.ref('Benjali_management.group_ceo', raise_if_not_found=False)
-                if ceo_group and ceo_group.users:
-                    approver = ceo_group.users[0]
+                ceo_users = self.env['res.users'].search([]).filtered(
+                    lambda u: u.has_group('Benjali_management.group_ceo')
+                )
+                if ceo_users:
+                    approver = ceo_users[0]
                 else:
                     approver = self.env.ref('base.user_admin', raise_if_not_found=False) or self.env.user
 
@@ -685,18 +845,18 @@ class BusinessProject(models.Model):
                         'The stage will advance once approved.'
                     )
 
-            if record.stage_id.name == 'Team Allocation' and not record.team_member_ids:
+            stage_lower = (record.stage_id.name or '').lower()
+            if ('team allocation' in stage_lower or 'team designation' in stage_lower) and not record.team_member_ids:
                 raise UserError(
                     'Please allocate at least one team member before '
                     'moving to the next stage.'
                 )
-            if record.stage_id.name == 'Initial Client Contact & Kick-off' \
-                    and not record.kickoff_completed:
+            if ('kick-off' in stage_lower or 'kickoff' in stage_lower) and not record.kickoff_completed:
                 raise UserError(
                     'Please complete the client kick-off before moving '
                     'to the next stage.'
                 )
-            if record.stage_id.name in ('System Study & Data Collection', 'System Study &  Collection'):
+            if 'data collection' in stage_lower:
                 if not record.data_collection_ids:
                     raise UserError(
                         'Please add at least one data collection item '
@@ -710,11 +870,14 @@ class BusinessProject(models.Model):
                         'All data collection items must be Collected or '
                         'Verified before moving to Analysis & Findings.'
                     )
-            if record.stage_id.name == 'Project Communication Setup' \
-                    and not record.communication_created:
+            if 'communication' in stage_lower and not record.communication_created:
                 raise UserError(
                     'Please complete the project communication setup '
                     'before moving to the next stage.'
+                )
+            if 'rollout' in stage_lower and not record.client_implementation_coordinator_id:
+                raise UserError(
+                    'Step 29: Client must designate an Implementation Coordinator before moving to Consultant Verification.'
                 )
 
     def write(self, vals):

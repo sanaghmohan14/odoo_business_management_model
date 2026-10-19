@@ -104,7 +104,7 @@
                             invisible="not has_pending_approval or not is_current_user_ceo or is_on_hold or is_cancelled or is_completed"/>
 
                     <button name="action_next_stage"
-                            string="Confirm"
+                            string="Next Stage"
                             type="object"
                             class="btn-primary"
                             icon="fa-arrow-right"
@@ -145,6 +145,8 @@
                     <field name="is_team_allocation_stage" invisible="1"/>
                     <field name="is_kickoff_stage" invisible="1"/>
                     <field name="is_communication_stage" invisible="1"/>
+                    <field name="is_client_onboarding_stage" invisible="1"/>
+                    <field name="is_sop_active_stage" invisible="1"/>
                     <field name="stage_requires_approval" invisible="1"/>
                     <field name="has_pending_approval" invisible="1"/>
                     <field name="is_stage_approved" invisible="1"/>

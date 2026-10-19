@@ -17,20 +17,20 @@
                 </button>
             </xpath>
             <xpath expr="//header" position="inside">
-
                 <button
                         name="action_create_business_project"
-                        string="Create Business Project"
+                        string="Create Business Project (Client Onboarding)"
                         type="object"
                         class="btn-primary"
                         invisible="won_status != 'won' or business_project_id"/>
 
                 <button name="create_sale_quotation" string="New Quotation"
                         type="object" class="btn-primary"/>
-
             </xpath>
             <xpath expr="//field[@name='user_id']" position="after">
                 <field name="department_id"/>
+                <field name="business_project_id" readonly="1" invisible="not business_project_id"/>
+                <field name="business_project_stage_id" widget="badge" invisible="not business_project_id"/>
             </xpath>
         </field>
     </record>

@@ -18,6 +18,12 @@ class CrmLead(models.Model):
         readonly=True
     )
 
+    business_project_stage_id = fields.Many2one(
+        related='business_project_id.stage_id',
+        string='Project Stage',
+        readonly=True,
+    )
+
     business_project_count = fields.Integer(
         string='Business Projects',
         compute='_compute_business_project_count'
@@ -86,14 +92,18 @@ class CrmLead(models.Model):
                 'Please select a customer before creating a Business Project.'
             )
 
-        # Create Business Project
+        # Create Business Project starting at Step 8: Client Onboarding
+        onboarding_stage = self.env.ref(
+            'Benjali_management.stage_client_onboarding',
+            raise_if_not_found=False
+        )
         business_project = self.env['business.project'].create({
             'name': self.name,
             'partner_id': self.partner_id.id,
             'opportunity_id': self.id,
             'sales_person_id': self.user_id.id,
             'department_id': self.department_id.id,
-
+            'stage_id': onboarding_stage.id if onboarding_stage else False,
         })
 
         # Create the related standard Odoo project. No project tasks or

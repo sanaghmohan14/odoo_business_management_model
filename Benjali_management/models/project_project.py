@@ -28,7 +28,7 @@ class ProjectProject(models.Model):
 
     task_id = fields.Many2one(
         'business.project',
-        string='Business Project',
+        string='Parent Business Project',
         ondelete='cascade',
     )
 

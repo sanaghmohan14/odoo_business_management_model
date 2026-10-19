@@ -1,45 +1,76 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+
+    <!-- ========================================================
+         ACTIONS
+    ========================================================= -->
+
     <record id="business_consulting_deliverable_action" model="ir.actions.act_window">
         <field name="name">Consulting Deliverables</field>
         <field name="res_model">business.consulting.deliverable</field>
         <field name="view_mode">list,form</field>
     </record>
+
     <record id="business_project_deliverable_action" model="ir.actions.act_window">
         <field name="name">Project Deliverables</field>
         <field name="res_model">business.consulting.deliverable.project</field>
         <field name="view_mode">list,kanban,form</field>
     </record>
+
     <record id="business_project_sop_action" model="ir.actions.act_window">
-        <field name="name">SOPs</field>
+        <field name="name">Standard Operating Procedures (SOPs)</field>
         <field name="res_model">business.project.sop</field>
         <field name="view_mode">kanban,list,form</field>
+        <field name="context">{'search_default_group_stage': 1, 'search_default_group_department': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create Department-wise SOPs with Daily, Weekly &amp; Monthly Checklists.
+            </p>
+            <p>
+                Each SOP connects to a consulting project stage, contains structured checklists, client formats, and tracks consultant verification compliance.
+            </p>
+        </field>
     </record>
+
     <record id="business_project_sop_checklist_action" model="ir.actions.act_window">
-        <field name="name">SOP Checklists</field>
+        <field name="name">SOP Checklists Workbench</field>
         <field name="res_model">business.project.sop.checklist</field>
         <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_group_frequency': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Monitor and verify Daily, Weekly, and Monthly SOP Checklists.
+            </p>
+        </field>
     </record>
+
     <record id="business_project_sop_compliance_action" model="ir.actions.act_window">
-        <field name="name">SOP Compliance</field>
+        <field name="name">SOP Compliance Records</field>
         <field name="res_model">business.project.sop.compliance</field>
         <field name="view_mode">list,kanban,form</field>
     </record>
+
     <record id="business_project_sop_document_action" model="ir.actions.act_window">
-        <field name="name">SOP Formats and Documents</field>
+        <field name="name">SOP Formats &amp; Templates</field>
         <field name="res_model">business.project.sop.document</field>
         <field name="view_mode">list,form</field>
     </record>
+
     <record id="business_project_monitoring_action" model="ir.actions.act_window">
-        <field name="name">Implementation Monitoring</field>
+        <field name="name">Implementation Coordinator Monitoring</field>
         <field name="res_model">business.project.monitoring</field>
         <field name="view_mode">list,kanban,form</field>
     </record>
+
     <record id="business_project_gap_action" model="ir.actions.act_window">
-        <field name="name">Gaps and Corrective Actions</field>
+        <field name="name">Gaps &amp; Corrective Actions</field>
         <field name="res_model">business.project.gap</field>
         <field name="view_mode">list,kanban,form</field>
     </record>
+
+    <!-- ========================================================
+         CONSULTING DELIVERABLE TEMPLATES
+    ========================================================= -->
 
     <record id="business_consulting_deliverable_list" model="ir.ui.view">
         <field name="name">business.consulting.deliverable.list</field>
@@ -53,6 +84,7 @@
             </list>
         </field>
     </record>
+
     <record id="business_consulting_deliverable_form" model="ir.ui.view">
         <field name="name">business.consulting.deliverable.form</field>
         <field name="model">business.consulting.deliverable</field>
@@ -72,6 +104,10 @@
         </field>
     </record>
 
+    <!-- ========================================================
+         PROJECT DELIVERABLES
+    ========================================================= -->
+
     <record id="business_project_deliverable_list" model="ir.ui.view">
         <field name="name">business.project.deliverable.list</field>
         <field name="model">business.consulting.deliverable.project</field>
@@ -83,10 +119,14 @@
                 <field name="deliverable_type"/>
                 <field name="responsible_user_id"/>
                 <field name="due_date"/>
-                <field name="state"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'planned'"
+                       decoration-warning="state == 'in_progress'"
+                       decoration-success="state == 'completed'"/>
             </list>
         </field>
     </record>
+
     <record id="business_project_deliverable_form" model="ir.ui.view">
         <field name="name">business.project.deliverable.form</field>
         <field name="model">business.consulting.deliverable.project</field>
@@ -94,68 +134,325 @@
             <form>
                 <sheet>
                     <group>
-                        <field name="name"/>
-                        <field name="project_id"/>
-                        <field name="department_id"/>
-                        <field name="deliverable_type"/>
-                        <field name="responsible_user_id"/>
-                        <field name="due_date"/>
-                        <field name="state"/>
+                        <group>
+                            <field name="name"/>
+                            <field name="project_id"/>
+                            <field name="department_id"/>
+                            <field name="deliverable_type"/>
+                        </group>
+                        <group>
+                            <field name="responsible_user_id"/>
+                            <field name="due_date"/>
+                            <field name="sequence"/>
+                            <field name="state" widget="badge"/>
+                        </group>
                     </group>
-                    <field name="description"/>
+                    <field name="description" placeholder="Deliverable details and scope..."/>
                 </sheet>
             </form>
         </field>
     </record>
 
-    <record id="business_project_sop_list" model="ir.ui.view">
-        <field name="name">business.project.sop.list</field>
+    <!-- ========================================================
+         SOP FORM VIEW (Easy to Understand, Clean & Structured)
+    ========================================================= -->
+
+    <record id="business_project_sop_form" model="ir.ui.view">
+        <field name="name">business.project.sop.form</field>
         <field name="model">business.project.sop</field>
         <field name="arch" type="xml">
-            <list>
-                <field name="name"/>
-                <field name="project_id"/>
-                <field name="department_id"/>
-                <field name="sop_type"/>
-                <field name="owner_id"/>
-                <field name="version"/>
-                <field name="state"/>
-                <field name="checklist_count"/>
-                <field name="compliance_count"/>
-            </list>
+            <form string="Standard Operating Procedure">
+                <header>
+                    <button name="action_generate_standard_checklists"
+                            string="Generate Standard Checklists"
+                            type="object"
+                            class="btn-primary"
+                            icon="fa-magic"/>
+                    <button name="action_quick_verify_all"
+                            string="Verify All Compliant"
+                            type="object"
+                            class="btn-success"
+                            icon="fa-check-circle"/>
+                    <button name="action_set_checklist_prep"
+                            string="Checklist Prep"
+                            type="object"
+                            invisible="state != 'draft'"/>
+                    <button name="action_set_rollout"
+                            string="Rollout to Client"
+                            type="object"
+                            class="btn-secondary"
+                            invisible="state not in ('draft', 'checklist_prep')"/>
+                    <button name="action_set_verification"
+                            string="Consultant Verification"
+                            type="object"
+                            class="btn-secondary"
+                            invisible="state != 'rollout'"/>
+                    <button name="action_set_active"
+                            string="Mark Compliant &amp; Active"
+                            type="object"
+                            class="btn-primary"
+                            invisible="state not in ('verification', 'rollout')"/>
+                    <button name="action_set_audit"
+                            string="Under Monthly Audit"
+                            type="object"
+                            invisible="state != 'active'"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,checklist_prep,rollout,verification,active,audit"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" type="object" icon="fa-calendar-o">
+                            <field name="daily_count" widget="statinfo" string="Daily Items"/>
+                        </button>
+                        <button class="oe_stat_button" type="object" icon="fa-calendar">
+                            <field name="weekly_count" widget="statinfo" string="Weekly Items"/>
+                        </button>
+                        <button class="oe_stat_button" type="object" icon="fa-calendar-check-o">
+                            <field name="monthly_count" widget="statinfo" string="Monthly Items"/>
+                        </button>
+                        <button class="oe_stat_button" type="object" icon="fa-percent">
+                            <field name="compliance_rate" widget="statinfo" string="Compliance %"/>
+                        </button>
+                        <button class="oe_stat_button" type="object" icon="fa-exclamation-circle"
+                                invisible="gap_count == 0">
+                            <field name="gap_count" widget="statinfo" string="Open Gaps"/>
+                        </button>
+                    </div>
+
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only" string="SOP Title"/>
+                        <h1>
+                            <field name="name" placeholder="e.g. Sales Follow-up &amp; Pipeline Review SOP"/>
+                        </h1>
+                    </div>
+
+                    <group>
+                        <group string="Project &amp; Ownership">
+                            <field name="project_id"/>
+                            <field name="stage_id"/>
+                            <field name="department_id"/>
+                            <field name="sop_type"/>
+                            <field name="owner_id"/>
+                        </group>
+                        <group string="Rollout &amp; Governance">
+                            <field name="coordinator_id"/>
+                            <field name="coordinator_designation_date"/>
+                            <field name="rollout_date"/>
+                            <field name="version"/>
+                            <field name="compliance_rate" widget="progressbar"/>
+                        </group>
+                    </group>
+
+                    <group string="Objective &amp; Scope">
+                        <field name="objective" placeholder="Main purpose and target outcome of this SOP..."/>
+                        <field name="scope" placeholder="Departments, employee roles, or processes where this applies..."/>
+                    </group>
+
+                    <notebook>
+                        <!-- TAB 1: DAILY CHECKLISTS -->
+                        <page string="Daily Checklists" name="page_daily_checklists">
+                            <div class="alert alert-info py-2" role="alert">
+                                <strong>Daily Checklists:</strong> Tasks client employees and coordinator must execute and log every working day.
+                            </div>
+                            <field name="daily_checklist_ids">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="name" string="Checklist Item"/>
+                                    <field name="responsible_user_id" string="Assigned Employee"/>
+                                    <field name="verification_method"/>
+                                    <field name="status" widget="badge"
+                                           decoration-warning="status == 'pending'"
+                                           decoration-success="status == 'compliant'"
+                                           decoration-info="status == 'partially_compliant'"
+                                           decoration-danger="status == 'non_compliant'"/>
+                                    <field name="last_verified_date"/>
+                                    <field name="verified_by_id" string="Consultant"/>
+                                    <button name="action_mark_compliant"
+                                            string="Verify Compliant"
+                                            type="object"
+                                            class="btn-success btn-sm"
+                                            icon="fa-check"
+                                            title="Mark as Compliant"/>
+                                    <button name="action_mark_non_compliant"
+                                            string="Log Non-Compliance"
+                                            type="object"
+                                            class="btn-danger btn-sm"
+                                            icon="fa-exclamation-triangle"
+                                            title="Log Defect and Create Action Item"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <!-- TAB 2: WEEKLY CHECKLISTS -->
+                        <page string="Weekly Checklists" name="page_weekly_checklists">
+                            <div class="alert alert-info py-2" role="alert">
+                                <strong>Weekly Checklists:</strong> Recurring weekly reviews, compliance audits, and consultant coordination reports.
+                            </div>
+                            <field name="weekly_checklist_ids">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="name" string="Weekly Item"/>
+                                    <field name="responsible_user_id" string="Assigned Employee"/>
+                                    <field name="verification_method"/>
+                                    <field name="status" widget="badge"
+                                           decoration-warning="status == 'pending'"
+                                           decoration-success="status == 'compliant'"
+                                           decoration-info="status == 'partially_compliant'"
+                                           decoration-danger="status == 'non_compliant'"/>
+                                    <field name="last_verified_date"/>
+                                    <field name="verified_by_id" string="Consultant"/>
+                                    <button name="action_mark_compliant"
+                                            string="Verify Compliant"
+                                            type="object"
+                                            class="btn-success btn-sm"
+                                            icon="fa-check"
+                                            title="Mark as Compliant"/>
+                                    <button name="action_mark_non_compliant"
+                                            string="Log Non-Compliance"
+                                            type="object"
+                                            class="btn-danger btn-sm"
+                                            icon="fa-exclamation-triangle"
+                                            title="Log Defect and Create Action Item"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <!-- TAB 3: MONTHLY CHECKLISTS -->
+                        <page string="Monthly Checklists" name="page_monthly_checklists">
+                            <div class="alert alert-info py-2" role="alert">
+                                <strong>Monthly Checklists:</strong> Monthly standards audit, KRA performance reconciliation, and management review.
+                            </div>
+                            <field name="monthly_checklist_ids">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="name" string="Monthly Item"/>
+                                    <field name="responsible_user_id" string="Assigned Employee"/>
+                                    <field name="verification_method"/>
+                                    <field name="status" widget="badge"
+                                           decoration-warning="status == 'pending'"
+                                           decoration-success="status == 'compliant'"
+                                           decoration-info="status == 'partially_compliant'"
+                                           decoration-danger="status == 'non_compliant'"/>
+                                    <field name="last_verified_date"/>
+                                    <field name="verified_by_id" string="Consultant"/>
+                                    <button name="action_mark_compliant"
+                                            string="Verify Compliant"
+                                            type="object"
+                                            class="btn-success btn-sm"
+                                            icon="fa-check"
+                                            title="Mark as Compliant"/>
+                                    <button name="action_mark_non_compliant"
+                                            string="Log Non-Compliance"
+                                            type="object"
+                                            class="btn-danger btn-sm"
+                                            icon="fa-exclamation-triangle"
+                                            title="Log Defect and Create Action Item"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <!-- TAB 4: DISCUSSION & ROLLOUT DETAILS -->
+                        <page string="SOP Discussion &amp; Rollout" name="page_discussion_rollout">
+                            <group>
+                                <group string="Step 28: SOP Discussion Details">
+                                    <field name="discussion_date"/>
+                                    <field name="discussion_attendees" placeholder="Names of client attendees / department heads..."/>
+                                    <field name="discussion_notes" placeholder="Agreed points, custom client requirements, and discussion MOM..."/>
+                                </group>
+                                <group string="Step 29: Implementation Coordinator &amp; Rollout">
+                                    <field name="coordinator_id"/>
+                                    <field name="coordinator_designation_date"/>
+                                    <field name="rollout_date"/>
+                                    <field name="rollout_notes" placeholder="Instructions for client to start using formats from next working day..."/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- TAB 5: FORMATS & TEMPLATES (DOCUMENTS) -->
+                        <page string="Formats and Documents" name="page_formats_documents">
+                            <div class="alert alert-light py-2" role="alert">
+                                Prescribed templates, daily registers, and reference documents required for this SOP.
+                            </div>
+                            <field name="document_ids">
+                                <list editable="bottom">
+                                    <field name="name" string="Document / Format Name"/>
+                                    <field name="document_type"/>
+                                    <field name="required"/>
+                                    <field name="attachment" filename="attachment_filename"/>
+                                    <field name="description"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <!-- TAB 6: GAPS & CORRECTIVE ACTION TRACKER -->
+                        <page string="Gaps &amp; Corrective Actions" name="page_sop_gaps">
+                            <field name="gap_ids">
+                                <list editable="bottom">
+                                    <field name="name" string="Identified Gap / Non-Compliance"/>
+                                    <field name="severity" widget="badge"
+                                           decoration-danger="severity in ('high', 'critical')"
+                                           decoration-warning="severity == 'medium'"
+                                           decoration-info="severity == 'low'"/>
+                                    <field name="employee_id" string="Accountable Person"/>
+                                    <field name="corrective_action" string="Corrective Action Plan"/>
+                                    <field name="due_date"/>
+                                    <field name="state" widget="badge"
+                                           decoration-danger="state == 'open'"
+                                           decoration-warning="state == 'in_progress'"
+                                           decoration-success="state in ('resolved', 'closed')"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
         </field>
     </record>
+
+    <!-- ========================================================
+         SOP KANBAN & LIST VIEWS
+    ========================================================= -->
+
     <record id="business_project_sop_kanban" model="ir.ui.view">
         <field name="name">business.project.sop.kanban</field>
         <field name="model">business.project.sop</field>
         <field name="arch" type="xml">
-            <kanban default_group_by="sop_type">
+            <kanban default_group_by="state" class="o_kanban_small_column">
                 <field name="name"/>
-                <field name="project_id"/>
                 <field name="department_id"/>
-                <field name="sop_type"/>
+                <field name="project_id"/>
+                <field name="stage_id"/>
+                <field name="owner_id"/>
+                <field name="compliance_rate"/>
+                <field name="checklist_count"/>
+                <field name="gap_count"/>
                 <field name="state"/>
                 <templates>
                     <t t-name="card">
-                        <div class="oe_kanban_global_click">
-                            <strong>
-                                <field name="name"/>
-                            </strong>
-                            <div class="text-muted">
-                                <field name="project_id"/>
-                                ·
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="badge bg-primary">
                                 <field name="department_id"/>
+                            </span>
+                            <span class="text-muted small">
+                                <field name="stage_id"/>
+                            </span>
+                        </div>
+                        <strong class="fs-6 text-dark d-block mb-1">
+                            <field name="name"/>
+                        </strong>
+                        <div class="text-muted small mb-2">
+                            <field name="project_id"/>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                            <div class="small">
+                                <i class="fa fa-tasks me-1 text-secondary" title="Checklists"/>
+                                <field name="checklist_count"/> Checklists
                             </div>
-                            <div class="mt-2">
-                                <field name="sop_type"/>
-                                · Version
-                                <field name="version"/>
-                            </div>
-                            <field name="state" widget="label_selection"/>
-                            <div class="text-muted mt-1">Checklists:
-                                <field name="checklist_count"/>
-                                | Compliance checks:
-                                <field name="compliance_count"/>
+                            <div class="small fw-bold">
+                                <span t-attf-class="badge #{record.compliance_rate.raw_value >= 80 ? 'bg-success' : record.compliance_rate.raw_value >= 50 ? 'bg-warning' : 'bg-secondary'}">
+                                    <field name="compliance_rate"/>%
+                                </span>
                             </div>
                         </div>
                     </t>
@@ -163,73 +460,159 @@
             </kanban>
         </field>
     </record>
-    <record id="business_project_sop_form" model="ir.ui.view">
-        <field name="name">business.project.sop.form</field>
+
+    <record id="business_project_sop_list" model="ir.ui.view">
+        <field name="name">business.project.sop.list</field>
         <field name="model">business.project.sop</field>
         <field name="arch" type="xml">
-            <form>
+            <list string="Standard Operating Procedures">
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="stage_id"/>
+                <field name="department_id"/>
+                <field name="sop_type"/>
+                <field name="owner_id"/>
+                <field name="coordinator_id"/>
+                <field name="checklist_count" string="Checklists"/>
+                <field name="compliance_rate" widget="progressbar"/>
+                <field name="state" widget="badge"
+                       decoration-info="state in ('draft', 'checklist_prep')"
+                       decoration-warning="state in ('rollout', 'verification')"
+                       decoration-success="state == 'active'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="business_project_sop_search" model="ir.ui.view">
+        <field name="name">business.project.sop.search</field>
+        <field name="model">business.project.sop</field>
+        <field name="arch" type="xml">
+            <search string="Search SOPs">
+                <field name="name" string="SOP"/>
+                <field name="project_id"/>
+                <field name="stage_id"/>
+                <field name="department_id"/>
+                <field name="coordinator_id"/>
+                <filter name="filter_active" string="Active / Compliant" domain="[('state', '=', 'active')]"/>
+                <filter name="filter_rollout" string="In Rollout / Verification" domain="[('state', 'in', ['rollout', 'verification'])]"/>
+                <group>
+                    <filter name="group_stage" string="Project Stage" context="{'group_by': 'stage_id'}"/>
+                    <filter name="group_department" string="Department" context="{'group_by': 'department_id'}"/>
+                    <filter name="group_project" string="Business Project" context="{'group_by': 'project_id'}"/>
+                    <filter name="group_state" string="State" context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ========================================================
+         SOP CHECKLIST WORKBENCH (LIST & FORM)
+    ========================================================= -->
+
+    <record id="business_project_sop_checklist_list" model="ir.ui.view">
+        <field name="name">business.project.sop.checklist.list</field>
+        <field name="model">business.project.sop.checklist</field>
+        <field name="arch" type="xml">
+            <list string="SOP Checklists" decoration-danger="status == 'non_compliant'" decoration-warning="status == 'pending'">
+                <field name="sequence" widget="handle"/>
+                <field name="name" string="Checklist Item"/>
+                <field name="frequency" widget="badge"
+                       decoration-info="frequency == 'daily'"
+                       decoration-primary="frequency == 'weekly'"
+                       decoration-success="frequency == 'monthly'"/>
+                <field name="sop_id"/>
+                <field name="project_id"/>
+                <field name="department_id"/>
+                <field name="responsible_user_id"/>
+                <field name="verification_method"/>
+                <field name="status" widget="badge"
+                       decoration-warning="status == 'pending'"
+                       decoration-success="status == 'compliant'"
+                       decoration-info="status == 'partially_compliant'"
+                       decoration-danger="status == 'non_compliant'"/>
+                <field name="last_verified_date"/>
+                <field name="verified_by_id"/>
+                <button name="action_mark_compliant"
+                        string="Verify Compliant"
+                        type="object"
+                        class="btn-success btn-sm"
+                        icon="fa-check"/>
+                <button name="action_mark_non_compliant"
+                        string="Log Non-Compliance"
+                        type="object"
+                        class="btn-danger btn-sm"
+                        icon="fa-exclamation-triangle"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="business_project_sop_checklist_form" model="ir.ui.view">
+        <field name="name">business.project.sop.checklist.form</field>
+        <field name="model">business.project.sop.checklist</field>
+        <field name="arch" type="xml">
+            <form string="Checklist Item">
                 <header>
-                    <button name="action_activate" string="Activate" type="object" class="btn-primary"
-                            invisible="state != 'draft'"/>
-                    <button name="action_submit_review" string="Submit for Review" type="object"
-                            invisible="state != 'active'"/>
-                    <button name="action_approve" string="Approve" type="object" class="btn-primary"
-                            invisible="state != 'review'"/>
-                    <field name="state" widget="statusbar" statusbar_visible="draft,active,review,approved,obsolete"/>
+                    <button name="action_mark_compliant"
+                            string="Verify Compliant"
+                            type="object"
+                            class="btn-success"
+                            icon="fa-check"/>
+                    <button name="action_mark_non_compliant"
+                            string="Log Non-Compliance (Create Gap)"
+                            type="object"
+                            class="btn-danger"
+                            icon="fa-exclamation-triangle"/>
+                    <button name="action_reset_pending"
+                            string="Reset to Pending"
+                            type="object"
+                            invisible="status == 'pending'"/>
+                    <field name="status" widget="statusbar"/>
                 </header>
                 <sheet>
                     <div class="oe_title">
+                        <label for="name" class="oe_edit_only" string="Checklist Item"/>
                         <h1>
                             <field name="name"/>
                         </h1>
                     </div>
                     <group>
-                        <group>
+                        <group string="SOP &amp; Project Context">
+                            <field name="sop_id"/>
                             <field name="project_id"/>
                             <field name="department_id"/>
-                            <field name="sop_type"/>
-                            <field name="owner_id"/>
+                            <field name="stage_id"/>
+                        </group>
+                        <group string="Frequency &amp; Assignment">
+                            <field name="frequency"/>
+                            <field name="responsible_user_id"/>
+                            <field name="responsible_role"/>
+                            <field name="is_required"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <group string="Execution Instructions">
+                        <field name="instructions" placeholder="Step-by-step instructions for the client employee to execute..."/>
+                    </group>
+                    <group string="Step 30: Consultant Verification">
+                        <group>
+                            <field name="verification_method"/>
+                            <field name="last_verified_date"/>
+                            <field name="verified_by_id"/>
                         </group>
                         <group>
-                            <field name="version"/>
-                            <field name="checklist_count"/>
-                            <field name="compliance_count"/>
+                            <field name="verification_notes" placeholder="Consultant findings, evidence verified, or gaps noticed..."/>
                         </group>
                     </group>
-                    <group>
-                        <field name="objective"/>
-                        <field name="scope"/>
-                    </group>
                     <notebook>
-                        <page string="Checklists">
-                            <field name="checklist_ids">
+                        <page string="Corrective Action Gaps" name="gaps">
+                            <field name="gap_ids">
                                 <list editable="bottom">
                                     <field name="name"/>
-                                    <field name="frequency"/>
-                                    <field name="responsible_user_id"/>
-                                    <field name="is_required"/>
-                                    <field name="active"/>
-                                </list>
-                            </field>
-                        </page>
-                        <page string="Formats and Documents">
-                            <field name="document_ids">
-                                <list editable="bottom">
-                                    <field name="name"/>
-                                    <field name="document_type"/>
-                                    <field name="required"/>
-                                    <field name="attachment" filename="attachment_filename"/>
-                                </list>
-                            </field>
-                        </page>
-                        <page string="Compliance">
-                            <field name="compliance_ids">
-                                <list editable="bottom">
-                                    <field name="checklist_id"/>
-                                    <field name="check_date"/>
+                                    <field name="severity"/>
                                     <field name="employee_id"/>
-                                    <field name="status"/>
-                                    <field name="evidence"/>
+                                    <field name="corrective_action"/>
+                                    <field name="due_date"/>
+                                    <field name="state" widget="badge"/>
                                 </list>
                             </field>
                         </page>
@@ -239,133 +622,112 @@
         </field>
     </record>
 
-    <record id="business_project_sop_checklist_list" model="ir.ui.view">
-        <field name="name">business.project.sop.checklist.list</field>
+    <record id="business_project_sop_checklist_search" model="ir.ui.view">
+        <field name="name">business.project.sop.checklist.search</field>
         <field name="model">business.project.sop.checklist</field>
         <field name="arch" type="xml">
-            <list>
-                <field name="name"/>
+            <search string="Search Checklists">
+                <field name="name" string="Checklist Item"/>
                 <field name="sop_id"/>
-                <field name="frequency"/>
-                <field name="responsible_user_id"/>
-                <field name="is_required"/>
-                <field name="active"/>
-            </list>
+                <field name="project_id"/>
+                <field name="department_id"/>
+                <filter name="filter_daily" string="Daily Checklists" domain="[('frequency', '=', 'daily')]"/>
+                <filter name="filter_weekly" string="Weekly Checklists" domain="[('frequency', '=', 'weekly')]"/>
+                <filter name="filter_monthly" string="Monthly Checklists" domain="[('frequency', '=', 'monthly')]"/>
+                <separator/>
+                <filter name="filter_pending" string="Pending Verification" domain="[('status', '=', 'pending')]"/>
+                <filter name="filter_compliant" string="Compliant" domain="[('status', '=', 'compliant')]"/>
+                <filter name="filter_non_compliant" string="Non-Compliant (Gaps)" domain="[('status', '=', 'non_compliant')]"/>
+                <group>
+                    <filter name="group_frequency" string="Frequency" context="{'group_by': 'frequency'}"/>
+                    <filter name="group_status" string="Verification Status" context="{'group_by': 'status'}"/>
+                    <filter name="group_sop" string="SOP" context="{'group_by': 'sop_id'}"/>
+                    <filter name="group_department" string="Department" context="{'group_by': 'department_id'}"/>
+                    <filter name="group_project" string="Business Project" context="{'group_by': 'project_id'}"/>
+                </group>
+            </search>
         </field>
     </record>
+
+    <!-- ========================================================
+         SOP DOCUMENTS & FORMATS
+    ========================================================= -->
+
     <record id="business_project_sop_document_list" model="ir.ui.view">
         <field name="name">business.project.sop.document.list</field>
         <field name="model">business.project.sop.document</field>
         <field name="arch" type="xml">
-            <list>
+            <list string="Formats and Documents">
                 <field name="name"/>
                 <field name="sop_id"/>
                 <field name="document_type"/>
                 <field name="required"/>
-                <field name="attachment" filename="attachment_filename"/>
+                <field name="attachment_filename" string="Filename"/>
             </list>
         </field>
     </record>
+
     <record id="business_project_sop_compliance_list" model="ir.ui.view">
         <field name="name">business.project.sop.compliance.list</field>
         <field name="model">business.project.sop.compliance</field>
         <field name="arch" type="xml">
-            <list>
-                <field name="check_date"/>
+            <list string="SOP Compliance Checks">
                 <field name="sop_id"/>
                 <field name="checklist_id"/>
-                <field name="frequency"/>
+                <field name="check_date"/>
                 <field name="employee_id"/>
-                <field name="status"/>
-                <field name="project_id"/>
+                <field name="status" widget="badge"
+                       decoration-success="status == 'compliant'"
+                       decoration-info="status == 'partially_compliant'"
+                       decoration-danger="status == 'non_compliant'"/>
+                <field name="evidence"/>
             </list>
         </field>
     </record>
+
+    <!-- ========================================================
+         MONITORING AND GAPS
+    ========================================================= -->
+
     <record id="business_project_monitoring_list" model="ir.ui.view">
         <field name="name">business.project.monitoring.list</field>
         <field name="model">business.project.monitoring</field>
         <field name="arch" type="xml">
-            <list>
-                <field name="monitoring_date"/>
+            <list string="Implementation Coordinator Monitoring">
+                <field name="name"/>
                 <field name="project_id"/>
                 <field name="coordinator_id"/>
                 <field name="employee_id"/>
+                <field name="monitoring_date"/>
                 <field name="frequency"/>
-                <field name="status"/>
-                <field name="name"/>
+                <field name="status" widget="badge"/>
             </list>
         </field>
     </record>
-    <record id="business_project_monitoring_form" model="ir.ui.view">
-        <field name="name">business.project.monitoring.form</field>
-        <field name="model">business.project.monitoring</field>
-        <field name="arch" type="xml">
-            <form>
-                <sheet>
-                    <group>
-                        <field name="name"/>
-                        <field name="project_id"/>
-                        <field name="coordinator_id"/>
-                        <field name="employee_id"/>
-                        <field name="monitoring_date"/>
-                        <field name="frequency"/>
-                        <field name="status"/>
-                    </group>
-                    <field name="findings"/>
-                    <field name="client_report"/>
-                    <field name="gap_ids">
-                        <list editable="bottom">
-                            <field name="name"/>
-                            <field name="severity"/>
-                            <field name="employee_id"/>
-                            <field name="due_date"/>
-                            <field name="state"/>
-                        </list>
-                    </field>
-                </sheet>
-            </form>
-        </field>
-    </record>
+
     <record id="business_project_gap_list" model="ir.ui.view">
         <field name="name">business.project.gap.list</field>
         <field name="model">business.project.gap</field>
         <field name="arch" type="xml">
-            <list>
+            <list string="Gaps and Corrective Actions" decoration-danger="severity in ('high', 'critical')" decoration-warning="severity == 'medium'">
                 <field name="name"/>
                 <field name="project_id"/>
+                <field name="sop_id"/>
                 <field name="department_id"/>
                 <field name="employee_id"/>
-                <field name="severity"/>
+                <field name="severity" widget="badge"/>
                 <field name="due_date"/>
-                <field name="state"/>
+                <field name="state" widget="badge"
+                       decoration-danger="state == 'open'"
+                       decoration-warning="state == 'in_progress'"
+                       decoration-success="state in ('resolved', 'closed')"/>
             </list>
         </field>
     </record>
-    <record id="business_project_gap_form" model="ir.ui.view">
-        <field name="name">business.project.gap.form</field>
-        <field name="model">business.project.gap</field>
-        <field name="arch" type="xml">
-            <form>
-                <sheet>
-                    <group>
-                        <field name="name"/>
-                        <field name="project_id"/>
-                        <field name="department_id"/>
-                        <field name="employee_id"/>
-                        <field name="severity"/>
-                        <field name="state"/>
-                        <field name="due_date"/>
-                    </group>
-                    <field name="description"/>
-                    <field name="corrective_action"/>
-                    <group>
-                        <field name="monitoring_id"/>
-                        <field name="compliance_id"/>
-                    </group>
-                </sheet>
-            </form>
-        </field>
-    </record>
+
+    <!-- ========================================================
+         PROJECT FORM EXTENSION: STAGE-CONNECTED SOP WORKBENCH
+    ========================================================= -->
 
     <record id="business_project_form_sop_extension" model="ir.ui.view">
         <field name="name">business.project.form.sop.extension</field>
@@ -373,51 +735,273 @@
         <field name="inherit_id" ref="Benjali_management.project_form_form"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='partner_id']" position="after">
-                <field name="client_implementation_coordinator_id"/>
+                <field name="client_implementation_coordinator_id"
+                       placeholder="Designate coordinator from client's team..."/>
             </xpath>
+
             <xpath expr="//notebook" position="inside">
-                <page string="Deliverables and SOPs">
-                    <field name="consulting_deliverable_ids">
-                        <list editable="bottom">
-                            <field name="name"/>
-                            <field name="department_id"/>
-                            <field name="deliverable_type"/>
-                            <field name="responsible_user_id"/>
-                            <field name="due_date"/>
-                            <field name="state"/>
-                        </list>
-                    </field>
-                    <field name="sop_ids">
-                        <list editable="bottom">
-                            <field name="name"/>
-                            <field name="department_id"/>
-                            <field name="sop_type"/>
-                            <field name="owner_id"/>
-                            <field name="state"/>
-                        </list>
-                    </field>
-                </page>
-                <page string="Implementation Monitoring">
-                    <field name="monitoring_ids">
-                        <list editable="bottom">
-                            <field name="monitoring_date"/>
-                            <field name="employee_id"/>
-                            <field name="frequency"/>
-                            <field name="status"/>
-                            <field name="name"/>
-                        </list>
-                    </field>
-                    <field name="gap_ids">
-                        <list editable="bottom">
-                            <field name="name"/>
-                            <field name="severity"/>
-                            <field name="employee_id"/>
-                            <field name="due_date"/>
-                            <field name="state"/>
-                        </list>
-                    </field>
+                <!-- MASTER SOP & CHECKLISTS TAB -->
+                <page string="SOPs &amp; Checklists" name="page_sops_and_checklists">
+
+                    <!-- STAGE-AWARE NOTIFICATION BANNER -->
+                    <div class="alert alert-info d-flex align-items-center justify-content-between mb-3 p-3 shadow-sm"
+                         role="alert"
+                         invisible="not is_sop_active_stage">
+                        <div>
+                            <h5 class="mb-1">
+                                <i class="fa fa-info-circle me-2"/>
+                                <span class="fw-bold">Current Stage Focus:</span>
+                                <field name="stage_id" class="fw-bold text-primary"/>
+                            </h5>
+                            <p class="mb-0 text-muted small">
+                                Execute SOP discussion, monitor employee compliance via client coordinator, and conduct consultant verifications.
+                            </p>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button name="action_generate_project_sop_checklists"
+                                    string="Generate Checklists"
+                                    type="object"
+                                    class="btn btn-outline-primary btn-sm"
+                                    icon="fa-magic"/>
+                            <button name="action_mark_all_sop_compliant"
+                                    string="Verify All Compliant"
+                                    type="object"
+                                    class="btn btn-success btn-sm"
+                                    icon="fa-check-circle"/>
+                        </div>
+                    </div>
+
+                    <!-- SOP DASHBOARD KPI SUMMARY BAR -->
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-2">
+                            <div class="card p-2 text-center border-0 bg-light shadow-sm">
+                                <div class="text-muted small">Total SOPs</div>
+                                <div class="fs-4 fw-bold text-primary">
+                                    <field name="sop_count"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="card p-2 text-center border-0 bg-light shadow-sm">
+                                <div class="text-muted small">Daily Tasks</div>
+                                <div class="fs-4 fw-bold text-info">
+                                    <field name="sop_daily_count"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="card p-2 text-center border-0 bg-light shadow-sm">
+                                <div class="text-muted small">Weekly Reviews</div>
+                                <div class="fs-4 fw-bold text-primary">
+                                    <field name="sop_weekly_count"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="card p-2 text-center border-0 bg-light shadow-sm">
+                                <div class="text-muted small">Monthly Audits</div>
+                                <div class="fs-4 fw-bold text-secondary">
+                                    <field name="sop_monthly_count"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="card p-2 text-center border-0 bg-light shadow-sm">
+                                <div class="text-muted small">Compliance %</div>
+                                <div class="fs-4 fw-bold text-success">
+                                    <field name="sop_compliance_rate"/>%
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="card p-2 text-center border-0 bg-light shadow-sm">
+                                <div class="text-muted small">Open Gaps</div>
+                                <div class="fs-4 fw-bold text-danger">
+                                    <field name="sop_open_gaps_count"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SUB-TABS FOR COMPLETE CLARITY -->
+                    <notebook>
+                        <!-- SUB-TAB 1: SOP REGISTER -->
+                        <page string="Department SOPs" name="subtab_sop_register">
+                            <field name="sop_ids">
+                                <list editable="bottom">
+                                    <field name="name" string="SOP Title"/>
+                                    <field name="stage_id" string="Associated Stage"/>
+                                    <field name="department_id"/>
+                                    <field name="sop_type"/>
+                                    <field name="owner_id"/>
+                                    <field name="coordinator_id"/>
+                                    <field name="checklist_count" string="Checklists"/>
+                                    <field name="compliance_rate" widget="progressbar"/>
+                                    <field name="state" widget="badge"
+                                           decoration-info="state in ('draft', 'checklist_prep')"
+                                           decoration-warning="state in ('rollout', 'verification')"
+                                           decoration-success="state == 'active'"/>
+                                    <button name="action_generate_standard_checklists"
+                                            string="Auto-Checklists"
+                                            type="object"
+                                            class="btn-outline-primary btn-sm"
+                                            icon="fa-magic"
+                                            title="Generate Standard Daily, Weekly, and Monthly Checklists"/>
+                                    <button name="action_quick_verify_all"
+                                            string="Verify All"
+                                            type="object"
+                                            class="btn-outline-success btn-sm"
+                                            icon="fa-check"
+                                            title="Mark All Pending Checklists Compliant"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <!-- SUB-TAB 2: DAILY CHECKLISTS -->
+                        <page string="Daily Checklists" name="subtab_daily_checklists">
+                            <field name="sop_daily_checklist_ids">
+                                <list editable="bottom">
+                                    <field name="name" string="Daily Item"/>
+                                    <field name="sop_id" string="SOP"/>
+                                    <field name="department_id" string="Department"/>
+                                    <field name="responsible_user_id" string="Assignee"/>
+                                    <field name="verification_method"/>
+                                    <field name="status" widget="badge"
+                                           decoration-warning="status == 'pending'"
+                                           decoration-success="status == 'compliant'"
+                                           decoration-danger="status == 'non_compliant'"/>
+                                    <field name="last_verified_date"/>
+                                    <button name="action_mark_compliant"
+                                            string="Compliant"
+                                            type="object"
+                                            class="btn-success btn-sm"
+                                            icon="fa-check"/>
+                                    <button name="action_mark_non_compliant"
+                                            string="Log Gap"
+                                            type="object"
+                                            class="btn-danger btn-sm"
+                                            icon="fa-exclamation-triangle"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <!-- SUB-TAB 3: WEEKLY CHECKLISTS -->
+                        <page string="Weekly Checklists" name="subtab_weekly_checklists">
+                            <field name="sop_weekly_checklist_ids">
+                                <list editable="bottom">
+                                    <field name="name" string="Weekly Item"/>
+                                    <field name="sop_id" string="SOP"/>
+                                    <field name="department_id" string="Department"/>
+                                    <field name="responsible_user_id" string="Assignee"/>
+                                    <field name="verification_method"/>
+                                    <field name="status" widget="badge"
+                                           decoration-warning="status == 'pending'"
+                                           decoration-success="status == 'compliant'"
+                                           decoration-danger="status == 'non_compliant'"/>
+                                    <field name="last_verified_date"/>
+                                    <button name="action_mark_compliant"
+                                            string="Compliant"
+                                            type="object"
+                                            class="btn-success btn-sm"
+                                            icon="fa-check"/>
+                                    <button name="action_mark_non_compliant"
+                                            string="Log Gap"
+                                            type="object"
+                                            class="btn-danger btn-sm"
+                                            icon="fa-exclamation-triangle"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <!-- SUB-TAB 4: MONTHLY CHECKLISTS -->
+                        <page string="Monthly Checklists" name="subtab_monthly_checklists">
+                            <field name="sop_monthly_checklist_ids">
+                                <list editable="bottom">
+                                    <field name="name" string="Monthly Item"/>
+                                    <field name="sop_id" string="SOP"/>
+                                    <field name="department_id" string="Department"/>
+                                    <field name="responsible_user_id" string="Assignee"/>
+                                    <field name="verification_method"/>
+                                    <field name="status" widget="badge"
+                                           decoration-warning="status == 'pending'"
+                                           decoration-success="status == 'compliant'"
+                                           decoration-danger="status == 'non_compliant'"/>
+                                    <field name="last_verified_date"/>
+                                    <button name="action_mark_compliant"
+                                            string="Compliant"
+                                            type="object"
+                                            class="btn-success btn-sm"
+                                            icon="fa-check"/>
+                                    <button name="action_mark_non_compliant"
+                                            string="Log Gap"
+                                            type="object"
+                                            class="btn-danger btn-sm"
+                                            icon="fa-exclamation-triangle"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <!-- SUB-TAB 5: GAPS & CORRECTIVE ACTION TRACKER -->
+                        <page string="Corrective Action Tracker" name="subtab_gaps_tracker">
+                            <field name="gap_ids">
+                                <list editable="bottom">
+                                    <field name="name" string="Identified Gap / Non-Compliance"/>
+                                    <field name="sop_id" string="Source SOP"/>
+                                    <field name="department_id"/>
+                                    <field name="employee_id" string="Accountable Person"/>
+                                    <field name="severity" widget="badge"
+                                           decoration-danger="severity in ('high', 'critical')"
+                                           decoration-warning="severity == 'medium'"/>
+                                    <field name="corrective_action" string="Action Plan"/>
+                                    <field name="due_date"/>
+                                    <field name="state" widget="badge"
+                                           decoration-danger="state == 'open'"
+                                           decoration-warning="state == 'in_progress'"
+                                           decoration-success="state in ('resolved', 'closed')"/>
+                                    <button name="action_resolve"
+                                            string="Resolve"
+                                            type="object"
+                                            class="btn-success btn-sm"
+                                            icon="fa-check"
+                                            invisible="state in ('resolved', 'closed')"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <!-- SUB-TAB 6: CONSULTING DELIVERABLES -->
+                        <page string="Consulting Deliverables" name="subtab_deliverables">
+                            <field name="consulting_deliverable_ids">
+                                <list editable="bottom">
+                                    <field name="name"/>
+                                    <field name="department_id"/>
+                                    <field name="deliverable_type"/>
+                                    <field name="responsible_user_id"/>
+                                    <field name="due_date"/>
+                                    <field name="state" widget="badge"
+                                           decoration-info="state == 'planned'"
+                                           decoration-warning="state == 'in_progress'"
+                                           decoration-success="state == 'completed'"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <!-- SUB-TAB 7: IMPLEMENTATION COORDINATOR MONITORING -->
+                        <page string="Coordinator Monitoring" name="subtab_monitoring">
+                            <field name="monitoring_ids">
+                                <list editable="bottom">
+                                    <field name="monitoring_date"/>
+                                    <field name="coordinator_id"/>
+                                    <field name="employee_id"/>
+                                    <field name="frequency"/>
+                                    <field name="status" widget="badge"/>
+                                    <field name="name"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
                 </page>
             </xpath>
         </field>
     </record>
+
 </odoo>

@@ -3,6 +3,8 @@
     "version": "1.0",
     "category": "Project",
     "summary": "Business project workflow management",
+    "author": "Benjali",
+    "license": "LGPL-3",
     "depends": [
         "base",
         "mail",

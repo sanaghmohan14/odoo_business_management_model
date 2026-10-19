@@ -1,135 +1,328 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <odoo>
 
+    <!-- ========================================================
+         PHASE 1: ONBOARDING & PROJECT INITIATION (Steps 8 - 14)
+    ========================================================= -->
+
+    <!-- Step 8: Client Onboarding (Ignoring sales steps 1-7 & payment verification) -->
     <record id="stage_client_onboarding" model="business.project.stage">
         <field name="name">Client Onboarding</field>
         <field name="sequence">70</field>
         <field name="phase">onboarding</field>
-        <field name="responsible_role">Sales Head</field>
-        <field name="approver_role">CEO</field>
+        <field name="responsible_role">Finance In-charge / Sales Person</field>
+        <field name="approver_role">Finance In-charge / Operations Head</field>
         <field name="description">
-            Convert the lead into a client and create the client profile.
+            Step 8: Payment verified and confirmed. Convert lead into onboarded client and establish client profile.
         </field>
     </record>
 
-
+    <!-- Step 9: Project Creation & Initial Client Connection -->
     <record id="stage_project_creation" model="business.project.stage">
-        <field name="name">Project Creation/Client connection</field>
+        <field name="name">Project Creation &amp; Initial Client Connection</field>
         <field name="sequence">80</field>
         <field name="phase">onboarding</field>
         <field name="responsible_role">Project Manager</field>
-        <field name="approver_role">COO</field>
+        <field name="approver_role">Operations Head / GVP</field>
         <field name="description">
-            Create the project in Odoo and define the basic project details.
+            Step 9: Client allotted to Consulting Team. PM contacts customer for initial connection, establishes communication and understands immediate context.
         </field>
     </record>
 
-
+    <!-- Step 10: Internal Project Understanding & Team Designation -->
     <record id="stage_team_allocation" model="business.project.stage">
-        <field name="name">Team Allocation</field>
+        <field name="name">Internal Project Understanding &amp; Team Designation</field>
         <field name="sequence">90</field>
         <field name="phase">onboarding</field>
         <field name="responsible_role">Project Manager</field>
-        <field name="approver_role">COO</field>
+        <field name="approver_role">CASAC Sir / Group VP</field>
         <field name="description">
-            Assign the project team and define team roles.
+            Step 10: PM conducts internal meeting with CASAC Sir / Group VP to understand key challenge areas, identify project focus, and designate required team members.
         </field>
     </record>
 
-
-    <record id="stage_kickoff" model="business.project.stage">
-        <field name="name">Initial Client Contact &amp; Kick-off</field>
+    <!-- Step 11: Project Setup & Communication -->
+    <record id="stage_communication" model="business.project.stage">
+        <field name="name">Project Setup &amp; Communication</field>
         <field name="sequence">100</field>
         <field name="phase">onboarding</field>
         <field name="responsible_role">Project Manager</field>
-        <field name="approver_role">COO</field>
+        <field name="approver_role">Operations Head / GVP</field>
         <field name="description">
-            Contact the client, plan and conduct the kick-off meeting within the required timeline.
+            Step 11: Confirm designated consultants, establish project structure, create communication group, and schedule kick-off.
         </field>
     </record>
 
-
-    <record id="stage_communication" model="business.project.stage">
-        <field name="name">Project Communication Setup</field>
+    <!-- Step 12: Project Kick-off & Formal Initiation -->
+    <record id="stage_kickoff" model="business.project.stage">
+        <field name="name">Project Kick-off &amp; Formal Initiation</field>
         <field name="sequence">110</field>
         <field name="phase">onboarding</field>
-        <field name="responsible_role">Project Manager</field>
-        <field name="approver_role">COO</field>
+        <field name="responsible_role">PM / Team Lead</field>
+        <field name="approver_role">Operations Head / GVP</field>
         <field name="description">
-            Create communication channels and establish the client communication process.
+            Step 12: Conduct kick-off, confirm objectives, scope, deliverables, timeline, communication, reporting and responsibilities.
         </field>
     </record>
 
+    <!-- Step 13: Change Management Meeting & Project Rollout -->
+    <record id="stage_change_management" model="business.project.stage">
+        <field name="name">Change Management Meeting &amp; Project Rollout</field>
+        <field name="sequence">115</field>
+        <field name="phase">onboarding</field>
+        <field name="responsible_role">CASAC Sir</field>
+        <field name="approver_role">CEO / Operations Head / GVP</field>
+        <field name="description">
+            Step 13: Immediately after kick-off: Change Management Meeting by CASAC Sir to explain project purpose, expected changes, and advise client to issue rollout notice to employees.
+        </field>
+    </record>
 
-    <!-- =========================
-         PLANNING & ANALYSIS
-    ========================== -->
+    <!-- Step 14: Management Function – Basic User Guide & Control Requirement -->
+    <record id="stage_management_guide" model="business.project.stage">
+        <field name="name">Management Function &amp; Control Requirement</field>
+        <field name="sequence">118</field>
+        <field name="phase">onboarding</field>
+        <field name="responsible_role">Consulting Team / Team Lead</field>
+        <field name="approver_role">CEO / CASAC Sir</field>
+        <field name="description">
+            Step 14: Share basic Management User Guide, determine desired management control level, define reports to review, meetings to attend, frequency, and when to ask for reports.
+        </field>
+    </record>
 
+    <!-- ========================================================
+         PHASE 2: PLANNING & SYSTEM STUDY (Steps 15 - 25)
+    ========================================================= -->
+
+    <!-- Step 15: Project KRA & Success Criteria Development -->
     <record id="stage_kra" model="business.project.stage">
-        <field name="name">Project KRA Development</field>
+        <field name="name">Project KRA &amp; Success Criteria Development</field>
         <field name="sequence">120</field>
         <field name="phase">planning</field>
-        <field name="responsible_role">Lead Consultant / PM</field>
-        <field name="approver_role">CEO / COO</field>
+        <field name="responsible_role">Team Lead / PM</field>
+        <field name="approver_role">CEO</field>
         <field name="description">
-            Define key result areas and project objectives.
+            Step 15: Develop project KRAs, define outcomes and success criteria, prepare Weekly KRA Checklist + Monthly KRA Checklist.
         </field>
     </record>
 
-
+    <!-- Step 16: Activity Plan & Management Approval -->
     <record id="stage_activity_plan" model="business.project.stage">
-        <field name="name">Activity Plan Preparation</field>
+        <field name="name">Activity Plan &amp; Management Approval</field>
         <field name="sequence">130</field>
         <field name="phase">planning</field>
-        <field name="responsible_role">Project Manager</field>
-        <field name="approver_role">COO</field>
-        <field name="description">
-            Prepare the detailed activity plan including activities, resources and timeline.
-        </field>
-    </record>
-
-
-    <record id="stage_management_review" model="business.project.stage">
-        <field name="name">Management Review &amp; Approval</field>
-        <field name="sequence">140</field>
-        <field name="phase">planning</field>
-        <field name="responsible_role">COO / CEO</field>
+        <field name="responsible_role">PM / Team Lead</field>
         <field name="approver_role">CEO</field>
         <field name="requires_approval">True</field>
-        <field name="approval_type">management_review</field>
+        <field name="approval_type">activity_plan</field>
         <field name="description">
-            Review and approve the project plan.
+            Step 16: Break KRAs into activities, assign responsibility, start dates, deadlines, dependencies, priorities, resource review, and CEO approval.
         </field>
     </record>
 
+    <!-- Step 17: Project Tracker Activation -->
+    <record id="stage_project_tracker" model="business.project.stage">
+        <field name="name">Project Tracker Activation</field>
+        <field name="sequence">135</field>
+        <field name="phase">planning</field>
+        <field name="responsible_role">Team Lead</field>
+        <field name="approver_role">PM</field>
+        <field name="description">
+            Step 17: Convert activity plan into tasks, assign task owners, deadlines, and setup monitoring mechanism.
+        </field>
+    </record>
 
+    <!-- Steps 18-20: System Study Preparation & Data Collection -->
     <record id="stage_data_collection" model="business.project.stage">
-        <field name="name">System Study &amp; Data Collection</field>
+        <field name="name">System Study Preparation &amp; Data Collection</field>
         <field name="sequence">150</field>
         <field name="phase">planning</field>
         <field name="responsible_role">Consulting Team</field>
-        <field name="approver_role">PM / COO</field>
+        <field name="approver_role">PM</field>
         <field name="description">
-            Collect data and documents, conduct interviews and study existing systems.
+            Steps 18-20: Study plan, document/data requests, questionnaires, as-is process maps, department analysis, and identification of quick-win low-hanging fruits.
         </field>
     </record>
 
-
+    <!-- Step 21: Gap, Root Cause & Recommendation Analysis -->
     <record id="stage_analysis" model="business.project.stage">
-        <field name="name">Analysis &amp; Findings</field>
+        <field name="name">Gap, Root Cause &amp; Recommendation Analysis</field>
         <field name="sequence">160</field>
         <field name="phase">planning</field>
         <field name="responsible_role">Consulting Team</field>
-        <field name="approver_role">PM / COO</field>
+        <field name="approver_role">PM</field>
         <field name="description">
-            Analyse current processes, identify gaps, root causes and risks.
+            Step 21: Identify gaps, bottlenecks, root causes, risks, performance gaps, opportunities, and prioritize recommendations.
         </field>
     </record>
 
+    <!-- Step 22: System Study Report & Internal Review -->
+    <record id="stage_system_study_report" model="business.project.stage">
+        <field name="name">System Study Report &amp; Internal Review</field>
+        <field name="sequence">170</field>
+        <field name="phase">planning</field>
+        <field name="responsible_role">Consulting Team</field>
+        <field name="approver_role">PM</field>
+        <field name="requires_approval">True</field>
+        <field name="approval_type">system_study</field>
+        <field name="description">
+            Step 22: Consolidate findings, prepare report, internal quality review, management review, and corrections.
+        </field>
+    </record>
+
+    <!-- Step 23: Client Presentation & Finalization -->
+    <record id="stage_client_presentation" model="business.project.stage">
+        <field name="name">Client Presentation &amp; Finalization</field>
+        <field name="sequence">180</field>
+        <field name="phase">planning</field>
+        <field name="responsible_role">Consulting Team</field>
+        <field name="approver_role">PM / CEO</field>
+        <field name="description">
+            Step 23: Present findings to client, explain gaps and recommendations, collect client feedback, incorporate revisions, and finalize report.
+        </field>
+    </record>
+
+    <!-- Step 24: Client-side Priority Setting -->
+    <record id="stage_client_priority" model="business.project.stage">
+        <field name="name">Client-side Priority Setting</field>
+        <field name="sequence">190</field>
+        <field name="phase">planning</field>
+        <field name="responsible_role">Client Team / Consulting Team</field>
+        <field name="approver_role">PM</field>
+        <field name="description">
+            Step 24: Client team suggests and prioritizes operational focus areas based on approved system study findings.
+        </field>
+    </record>
+
+    <!-- Step 25: Consulting Execution Planning & Prioritization -->
+    <record id="stage_execution_planning" model="business.project.stage">
+        <field name="name">Consulting Execution Planning &amp; Prioritization</field>
+        <field name="sequence">200</field>
+        <field name="phase">planning</field>
+        <field name="responsible_role">Team Lead / PM</field>
+        <field name="approver_role">CEO</field>
+        <field name="requires_approval">True</field>
+        <field name="approval_type">other</field>
+        <field name="description">
+            Step 25: Review approved findings, prioritize work, identify high-priority KRAs, set execution sequence, and update tracker.
+        </field>
+    </record>
+
+    <!-- ========================================================
+         PHASE 3: EXECUTION & SOP DEVELOPMENT (Steps 26 - 30)
+    ========================================================= -->
+
+    <!-- Step 26: Strategic Foundation Framework Execution -->
+    <record id="stage_strategic_foundation" model="business.project.stage">
+        <field name="name">Strategic Foundation Framework Execution</field>
+        <field name="sequence">210</field>
+        <field name="phase">execution</field>
+        <field name="responsible_role">Consulting Team</field>
+        <field name="approver_role">CEO</field>
+        <field name="requires_approval">True</field>
+        <field name="approval_type">strategic_foundation</field>
+        <field name="description">
+            Step 26: Establish organizational/management foundation, align departments, objectives, responsibilities, reporting, and priorities.
+        </field>
+    </record>
+
+    <!-- Step 27: Department-wise Consulting Deliverables & SOP Development -->
+    <record id="stage_sop_development" model="business.project.stage">
+        <field name="name">Deliverables &amp; SOP Development</field>
+        <field name="sequence">220</field>
+        <field name="phase">execution</field>
+        <field name="responsible_role">Consulting Team / Lead Consultant</field>
+        <field name="approver_role">PM</field>
+        <field name="requires_approval">True</field>
+        <field name="approval_type">deliverables</field>
+        <field name="description">
+            Step 27: Develop SOPs, policies, procedures, workflows, JDs, KRAs/KPIs, templates and reports. Review, client presentation, approval, revisions, and finalization.
+        </field>
+    </record>
+
+    <!-- Step 28: SOP Discussion & Checklist Development -->
+    <record id="stage_sop_discussion_checklist" model="business.project.stage">
+        <field name="name">SOP Discussion &amp; Checklist Development</field>
+        <field name="sequence">230</field>
+        <field name="phase">execution</field>
+        <field name="responsible_role">Lead Consultant</field>
+        <field name="approver_role">Team Lead / PM</field>
+        <field name="description">
+            Step 28: Whenever an SOP is discussed/presented, develop and share Daily SOP Checklist, Weekly SOP Checklist, Monthly SOP Checklist and SOP Compliance Checklist along with required formats/documents.
+        </field>
+    </record>
+
+    <!-- Step 29: Client Implementation Coordinator & SOP Rollout -->
+    <record id="stage_sop_rollout" model="business.project.stage">
+        <field name="name">Client Coordinator &amp; SOP Rollout</field>
+        <field name="sequence">240</field>
+        <field name="phase">execution</field>
+        <field name="responsible_role">Client Implementation Coordinator</field>
+        <field name="approver_role">Client Management</field>
+        <field name="description">
+            Step 29: Client designates an Implementation Coordinator. Coordinator monitors employee compliance. Client starts using formats from next working day. Reports shared with assigned consultant.
+        </field>
+    </record>
+
+    <!-- Step 30: Consultant Verification & Odoo SOP Checklist Update -->
+    <record id="stage_consultant_verification" model="business.project.stage">
+        <field name="name">Consultant Verification &amp; SOP Checklist</field>
+        <field name="sequence">250</field>
+        <field name="phase">execution</field>
+        <field name="responsible_role">Assigned Consultant</field>
+        <field name="approver_role">Team Lead / PM</field>
+        <field name="description">
+            Step 30: Assigned consultant collects reports, verifies implementation, updates Odoo SOP Compliance Checklist, identifies gaps, and initiates corrective actions.
+        </field>
+    </record>
+
+    <!-- ========================================================
+         PHASE 4: GOVERNANCE & AUDIT (Steps 31 - 32)
+    ========================================================= -->
+
+    <!-- Step 31: Implementation, Monitoring & Client Governance -->
+    <record id="stage_governance" model="business.project.stage">
+        <field name="name">Implementation, Monitoring &amp; Governance</field>
+        <field name="sequence">260</field>
+        <field name="phase">governance</field>
+        <field name="responsible_role">Consulting Team</field>
+        <field name="approver_role">PM / CEO</field>
+        <field name="description">
+            Step 31: Implement recommendations, monitor adoption, track KRA/KPI, review client checklist, take corrective actions, and continuous follow-up.
+        </field>
+    </record>
+
+    <!-- Step 32: Monthly Audit – Standards, Sub-Standards & Reference Documents -->
+    <record id="stage_monthly_audit" model="business.project.stage">
+        <field name="name">Monthly Audit – Standards &amp; Compliance</field>
+        <field name="sequence">270</field>
+        <field name="phase">governance</field>
+        <field name="responsible_role">Consulting Team / Assigned Consultant</field>
+        <field name="approver_role">PM / Team Lead</field>
+        <field name="description">
+            Step 32: Audit against Standards, Sub-Standards, Reference Documents (policies, SOPs, agendas, formats/templates, procedures), verify actual practice, compliance, and corrective action.
+        </field>
+    </record>
+
+    <!-- ========================================================
+         PHASE 5: CLOSURE (Step 33)
+    ========================================================= -->
+
+    <!-- Step 33: Project Closure & Post-Implementation Support -->
+    <record id="stage_project_closure" model="business.project.stage">
+        <field name="name">Project Closure &amp; Post-Implementation Support</field>
+        <field name="sequence">280</field>
+        <field name="phase">closure</field>
+        <field name="responsible_role">PM / Lead Consultant</field>
+        <field name="approver_role">CEO / Operations Head / GVP</field>
+        <field name="requires_approval">True</field>
+        <field name="approval_type">project_closure</field>
+        <field name="description">
+            Step 33: Verify deliverables, close pending actions, client confirmation, closure report, handover, post-implementation review, and AMC/support where applicable.
+        </field>
+    </record>
 
     <!-- =========================
-         EXTRA CONTROL STAGES
+         CONTROL & TERMINAL STAGES
     ========================== -->
 
     <record id="stage_new" model="business.project.stage">
@@ -138,10 +331,10 @@
         <field name="phase">sales</field>
         <field name="responsible_role">Sales Person</field>
         <field name="description">
-            Newly created business project record.
+            Pre-onboarding record. (Note: standard workflow starts at Client Onboarding).
         </field>
+        <field name="folded">True</field>
     </record>
-
 
     <record id="stage_on_hold" model="business.project.stage">
         <field name="name">On Hold</field>
@@ -153,7 +346,6 @@
         <field name="folded">True</field>
     </record>
 
-
     <record id="stage_cancelled" model="business.project.stage">
         <field name="name">Cancelled</field>
         <field name="sequence">910</field>
@@ -164,14 +356,73 @@
         <field name="folded">True</field>
     </record>
 
-
     <record id="stage_completed" model="business.project.stage">
         <field name="name">Completed</field>
         <field name="sequence">1000</field>
-        <field name="phase">planning</field>
+        <field name="phase">closure</field>
         <field name="description">
-            Business project process completed.
+            Business consulting project successfully completed and closed.
         </field>
+        <field name="folded">True</field>
+    </record>
+
+    <!-- ========================================================
+         LEGACY STAGES (Retained as inactive/folded to preserve DB foreign key references)
+    ========================================================= -->
+
+    <record id="stage_proposal" model="business.project.stage">
+        <field name="name">Proposal Preparation (Legacy)</field>
+        <field name="sequence">800</field>
+        <field name="phase">sales</field>
+        <field name="active">False</field>
+        <field name="folded">True</field>
+    </record>
+
+    <record id="stage_negotiation" model="business.project.stage">
+        <field name="name">Client Negotiation &amp; Closing (Legacy)</field>
+        <field name="sequence">801</field>
+        <field name="phase">sales</field>
+        <field name="active">False</field>
+        <field name="folded">True</field>
+    </record>
+
+    <record id="stage_payment" model="business.project.stage">
+        <field name="name">Payment Confirmation (Legacy)</field>
+        <field name="sequence">802</field>
+        <field name="phase">sales</field>
+        <field name="active">False</field>
+        <field name="folded">True</field>
+    </record>
+
+    <record id="stage_activity_plan" model="business.project.stage">
+        <field name="name">Activity Plan Preparation (Legacy)</field>
+        <field name="sequence">803</field>
+        <field name="phase">planning</field>
+        <field name="active">False</field>
+        <field name="folded">True</field>
+    </record>
+
+    <record id="stage_management_review" model="business.project.stage">
+        <field name="name">Management Review &amp; Approval (Legacy)</field>
+        <field name="sequence">804</field>
+        <field name="phase">planning</field>
+        <field name="active">False</field>
+        <field name="folded">True</field>
+    </record>
+
+    <record id="stage_data_collection" model="business.project.stage">
+        <field name="name">System Study &amp; Data Collection (Legacy)</field>
+        <field name="sequence">805</field>
+        <field name="phase">planning</field>
+        <field name="active">False</field>
+        <field name="folded">True</field>
+    </record>
+
+    <record id="stage_analysis" model="business.project.stage">
+        <field name="name">Analysis &amp; Findings (Legacy)</field>
+        <field name="sequence">806</field>
+        <field name="phase">planning</field>
+        <field name="active">False</field>
         <field name="folded">True</field>
     </record>
 

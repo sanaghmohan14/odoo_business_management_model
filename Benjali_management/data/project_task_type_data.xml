@@ -36,6 +36,16 @@
         <field name="fold">False</field>
     </record>
 
+        <!-- ========================================================= -->
+    <!-- 11. Project Communication Setup                           -->
+    <!-- ========================================================= -->
+
+    <record id="task_stage_communication_setup" model="project.task.type">
+        <field name="name">Project Communication Setup</field>
+        <field name="sequence">10</field>
+        <field name="fold">False</field>
+    </record>
+
 
     <!-- ========================================================= -->
     <!-- 10. Initial Client Contact & Kick-off                     -->
@@ -43,20 +53,28 @@
 
     <record id="task_stage_kickoff" model="project.task.type">
         <field name="name">Initial Client Contact &amp; Kick-off</field>
-        <field name="sequence">10</field>
-        <field name="fold">False</field>
-    </record>
-
-
-    <!-- ========================================================= -->
-    <!-- 11. Project Communication Setup                           -->
-    <!-- ========================================================= -->
-
-    <record id="task_stage_communication_setup" model="project.task.type">
-        <field name="name">Project Communication Setup</field>
         <field name="sequence">11</field>
         <field name="fold">False</field>
     </record>
+
+
+
+    <record id="change_management" model="project.task.type">
+        <field name="name">Change Management meeting / Project Rollout</field>
+        <field name="sequence">12</field>
+        <field name="fold">False</field>
+    </record>
+
+
+     <record id="management_function" model="project.task.type">
+        <field name="name">Management Function(user guide)</field>
+        <field name="sequence">13</field>
+        <field name="fold">False</field>
+    </record>
+
+
+
+
 
 
     <!-- ========================================================= -->

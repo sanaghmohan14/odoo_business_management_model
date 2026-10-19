@@ -384,7 +384,7 @@ class BusinessProjectKRAEntry(models.Model):
     state = fields.Selection([
         ('draft', 'Draft'), ('submitted', 'Submitted'),
         ('approved', 'Approved'), ('rejected', 'Rejected'),
-    ], string='Status', default='approved', required=True, index=True,
+    ], string='Status', default='draft', required=True, index=True,
        help='Approved entries contribute to KPI and KRA progress.')
 
     company_id = fields.Many2one(

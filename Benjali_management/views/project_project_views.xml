@@ -5,7 +5,7 @@
         <field name="model">project.project</field>
         <field name="inherit_id" ref="project.project_view_kanban"/>
         <field name="arch" type="xml">
-            <xpath expr="//t[@t-name='card']/div[@class='d-flex']/field[@name='partner_id']" position="after">
+            <xpath expr="//t[@t-name='card']/div[hasclass('d-flex')]/field[@name='partner_id']" position="after">
                 <field name="department_id" string="Department"/>
             </xpath>
         </field>

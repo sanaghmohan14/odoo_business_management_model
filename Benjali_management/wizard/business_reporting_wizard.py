@@ -3,6 +3,7 @@ from odoo.exceptions import ValidationError
 
 class BusinessReportingWizard(models.TransientModel):
     _name = 'business.reporting.wizard'
+    _description = 'Business Reporting Wizard'
 
 
     start_date = fields.Date(string='Start Date')
