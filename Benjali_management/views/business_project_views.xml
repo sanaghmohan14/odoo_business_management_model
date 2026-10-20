@@ -165,6 +165,22 @@
                     </div>
 
                     <div class="oe_button_box" name="button_box">
+                        <button name="action_view_project_kras"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-tasks">
+                            <field name="kra_count"
+                                   widget="statinfo"
+                                   string="KRAs"/>
+                        </button>
+                        <button name="action_view_project_kpis"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-check-square-o">
+                            <field name="kpi_count"
+                                   widget="statinfo"
+                                   string="KPIs"/>
+                        </button>
                         <button name="action_view_meetings"
                                 type="object"
                                 class="oe_stat_button"
@@ -176,7 +192,7 @@
                         <button name="action_view_activity_calendar"
                                 type="object"
                                 class="oe_stat_button"
-                                icon="fa-tasks">
+                                icon="fa-calendar-check-o">
                             <span class="o_stat_text">Activities</span>
                         </button>
                     </div>
@@ -230,6 +246,86 @@
 <!--                               placeholder="Enter qualification details..."/>-->
 <!--                    </group>-->
                     <notebook>
+
+                        <!-- ================= KRA & KPI MANAGEMENT ================= -->
+                        <page string="KRAs &amp; KPIs" name="kra_kpi_page">
+                            <div class="d-flex justify-content-between align-items-center mb-3 p-2 bg-light rounded border">
+                                <div>
+                                    <button name="action_generate_today_kpis"
+                                            type="object"
+                                            string="Generate Today's Repeating Tasks"
+                                            class="btn btn-primary btn-sm me-2"
+                                            icon="fa-refresh"/>
+                                </div>
+                                <div class="d-flex gap-3 align-items-center">
+                                    <span class="text-muted small">Weekly Progress:</span>
+                                    <field name="kra_weekly_progress" widget="progressbar" class="oe_inline" style="width: 140px;"/>
+                                    <span class="text-muted small">Monthly Score (/100):</span>
+                                    <field name="kra_monthly_progress" widget="progressbar" class="oe_inline" style="width: 140px;"/>
+                                </div>
+                            </div>
+
+                            <group string="Key Result Areas (KRAs) - Main Tasks">
+                                <field name="kra_ids" nolabel="1" context="{'default_project_id': id, 'default_department_id': department_id}">
+                                    <list editable="bottom">
+                                        <field name="sequence" widget="handle"/>
+                                        <field name="reference" readonly="1"/>
+                                        <field name="name" string="KRA (Main Task)"/>
+                                        <field name="responsible_user_id" string="Lead / Responsible"/>
+                                        <field name="state" widget="badge"
+                                               decoration-muted="state == 'not_started'"
+                                               decoration-warning="state in ('in_progress', 'draft', 'active')"
+                                               decoration-success="state == 'completed'"
+                                               decoration-danger="state == 'postponed'"/>
+                                        <field name="kpi_count" string="KPIs Count"/>
+                                        <field name="weekly_progress" widget="progressbar" string="Weekly Progress (%)"/>
+                                        <field name="monthly_achievement" string="Monthly (/100)"/>
+                                        <button name="action_generate_daily_repeating_kpis"
+                                                type="object"
+                                                title="Generate Today's Repeating Tasks"
+                                                icon="fa-refresh"
+                                                class="btn-link"/>
+                                    </list>
+                                </field>
+                            </group>
+
+                            <group string="Key Performance Indicators (KPIs) - Sub-Tasks">
+                                <field name="kpi_ids" nolabel="1" context="{'default_project_id': id, 'default_department_id': department_id}">
+                                    <list editable="bottom">
+                                        <field name="date"/>
+                                        <field name="kra_id" domain="parent.id and [('project_id', '=', parent.id)] or []" string="KRA (Main Task)"/>
+                                        <field name="name" string="KPI (Sub-Task)"/>
+                                        <field name="employee_id" string="Assigned Employee"/>
+                                        <field name="is_daily_repeating" string="Daily Repeating?" widget="boolean_toggle"/>
+                                        <field name="state" widget="badge"
+                                               decoration-muted="state == 'not_started'"
+                                               decoration-warning="state == 'in_progress'"
+                                               decoration-success="state == 'completed'"
+                                               decoration-danger="state == 'postponed'"/>
+                                        <field name="weekly_target" string="Weekly Target"/>
+                                        <field name="weekly_weightage" string="Weight (%)"/>
+                                        <field name="weekly_achievement" string="Achieved"/>
+                                        <field name="weekly_progress" widget="progressbar" string="Weekly (%)"/>
+                                        <field name="monthly_achievement" string="Monthly (/100)"/>
+                                        <button name="action_set_completed"
+                                                type="object"
+                                                title="Mark Completed"
+                                                icon="fa-check text-success"
+                                                invisible="state == 'completed'"/>
+                                        <button name="action_set_in_progress"
+                                                type="object"
+                                                title="Mark In Progress"
+                                                icon="fa-play text-warning"
+                                                invisible="state == 'in_progress'"/>
+                                        <button name="action_set_postponed"
+                                                type="object"
+                                                title="Postpone"
+                                                icon="fa-clock-o text-danger"
+                                                invisible="state == 'postponed'"/>
+                                    </list>
+                                </field>
+                            </group>
+                        </page>
 
                         <page string="Notes">
                             <field name="description" placeholder="Enter project description..."/>

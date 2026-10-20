@@ -17,7 +17,6 @@
         "project",
     ],
     "data": [
-
         "security/record_rules.xml",
         "security/user_groups.xml",
         "security/ir.model.access.csv",
@@ -25,13 +24,14 @@
         "data/approval_sequence.xml",
         "data/sequence_data.xml",
         "data/stage_data.xml",
+        "data/data_cron.xml",
         "data/mail_template.xml",
         "wizard/report_wizard.xml",
         "report/report_view.xml",
         "report/business_report.xml",
         "views/crm_tag_views.xml",
-        "views/reporting.xml",
         "views/business_project_kra_views.xml",
+        "views/reporting.xml",
         "views/dashboard_views.xml",
         "views/hr_department_views.xml",
         "views/crm_lead_views.xml",

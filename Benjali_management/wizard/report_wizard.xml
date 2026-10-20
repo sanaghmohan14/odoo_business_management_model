@@ -4,34 +4,42 @@
         <field name="name">reporting.wizard.form</field>
         <field name="model">business.reporting.wizard</field>
         <field name="arch" type="xml">
-            <form>
+            <form string="KRA &amp; KPI Performance Reporting Wizard">
                 <sheet>
+                    <div class="oe_title mb-3">
+                        <h2>KRA &amp; KPI Performance Report</h2>
+                        <span class="text-muted">Generate Daily, Weekly, or Monthly performance reports for Projects and KRAs.</span>
+                    </div>
                     <group>
-<!--                        <field name="partner_id" widget="many2many_tags"/>-->
-<!--                        <field name="project_manager_id" widget="many2many_tags"/>-->
-<!--                        <field name="department_id" widget="many2many_tags"/>-->
-                        <field name="start_date" />
-                        <field name="end_date"/>
+                        <group string="Report Scope &amp; Period">
+                            <field name="report_type" widget="radio"/>
+                            <field name="date" invisible="report_type != 'daily'"/>
+                            <field name="start_date" invisible="report_type == 'daily'"/>
+                            <field name="end_date" invisible="report_type == 'daily'"/>
+                        </group>
+                        <group string="Filters (Optional)">
+                            <field name="project_id"/>
+                            <field name="kra_id"/>
+                            <field name="department_id"/>
+                            <field name="employee_id"/>
+                        </group>
                     </group>
                 </sheet>
-                      <footer>
-                    <button type="object" string="Create PDF Report"  name="action_print_report"/>
-                    <button type="object" string="Excel report" name="action_print_xlsx"/>
+                <footer>
+                    <button type="object" string="Print PDF Report" name="action_print_report" class="btn-primary" icon="fa-print"/>
+                    <button type="object" string="View Interactive Analysis" name="action_view_analysis" class="btn-secondary" icon="fa-bar-chart"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
                 </footer>
             </form>
         </field>
     </record>
 
     <record id="create_reporting_wizard_business" model="ir.actions.act_window">
-        <field name="name">BUSINESS REPORTING WIZARD</field>
+        <field name="name">KRA &amp; KPI Report Wizard</field>
         <field name="type">ir.actions.act_window</field>
         <field name="res_model">business.reporting.wizard</field>
         <field name="view_mode">form</field>
         <field name="view_id" ref="reporting_wizard_business_one"/>
         <field name="target">new</field>
     </record>
-
-
-
-
 </odoo>

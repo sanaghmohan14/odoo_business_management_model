@@ -257,8 +257,87 @@ class BusinessProject(models.Model):
     kra_ids = fields.One2many(
         'business.project.kra',
         'project_id',
-        string='KRAs'
+        string='KRAs (Main Tasks)'
     )
+    kpi_ids = fields.One2many(
+        'business.project.kpi',
+        'project_id',
+        string='KPIs (Sub-Tasks)'
+    )
+    kra_count = fields.Integer(
+        string='KRAs Count',
+        compute='_compute_kra_kpi_metrics'
+    )
+    kpi_count = fields.Integer(
+        string='KPIs Count',
+        compute='_compute_kra_kpi_metrics'
+    )
+    kra_weekly_progress = fields.Float(
+        string='Weekly KRA Progress (%)',
+        compute='_compute_kra_kpi_metrics'
+    )
+    kra_monthly_progress = fields.Float(
+        string='Monthly KRA Score (/100)',
+        compute='_compute_kra_kpi_metrics'
+    )
+
+    @api.depends('kra_ids', 'kpi_ids', 'kra_ids.weekly_progress', 'kra_ids.monthly_achievement', 'kra_ids.active')
+    def _compute_kra_kpi_metrics(self):
+        for proj in self:
+            proj.kra_count = len(proj.kra_ids)
+            proj.kpi_count = len(proj.kpi_ids)
+            active_kras = proj.kra_ids.filtered(lambda k: k.active)
+            if active_kras:
+                proj.kra_weekly_progress = sum(active_kras.mapped('weekly_progress')) / len(active_kras)
+                proj.kra_monthly_progress = sum(active_kras.mapped('monthly_achievement')) / len(active_kras)
+            else:
+                proj.kra_weekly_progress = 0.0
+                proj.kra_monthly_progress = 0.0
+
+    def action_view_project_kras(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': f'{self.name} - KRAs (Main Tasks)',
+            'res_model': 'business.project.kra',
+            'view_mode': 'list,kanban,form',
+            'domain': [('project_id', '=', self.id)],
+            'context': {
+                'default_project_id': self.id,
+                'default_department_id': self.department_id.id if self.department_id else False,
+            },
+        }
+
+    def action_view_project_kpis(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': f'{self.name} - KPIs (Sub-Tasks)',
+            'res_model': 'business.project.kpi',
+            'view_mode': 'list,kanban,form,pivot,graph',
+            'domain': [('project_id', '=', self.id)],
+            'context': {
+                'default_project_id': self.id,
+                'default_department_id': self.department_id.id if self.department_id else False,
+            },
+        }
+
+    def action_generate_today_kpis(self):
+        self.ensure_one()
+        today = fields.Date.context_today(self)
+        for kra in self.kra_ids:
+            kra.action_generate_daily_repeating_kpis(today)
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': 'Repeating KPIs Processed',
+                'message': f"Today's repeating tasks checked and updated for project '{self.name}'.",
+                'type': 'success',
+                'sticky': False,
+            }
+        }
+
 
     #activity
 
@@ -322,7 +401,7 @@ class BusinessProject(models.Model):
     )
 
     client_implementation_coordinator_id = fields.Many2one(
-        'res.partner', string='Client Implementation Coordinator',
+        'res.partner', string='Project Manager',
         tracking=True, ondelete='set null'
     )
 

@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
+
+    <!-- Project Details Report (General) -->
     <template id="business_one">
         <t t-call="web.html_container">
             <t t-foreach="docs" t-as="o">
@@ -48,40 +50,71 @@
                             </tbody>
                         </table>
 
-                        <h3>Description</h3>
-                        <div t-if="o.description" t-field="o.description"/>
-                        <p t-if="not o.description">No description provided.</p>
-
-                        <h3>KRAs</h3>
+                        <h3>Key Result Areas (KRAs) &amp; Key Performance Indicators (KPIs)</h3>
                         <table class="table table-sm table-bordered">
-                            <thead>
+                            <thead class="table-light">
                                 <tr>
-                                    <th>KRA</th>
-                                    <th>Responsible User</th>
-                                    <th>KPI</th>
-                                    <th>Target</th>
-                                    <th>Unit</th>
-                                    <th>Achievement</th>
-                                    <th>Progress</th>
-                                    <th>Status</th>
+                                    <th>KRA (Main Task)</th>
+                                    <th>Lead / Responsible</th>
+                                    <th>Stage</th>
+                                    <th>KPIs</th>
+                                    <th>Weekly Progress</th>
+                                    <th>Monthly Score</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr t-foreach="o.kra_ids" t-as="kra">
-                                    <td><span t-field="kra.name"/></td>
-                                    <td><span t-field="kra.responsible_user_id"/></td>
-                                    <td><span t-field="kra.kpi"/></td>
-                                     <td><span t-field="kra.target"/></td>
-                                     <td><span t-field="kra.unit"/></td>
-                                     <td><span t-field="kra.achievement"/></td>
-                                     <td><span t-field="kra.progress_percentage"/>%</td>
-                                     <td><span t-field="kra.state"/></td>
-                                </tr>
+                                <t t-foreach="o.kra_ids" t-as="kra">
+                                    <tr class="table-secondary fw-bold">
+                                        <td><span t-field="kra.name"/></td>
+                                        <td><span t-field="kra.responsible_user_id"/></td>
+                                        <td><span t-field="kra.state"/></td>
+                                        <td><span t-field="kra.kpi_count"/></td>
+                                        <td><span t-field="kra.weekly_progress"/>%</td>
+                                        <td><span t-field="kra.monthly_achievement"/> / 100</td>
+                                    </tr>
+                                    <tr t-if="kra.kpi_ids">
+                                        <td colspan="6" class="p-0">
+                                            <table class="table table-sm table-hover mb-0 ms-3" style="width: 95%;">
+                                                <thead>
+                                                    <tr class="text-muted small">
+                                                        <th>Sub-Task (KPI)</th>
+                                                        <th>Assigned Employee</th>
+                                                        <th>Type</th>
+                                                        <th>Stage</th>
+                                                        <th>Weekly Target</th>
+                                                        <th>Achieved</th>
+                                                        <th>Weight (%)</th>
+                                                        <th>Monthly (/100)</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr t-foreach="kra.kpi_ids" t-as="kpi">
+                                                        <td><span t-field="kpi.name"/></td>
+                                                        <td><span t-field="kpi.employee_id"/></td>
+                                                        <td>
+                                                            <span t-if="kpi.is_daily_repeating" class="badge bg-info text-white">Daily Repeating</span>
+                                                            <span t-else="" class="text-muted small">One-time</span>
+                                                        </td>
+                                                        <td><span t-field="kpi.state"/></td>
+                                                        <td><span t-field="kpi.weekly_target"/></td>
+                                                        <td><span t-field="kpi.weekly_achievement"/></td>
+                                                        <td><span t-field="kpi.weekly_weightage"/>%</td>
+                                                        <td><span t-field="kpi.monthly_achievement"/></td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                </t>
                                 <tr t-if="not o.kra_ids">
-                                    <td colspan="8">No KRAs configured.</td>
+                                    <td colspan="6">No KRAs configured.</td>
                                 </tr>
                             </tbody>
                         </table>
+
+                        <h3>Description</h3>
+                        <div t-if="o.description" t-field="o.description"/>
+                        <p t-if="not o.description">No description provided.</p>
 
                         <h3>Internal Notes</h3>
                         <div t-if="o.notes" t-field="o.notes"/>
@@ -91,4 +124,126 @@
             </t>
         </t>
     </template>
+
+    <!-- Dedicated KRA & KPI Performance Report (Daily, Weekly, Monthly) -->
+    <template id="report_kra_kpi_template">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-set="project" t-value="doc if doc._name == 'business.project' else (doc.project_id if hasattr(doc, 'project_id') and doc.project_id else False)"/>
+                <t t-set="kras" t-value="doc.kra_ids if doc._name == 'business.project' else (doc if doc._name == 'business.project.kra' else (project.kra_ids if project else doc.env['business.project.kra'].search([])))"/>
+
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+                            <div>
+                                <h2 class="mb-0 text-primary">KRA &amp; KPI Performance Report</h2>
+                                <span class="text-muted">Daily, Weekly &amp; Monthly Performance Breakdown</span>
+                            </div>
+                            <div class="text-end">
+                                <t t-if="project">
+                                    <h4 class="mb-0"><span t-field="project.name"/></h4>
+                                    <span class="text-muted"><span t-field="project.reference"/> | <span t-field="project.department_id"/></span>
+                                </t>
+                            </div>
+                        </div>
+
+                        <!-- Scorecard Summary -->
+                        <div class="row text-center mb-4 p-3 bg-light rounded border">
+                            <div class="col-4 border-end">
+                                <span class="text-muted small">Total Key Result Areas</span>
+                                <h3 class="text-dark my-1"><t t-esc="len(kras)"/></h3>
+                                <span class="text-muted small">Main Tasks</span>
+                            </div>
+                            <div class="col-4 border-end">
+                                <span class="text-muted small">Weekly Progress</span>
+                                <h3 class="text-primary my-1">
+                                    <t t-if="kras">
+                                        <t t-esc="round(sum(kras.mapped('weekly_progress')) / len(kras), 1)"/>%
+                                    </t>
+                                    <t t-else="">0.0%</t>
+                                </h3>
+                                <span class="text-muted small">Target Achievement</span>
+                            </div>
+                            <div class="col-4">
+                                <span class="text-muted small">Monthly Score (Target: 100)</span>
+                                <h3 class="text-success my-1">
+                                    <t t-if="kras">
+                                        <t t-esc="round(sum(kras.mapped('monthly_achievement')) / len(kras), 1)"/> / 100
+                                    </t>
+                                    <t t-else="">0.0 / 100</t>
+                                </h3>
+                                <span class="text-muted small">Filled from Weekly Results</span>
+                            </div>
+                        </div>
+
+                        <!-- Detailed KRAs & Sub-Task KPIs -->
+                        <h4 class="mb-3 text-secondary">KRAs (Main Tasks) &amp; Assigned KPIs (Sub-Tasks)</h4>
+
+                        <t t-foreach="kras" t-as="kra">
+                            <div class="card mb-3 border">
+                                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong class="fs-6 text-dark"><span t-field="kra.name"/></strong>
+                                        <span class="badge bg-secondary text-white ms-2"><span t-field="kra.reference"/></span>
+                                        <span class="badge bg-primary text-white ms-1"><span t-field="kra.state"/></span>
+                                    </div>
+                                    <div>
+                                        <span class="me-3 small">Lead: <strong><span t-field="kra.responsible_user_id"/></strong></span>
+                                        <span class="me-3 small">Weekly: <strong><span t-field="kra.weekly_progress"/>%</strong></span>
+                                        <span class="small text-success">Monthly: <strong><span t-field="kra.monthly_achievement"/> / 100</strong></span>
+                                    </div>
+                                </div>
+                                <div class="card-body p-2">
+                                    <table class="table table-sm table-bordered table-striped mb-0">
+                                        <thead class="table-light small">
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>Sub-Task (KPI)</th>
+                                                <th>Assigned Employee</th>
+                                                <th>Stage</th>
+                                                <th>Repeating?</th>
+                                                <th class="text-end">Weekly Target</th>
+                                                <th class="text-end">Achieved</th>
+                                                <th class="text-end">Weight (%)</th>
+                                                <th class="text-end">Monthly Score (/100)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="small">
+                                            <tr t-foreach="kra.kpi_ids" t-as="kpi">
+                                                <td><span t-field="kpi.date"/></td>
+                                                <td class="fw-bold"><span t-field="kpi.name"/></td>
+                                                <td><span t-field="kpi.employee_id"/></td>
+                                                <td>
+                                                    <span t-if="kpi.state == 'completed'" class="badge bg-success text-white">Completed</span>
+                                                    <span t-elif="kpi.state == 'in_progress'" class="badge bg-warning text-dark">In Progress</span>
+                                                    <span t-elif="kpi.state == 'postponed'" class="badge bg-danger text-white">Postponed</span>
+                                                    <span t-else="" class="badge bg-secondary text-white">Not Started</span>
+                                                </td>
+                                                <td>
+                                                    <span t-if="kpi.is_daily_repeating" class="badge bg-info text-white">Daily Repeating</span>
+                                                    <span t-else="" class="text-muted">One-time</span>
+                                                </td>
+                                                <td class="text-end"><span t-field="kpi.weekly_target"/></td>
+                                                <td class="text-end fw-bold"><span t-field="kpi.weekly_achievement"/></td>
+                                                <td class="text-end"><span t-field="kpi.weekly_weightage"/>%</td>
+                                                <td class="text-end fw-bold text-primary"><span t-field="kpi.monthly_achievement"/> / 100</td>
+                                            </tr>
+                                            <tr t-if="not kra.kpi_ids">
+                                                <td colspan="9" class="text-center text-muted">No KPI sub-tasks defined under this KRA.</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </t>
+
+                        <div class="mt-4 pt-2 border-top text-muted small text-end">
+                            Printed on <span t-esc="context_timestamp(datetime.datetime.now()).strftime('%Y-%m-%d %H:%M')"/>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
 </odoo>

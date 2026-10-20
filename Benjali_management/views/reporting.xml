@@ -1,12 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <odoo>
 
     <!-- Shared application root menu. It must be loaded before reporting menus. -->
     <menuitem id="benjali_project_root" name="Business Consulting"/>
 
     <!-- Reporting Root Menu -->
-
     <menuitem
         id="menu_benjali_management_reporting"
         name="Reporting"
@@ -14,18 +12,12 @@
         sequence="50"
     />
 
-
     <!-- Project Analysis -->
-
     <record id="action_business_project_report"
             model="ir.actions.act_window">
-
         <field name="name">Project Analysis</field>
-
         <field name="res_model">business.project</field>
-
         <field name="view_mode">pivot,graph,list</field>
-
     </record>
 
     <menuitem
@@ -36,24 +28,17 @@
         sequence="10"
     />
 
-
     <!-- Stage Analysis -->
-
     <record id="action_business_project_stage_report"
             model="ir.actions.act_window">
-
         <field name="name">Stage Analysis</field>
-
         <field name="res_model">business.project</field>
-
         <field name="view_mode">pivot,graph,list</field>
-
         <field name="context">
             {
                 "group_by": ["stage_id"]
             }
         </field>
-
     </record>
 
     <menuitem
@@ -64,24 +49,17 @@
         sequence="20"
     />
 
-
     <!-- Department Analysis -->
-
     <record id="action_business_project_department_report"
             model="ir.actions.act_window">
-
         <field name="name">Department Analysis</field>
-
         <field name="res_model">business.project</field>
-
         <field name="view_mode">pivot,graph,list</field>
-
         <field name="context">
             {
                 "group_by": ["department_id"]
             }
         </field>
-
     </record>
 
     <menuitem
@@ -92,18 +70,12 @@
         sequence="30"
     />
 
-
     <!-- KRA Analysis -->
-
     <record id="action_business_project_kra_report"
             model="ir.actions.act_window">
-
         <field name="name">KRA Analysis</field>
-
         <field name="res_model">business.project.kra.entry</field>
-
         <field name="view_mode">pivot,graph,list,calendar,form</field>
-
     </record>
 
     <menuitem
@@ -114,18 +86,37 @@
         sequence="40"
     />
 
+    <!-- Daily, Weekly, and Monthly KRA & KPI Reports -->
+    <menuitem
+        id="menu_reporting_daily_kra_kpi"
+        name="Daily KRA &amp; KPI Report"
+        parent="menu_benjali_management_reporting"
+        action="business_project_daily_report_action"
+        sequence="41"
+    />
+
+    <menuitem
+        id="menu_reporting_weekly_kra_kpi"
+        name="Weekly KRA &amp; KPI Report"
+        parent="menu_benjali_management_reporting"
+        action="business_project_weekly_report_action"
+        sequence="42"
+    />
+
+    <menuitem
+        id="menu_reporting_monthly_kra_kpi"
+        name="Monthly KRA &amp; KPI Report"
+        parent="menu_benjali_management_reporting"
+        action="business_project_monthly_report_action"
+        sequence="43"
+    />
 
     <!-- Activity Analysis -->
-
     <record id="action_business_project_activity_report"
             model="ir.actions.act_window">
-
         <field name="name">Activity Analysis</field>
-
         <field name="res_model">business.project.activity</field>
-
         <field name="view_mode">calendar,pivot,graph,list</field>
-
     </record>
 
     <menuitem
@@ -136,18 +127,12 @@
         sequence="50"
     />
 
-
     <!-- Data Collection Analysis -->
-
     <record id="action_business_project_data_collection_report"
             model="ir.actions.act_window">
-
         <field name="name">Data Collection Analysis</field>
-
         <field name="res_model">business.project.data.collection</field>
-
         <field name="view_mode">pivot,graph,list</field>
-
     </record>
 
     <menuitem
@@ -158,13 +143,9 @@
         sequence="60"
     />
 
-        <menuitem id="menu_project_xlsx" name="PDF/EXCEL Report"
-                  parent="menu_benjali_management_reporting"
-       action="create_reporting_wizard_business"
-                  sequence="60"/>
-
-
-
-
+    <menuitem id="menu_project_xlsx" name="PDF/EXCEL Report"
+              parent="menu_benjali_management_reporting"
+              action="create_reporting_wizard_business"
+              sequence="70"/>
 
 </odoo>

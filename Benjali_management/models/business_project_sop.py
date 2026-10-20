@@ -133,7 +133,7 @@ class BusinessProjectSOP(models.Model):
         if self.project_id:
             if not self.stage_id:
                 self.stage_id = self.project_id.stage_id
-            if not self.coordinator_id and self.project_id.client_implementation_coordinator_id:
+            if not self.coordinator_id and self.project_id. client_implementation_coordinator_id:
                 self.coordinator_id = self.project_id.client_implementation_coordinator_id
 
     @api.depends('checklist_ids', 'checklist_ids.frequency', 'checklist_ids.status', 'gap_ids', 'gap_ids.state')

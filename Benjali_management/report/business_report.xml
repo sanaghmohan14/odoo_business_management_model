@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-    <!--    Report Function -->
+    <!-- Project General Report -->
     <record id="action_business_request_report" model="ir.actions.report">
         <field name="name">Business Report</field>
         <field name="model">business.project</field>
@@ -10,5 +10,17 @@
         <field name="binding_model_id" ref="model_business_project"/>
         <field name="binding_type">report</field>
         <field name="binding_view_types">form,kanban</field>
+    </record>
+
+    <!-- KRA & KPI Performance Report (Daily, Weekly, Monthly) -->
+    <record id="action_kra_kpi_performance_report" model="ir.actions.report">
+        <field name="name">KRA &amp; KPI Performance Report</field>
+        <field name="model">business.project</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">Benjali_management.report_kra_kpi_template</field>
+        <field name="report_file">Benjali_management.report_kra_kpi_template</field>
+        <field name="binding_model_id" ref="model_business_project"/>
+        <field name="binding_type">report</field>
+        <field name="binding_view_types">form</field>
     </record>
 </odoo>
