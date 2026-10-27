@@ -101,7 +101,6 @@ class CrmLead(models.Model):
             'name': self.name,
             'partner_id': self.partner_id.id,
             'opportunity_id': self.id,
-            'sales_person_id': self.user_id.id,
             'department_id': self.department_id.id,
             'stage_id': onboarding_stage.id if onboarding_stage else False,
         })
@@ -137,12 +136,6 @@ class CrmLead(models.Model):
             'res_id': business_project.id,
             'target': 'current',
         }
-
-
-
-
-
-
 
 
 

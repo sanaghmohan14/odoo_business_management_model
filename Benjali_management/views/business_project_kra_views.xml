@@ -5,36 +5,35 @@
          ACTIONS
     ========================================== -->
 
-    <!-- 1. Key Result Areas (KRAs) - Main Tasks -->
+    <!-- 1. Key Result Areas (KRAs) -->
     <record id="business_project_kra_action" model="ir.actions.act_window">
         <field name="name">Key Result Areas (KRAs)</field>
         <field name="res_model">business.project.kra</field>
-        <field name="view_mode">list,kanban,form,pivot,graph</field>
-        <field name="context">{'search_default_group_project': 1, 'search_default_active': 1}</field>
+        <field name="view_mode">kanban,list,form,pivot,graph</field>
+        <field name="context">{'search_default_group_stage_id': 1, 'search_default_active': 1}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
-                Define Key Result Areas (KRAs) - The Actual Main Tasks.
+                Define Key Result Areas (KRAs).
             </p>
             <p>
-                Each KRA represents a major task under a Business Project (e.g. Employee Hiring).
-                Under each KRA, add measurable sub-tasks (KPIs) like Job Posting, Interview, and Onboarding.
+                Each KRA represents a major area under a Project with 4 stages: New, Ongoing, Completed, and On Hold.
             </p>
         </field>
     </record>
 
-    <!-- 2. Key Performance Indicators (KPIs) - Sub-Tasks -->
+    <!-- 2. Key Performance Indicators (KPIs) -->
     <record id="business_project_kpi_action" model="ir.actions.act_window">
         <field name="name">Key Performance Indicators (KPIs)</field>
         <field name="res_model">business.project.kpi</field>
-        <field name="view_mode">list,kanban,form,pivot,graph</field>
-        <field name="context">{'search_default_group_kra': 1}</field>
+        <field name="view_mode">kanban,list,form,pivot,graph</field>
+        <field name="context">{'search_default_group_stage_id': 1}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
-                Sub-tasks (KPIs) under Project KRAs.
+                Define Key Performance Indicators (KPIs).
             </p>
             <p>
-                Each KPI is a sub-task with stages (Not Started, In Progress, Completed, Postponed),
-                assigned employee, weekly target and weightage, and monthly score calculated towards 100.
+                Each KPI is a measurable task with stages: Not Started, In Progress, Completed, On Hold, and Cancelled.
+                Includes an interactive progress bar slider and timesheets tracking.
             </p>
         </field>
     </record>
@@ -49,10 +48,6 @@
             <p class="o_view_nocontent_smiling_face">
                 Daily Report for KRAs and KPIs.
             </p>
-            <p>
-                View today's sub-tasks, daily repeating tasks, stages (Not Started, In Progress, Completed, Postponed),
-                and employee achievements.
-            </p>
         </field>
     </record>
 
@@ -65,10 +60,6 @@
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Weekly Report for KRAs and KPIs.
-            </p>
-            <p>
-                Track weekly targets and achievements. Daily completed tasks achieve weekly targets,
-                calculating the weekly progress and weighted score.
             </p>
         </field>
     </record>
@@ -83,15 +74,12 @@
             <p class="o_view_nocontent_smiling_face">
                 Monthly Report for KRAs and KPIs.
             </p>
-            <p>
-                Monthly target is 100. Monthly achievement fills based on weekly achievement results!
-            </p>
         </field>
     </record>
 
-    <!-- 6. Backward Compatibility: Entries Action -->
+    <!-- 6. Performance Entries Action -->
     <record id="business_project_kra_entry_action" model="ir.actions.act_window">
-        <field name="name">Performance Entries (Legacy Logs)</field>
+        <field name="name">Performance Entries</field>
         <field name="res_model">business.project.kra.entry</field>
         <field name="view_mode">list,kanban,pivot,graph,form</field>
         <field name="context">{'search_default_group_department': 1}</field>
@@ -106,25 +94,24 @@
         <field name="name">business.project.kpi.list</field>
         <field name="model">business.project.kpi</field>
         <field name="arch" type="xml">
-            <list string="Key Performance Indicators (Sub-Tasks)">
+            <list string="Key Performance Indicators (KPIs)">
                 <field name="sequence" widget="handle"/>
                 <field name="date"/>
-                <field name="code"/>
-                <field name="name" string="Sub-Task / KPI"/>
-                <field name="kra_id" string="Main Task (KRA)"/>
-                <field name="project_id" optional="show"/>
-                <field name="employee_id" string="Assigned Employee"/>
-                <field name="is_daily_repeating" string="Daily Repeating?" widget="boolean_toggle"/>
+                <field name="name" string="KPI Name"/>
+                <field name="kra_id" string="KRA"/>
+                <field name="project_id" string="Project" optional="show"/>
+                <field name="manager_id" string="KRA Manager" optional="show"/>
+                <field name="employee_ids" widget="many2many_tags_avatar" string="Assigned Employees"/>
+                <field name="is_daily_repeating" string="Repeating?" widget="boolean_toggle"/>
+                <field name="progress" widget="progressbar" string="Progress"/>
+                <field name="total_hours_spent" widget="float_time" string="Hours" optional="show"/>
+                <field name="stage_id" string="Stage" optional="show"/>
                 <field name="state" widget="badge"
                        decoration-muted="state == 'not_started'"
                        decoration-warning="state == 'in_progress'"
                        decoration-success="state == 'completed'"
-                       decoration-danger="state == 'postponed'"/>
-                <field name="weekly_target" string="Weekly Target"/>
-                <field name="weekly_weightage" string="Weight (%)"/>
-                <field name="weekly_achievement" string="Achieved"/>
-                <field name="weekly_progress" widget="progressbar" string="Weekly Progress (%)"/>
-                <field name="monthly_achievement" string="Monthly (/100)"/>
+                       decoration-info="state == 'on_hold'"
+                       decoration-danger="state == 'cancelled'"/>
                 <button name="action_set_completed"
                         type="object"
                         title="Mark Completed"
@@ -135,67 +122,89 @@
                         title="Mark In Progress"
                         icon="fa-play text-warning"
                         invisible="state == 'in_progress'"/>
-                <button name="action_set_postponed"
+                <button name="action_set_on_hold"
                         type="object"
-                        title="Postpone"
-                        icon="fa-clock-o text-danger"
-                        invisible="state == 'postponed'"/>
+                        title="Put On Hold"
+                        icon="fa-pause text-secondary"
+                        invisible="state == 'on_hold'"/>
                 <field name="active" column_invisible="True"/>
             </list>
         </field>
     </record>
 
+    <!-- KPI Kanban View -->
     <record id="business_project_kpi_kanban" model="ir.ui.view">
         <field name="name">business.project.kpi.kanban</field>
         <field name="model">business.project.kpi</field>
         <field name="arch" type="xml">
-            <kanban default_group_by="state" class="o_kanban_small_column">
+            <kanban default_group_by="stage_id" class="o_kanban_small_column" records_draggable="1">
+                <field name="stage_id" options="{'group_by_tooltip': {'description': 'Stage Details'}}"/>
                 <field name="name"/>
                 <field name="code"/>
                 <field name="kra_id"/>
                 <field name="project_id"/>
+                <field name="manager_id"/>
+                <field name="employee_ids"/>
                 <field name="employee_id"/>
                 <field name="state"/>
                 <field name="date"/>
                 <field name="is_daily_repeating"/>
-                <field name="weekly_target"/>
-                <field name="weekly_achievement"/>
-                <field name="weekly_progress"/>
-                <field name="monthly_achievement"/>
+                <field name="progress"/>
+                <field name="total_hours_spent"/>
                 <templates>
                     <t t-name="card">
                         <div class="oe_kanban_global_click p-2">
+                            <!-- Top: State and Repeating badge -->
                             <div class="d-flex justify-content-between align-items-center mb-1">
-                                <span class="badge bg-secondary text-white"><field name="code"/></span>
-                                <t t-if="record.is_daily_repeating.raw_value">
-                                    <span class="badge bg-info text-white"><i class="fa fa-refresh me-1" title="Daily Repeating"/> Daily</span>
-                                </t>
                                 <field name="state" widget="badge"
                                        decoration-muted="state == 'not_started'"
                                        decoration-warning="state == 'in_progress'"
                                        decoration-success="state == 'completed'"
-                                       decoration-danger="state == 'postponed'"/>
+                                       decoration-info="state == 'on_hold'"
+                                       decoration-danger="state == 'cancelled'"/>
+                                <t t-if="record.is_daily_repeating.raw_value">
+                                    <span class="badge bg-secondary text-white"><i class="fa fa-refresh me-1" title="Repeating Task"/> Repeating</span>
+                                </t>
                             </div>
+
+                            <!-- KPI Name -->
                             <div class="fw-bold fs-6 text-dark mb-1">
                                 <field name="name"/>
                             </div>
+
+                            <!-- KRA Name & Project Name -->
                             <div class="text-muted small mb-2">
-                                <span><i class="fa fa-tasks me-1 text-primary" title="KRA"/><field name="kra_id"/></span>
+                                <div class="mb-1">
+                                    <i class="fa fa-tasks me-1 text-primary" title="KRA"/>
+                                    <strong><field name="kra_id"/></strong>
+                                </div>
                                 <t t-if="record.project_id.raw_value">
-                                    · <span><i class="fa fa-folder-open-o me-1" title="Project"/><field name="project_id"/></span>
+                                    <div>
+                                        <i class="fa fa-folder-open-o me-1 text-secondary" title="Project"/>
+                                        <span><field name="project_id"/></span>
+                                    </div>
                                 </t>
                             </div>
-                            <div class="d-flex justify-content-between small text-muted my-1">
-                                <span>Target: <field name="weekly_target"/></span>
-                                <span>Achieved: <strong><field name="weekly_achievement"/></strong></span>
-                                <span>Monthly: <strong><field name="monthly_achievement"/></strong>/100</span>
+
+                            <!-- Progress Bar -->
+                            <div class="my-2">
+                                <div class="d-flex justify-content-between small text-muted mb-1">
+                                    <span>Progress</span>
+                                    <span class="fw-bold"><field name="progress"/>%</span>
+                                </div>
+                                <field name="progress" widget="progressbar"/>
                             </div>
-                            <div class="my-1">
-                                <field name="weekly_progress" widget="progressbar"/>
-                            </div>
-                            <div class="text-muted small mt-2 d-flex justify-content-between align-items-center">
-                                <span><i class="fa fa-calendar me-1" title="Date"/><field name="date"/></span>
-                                <field name="employee_id" widget="many2one_avatar_user"/>
+
+                            <!-- Footer: Assigned Employees & Hours -->
+                            <div class="d-flex justify-content-between align-items-center text-muted small mt-2 pt-2 border-top">
+                                <div class="d-flex align-items-center">
+                                    <field name="employee_ids" widget="many2many_tags_avatar"/>
+                                </div>
+                                <t t-if="record.total_hours_spent.raw_value">
+                                    <span class="badge bg-light text-primary border">
+                                        <i class="fa fa-clock-o me-1" title="Recorded Hours"/> <field name="total_hours_spent" widget="float_time"/>
+                                    </span>
+                                </t>
                             </div>
                         </div>
                     </t>
@@ -204,91 +213,108 @@
         </field>
     </record>
 
+    <!-- KPI Form View -->
     <record id="business_project_kpi_form" model="ir.ui.view">
         <field name="name">business.project.kpi.form</field>
         <field name="model">business.project.kpi</field>
         <field name="arch" type="xml">
-            <form string="Key Performance Indicator (Sub-Task)">
+            <form string="Key Performance Indicator (KPI)">
                 <header>
                     <button name="action_set_in_progress" string="Start Work" type="object"
                             class="btn-primary" invisible="state == 'in_progress'"/>
                     <button name="action_set_completed" string="Mark Completed" type="object"
                             class="btn-success" invisible="state == 'completed'"/>
-                    <button name="action_set_postponed" string="Postpone" type="object"
-                            class="btn-secondary" invisible="state == 'postponed'"/>
+                    <button name="action_set_on_hold" string="Put On Hold" type="object"
+                            class="btn-secondary" invisible="state == 'on_hold'"/>
+                    <button name="action_set_cancelled" string="Cancel" type="object"
+                            invisible="state == 'cancelled'"/>
                     <button name="action_set_not_started" string="Reset to Not Started" type="object"
                             invisible="state == 'not_started'"/>
-                    <!-- User stages: Not started, inprogress , completed , Postponed -->
-                    <field name="state" widget="statusbar"
-                           options="{'clickable': True}"
-                           statusbar_visible="not_started,in_progress,completed,postponed"/>
+                    <field name="stage_id" widget="statusbar"
+                           options="{'clickable': True}"/>
+                    <field name="state" invisible="1"/>
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
-                        <button name="action_view_entries" type="object"
-                                class="oe_stat_button" icon="fa-list-ol">
-                            <field name="entry_count" widget="statinfo" string="Log Entries"/>
+                        <!-- Timesheets Smart Button -->
+                        <button name="action_view_timesheets" type="object"
+                                class="oe_stat_button" icon="fa-clock-o">
+                            <div class="o_stat_info">
+                                <span class="o_stat_value"><field name="total_hours_spent" widget="float_time"/></span>
+                                <span class="o_stat_text">Timesheets</span>
+                            </div>
                         </button>
                     </div>
                     <div class="oe_title">
                         <span class="text-muted"><field name="code" readonly="1"/></span>
-                        <h1><field name="name" placeholder="Sub-Task Name (e.g. Job Posting, Candidate Interview, Onboarding)..."/></h1>
+                        <h1><field name="name" placeholder="KPI Name"/></h1>
                     </div>
                     <group>
-                        <group string="Main Task &amp; Scope">
-                            <field name="kra_id" string="Main Task (KRA)"/>
-                            <field name="project_id" readonly="1"/>
+                        <group string="Scope &amp; Assignment">
+                            <!-- KRA Selection -->
+                            <field name="kra_id" string="KRA" placeholder="Choose KRA"/>
+                            <!-- Auto-filled Project and Manager -->
+                            <field name="project_id" string="Project" readonly="1" force_save="1" placeholder="Auto filled from KRA"/>
+                            <field name="manager_id" string="KRA Manager" readonly="1" force_save="1" placeholder="Auto filled from KRA"/>
+                            <field name="employee_ids" string="Assigned Employees" widget="many2many_tags_avatar" placeholder="Select employees"/>
                             <field name="department_id" readonly="1"/>
-                            <field name="employee_id" string="Assigned Employee"/>
                         </group>
-                        <group string="Date &amp; Schedule">
+                        <group string="Schedule &amp; Progress">
                             <field name="date"/>
-                            <field name="is_daily_repeating" widget="boolean_toggle"/>
+                            <field name="is_daily_repeating" string="Repeating Task" widget="boolean_toggle"/>
                             <field name="recurring_template_id" invisible="not is_daily_repeating or not recurring_template_id" readonly="1"/>
-                            <field name="day_name" readonly="1"/>
-                            <field name="week_number" readonly="1"/>
-                            <field name="month_name" readonly="1"/>
+                            
+                            <!-- Progress Bar with Sliding Option up to 100 -->
+                            <label for="progress"/>
+                            <div>
+                                <div class="d-flex align-items-center gap-3">
+                                    <field name="progress" widget="range" options="{'min': 0, 'max': 100, 'step': 1}" class="flex-grow-1"/>
+                                    <span class="badge bg-primary fs-6 px-3 py-1"><field name="progress" nolabel="1"/>%</span>
+                                </div>
+                                <div class="mt-2">
+                                    <field name="progress" widget="progressbar"/>
+                                </div>
+                            </div>
                         </group>
                     </group>
-                    <group>
-                        <group string="Weekly Target &amp; Weightage">
-                            <label for="weekly_target"/>
-                            <div class="o_row">
-                                <field name="weekly_target"/>
-                                <field name="unit" placeholder="units / days"/>
-                            </div>
-                            <field name="weekly_weightage" string="Weekly Weightage (%)"/>
-                            <field name="daily_target" invisible="not is_daily_repeating"/>
-                            <field name="daily_achievement" string="Today's Achievement"/>
-                            <field name="weekly_achievement" string="Weekly Achieved"/>
-                            <field name="weekly_progress" widget="progressbar" string="Weekly Progress (%)"/>
-                            <field name="weekly_weighted_score" string="Weekly Weighted Score (%)"/>
-                        </group>
-                        <group string="Monthly Calculation (Target is 100)">
-                            <div class="alert alert-info py-2" role="alert">
-                                <strong>Monthly calculation:</strong> Target is 100. Fills up based on weekly achievements.
-                            </div>
-                            <field name="monthly_target" readonly="1" string="Monthly Target"/>
-                            <field name="monthly_achievement" widget="progressbar" string="Monthly Score (/100)"/>
-                            <field name="performance_percentage" invisible="1"/>
-                        </group>
-                    </group>
+
                     <notebook>
-                        <page string="Measurement Notes">
-                            <field name="description" placeholder="Instructions or details on what counts towards completing this task..."/>
-                        </page>
-                        <page string="Performance Log Entries">
-                            <field name="entry_ids">
-                                <list editable="bottom">
+                        <!-- Timesheets Notebook Page -->
+                        <page string="Timesheets" name="timesheets">
+                            <field name="timesheet_ids" context="{'default_kpi_id': id, 'default_business_project_id': project_id, 'default_name': name}">
+                                <list editable="bottom" string="Timesheet Lines">
                                     <field name="date"/>
-                                    <field name="name"/>
-                                    <field name="employee_id"/>
-                                    <field name="target"/>
-                                    <field name="achievement"/>
-                                    <field name="progress_percentage" widget="progressbar"/>
-                                    <field name="state"/>
+                                    <field name="employee_id" widget="many2one_avatar_employee"/>
+                                    <field name="name" string="Description"/>
+                                    <field name="unit_amount" string="Hours Spent" sum="Total Hours" widget="timesheet_uom"/>
+                                    <field name="account_id" column_invisible="True"/>
+                                    <field name="project_id" column_invisible="True"/>
                                 </list>
                             </field>
+                        </page>
+
+                        <!-- Targets & Performance Notebook Page -->
+                        <page string="Performance &amp; Targets" name="targets">
+                            <group>
+                                <group string="Weekly Target &amp; Weight">
+                                    <label for="weekly_target"/>
+                                    <div class="o_row">
+                                        <field name="weekly_target"/>
+                                        <field name="unit" placeholder="units"/>
+                                    </div>
+                                    <field name="weekly_weightage" string="Weekly Weightage (%)"/>
+                                    <field name="weekly_achievement" string="Weekly Achieved"/>
+                                    <field name="weekly_progress" widget="progressbar" string="Weekly Progress (%)"/>
+                                </group>
+                                <group string="Monthly Calculation">
+                                    <field name="monthly_target" readonly="1"/>
+                                    <field name="monthly_achievement" widget="progressbar" string="Monthly Score (/100)"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="Notes &amp; Description" name="notes">
+                            <field name="description" placeholder="Instructions, criteria, or details for this KPI..."/>
                         </page>
                     </notebook>
                 </sheet>
@@ -297,34 +323,39 @@
         </field>
     </record>
 
+    <!-- KPI Search View -->
     <record id="business_project_kpi_search" model="ir.ui.view">
         <field name="name">business.project.kpi.search</field>
         <field name="model">business.project.kpi</field>
         <field name="arch" type="xml">
-            <search string="KPIs (Sub-Tasks)">
+            <search string="KPIs">
                 <field name="name"/>
                 <field name="code"/>
                 <field name="kra_id"/>
                 <field name="project_id"/>
-                <field name="employee_id"/>
+                <field name="manager_id"/>
+                <field name="employee_ids"/>
+                <field name="hr_employee_ids" string="HR Employee"/>
+                <field name="stage_id"/>
                 <field name="date"/>
                 <filter name="filter_today" string="Today" domain="[('is_today', '=', True)]"/>
                 <filter name="filter_this_week" string="This Week" domain="[('is_this_week', '=', True)]"/>
                 <filter name="filter_this_month" string="This Month" domain="[('is_this_month', '=', True)]"/>
                 <separator/>
-                <filter name="filter_repeating" string="Daily Repeating Tasks" domain="[('is_daily_repeating', '=', True)]"/>
-                <filter name="filter_completed" string="Completed" domain="[('state', '=', 'completed')]"/>
-                <filter name="filter_in_progress" string="In Progress" domain="[('state', '=', 'in_progress')]"/>
-                <filter name="filter_not_started" string="Not Started" domain="[('state', '=', 'not_started')]"/>
-                <filter name="filter_postponed" string="Postponed" domain="[('state', '=', 'postponed')]"/>
+                <filter name="filter_repeating" string="Repeating Tasks" domain="[('is_daily_repeating', '=', True)]"/>
                 <separator/>
-                <filter name="group_kra" string="Main Task (KRA)" context="{'group_by': 'kra_id'}"/>
+                <filter name="filter_not_started" string="Not Started" domain="[('state', '=', 'not_started')]"/>
+                <filter name="filter_in_progress" string="In Progress" domain="[('state', '=', 'in_progress')]"/>
+                <filter name="filter_completed" string="Completed" domain="[('state', '=', 'completed')]"/>
+                <filter name="filter_on_hold" string="On Hold" domain="[('state', '=', 'on_hold')]"/>
+                <filter name="filter_cancelled" string="Cancelled" domain="[('state', '=', 'cancelled')]"/>
+                <separator/>
+                <filter name="group_stage_id" string="Stage" context="{'group_by': 'stage_id'}"/>
+                <filter name="group_state" string="State (Legacy)" context="{'group_by': 'state'}"/>
+                <filter name="group_kra" string="KRA" context="{'group_by': 'kra_id'}"/>
                 <filter name="group_project" string="Project" context="{'group_by': 'project_id'}"/>
+                <filter name="group_manager" string="KRA Manager" context="{'group_by': 'manager_id'}"/>
                 <filter name="group_employee" string="Assigned Employee" context="{'group_by': 'employee_id'}"/>
-                <filter name="group_state" string="Stage" context="{'group_by': 'state'}"/>
-                <filter name="group_date" string="Date" context="{'group_by': 'date'}"/>
-                <filter name="group_week" string="Week" context="{'group_by': 'week_number'}"/>
-                <filter name="group_month" string="Month" context="{'group_by': 'month_start'}"/>
             </search>
         </field>
     </record>
@@ -339,10 +370,8 @@
                 <field name="name" type="row"/>
                 <field name="employee_id" type="row"/>
                 <field name="date" type="col" interval="day"/>
-                <field name="weekly_target" type="measure"/>
-                <field name="weekly_achievement" type="measure"/>
-                <field name="weekly_progress" type="measure"/>
-                <field name="monthly_achievement" type="measure"/>
+                <field name="progress" type="measure"/>
+                <field name="total_hours_spent" type="measure"/>
             </pivot>
         </field>
     </record>
@@ -353,8 +382,8 @@
         <field name="arch" type="xml">
             <graph string="KPI Performance" type="bar">
                 <field name="kra_id"/>
-                <field name="employee_id"/>
-                <field name="weekly_progress" type="measure"/>
+                <field name="name"/>
+                <field name="progress" type="measure"/>
             </graph>
         </field>
     </record>
@@ -364,83 +393,141 @@
          KRA VIEWS (MAIN TASKS)
     ========================================== -->
 
+    <!-- KRA List View -->
     <record id="business_project_kra_list" model="ir.ui.view">
         <field name="name">business.project.kra.list</field>
         <field name="model">business.project.kra</field>
         <field name="arch" type="xml">
-            <list string="Key Result Areas (Main Tasks)">
+            <list string="Key Result Areas (KRAs)">
                 <field name="sequence" widget="handle"/>
                 <field name="reference"/>
-                <field name="name" string="Main Task (KRA)"/>
-                <field name="project_id" optional="show"/>
-                <field name="department_id" decoration-bf="1" optional="show"/>
-                <field name="responsible_user_id" string="Lead / Responsible"/>
+                <field name="name" string="KRA Name"/>
+                <field name="project_id" string="Project"/>
+                <field name="manager_id" string="KRA Manager"/>
+                <field name="priority" widget="priority"/>
+                <field name="start_date"/>
+                <field name="end_date"/>
+                <field name="stage_id" string="Stage" optional="show"/>
                 <field name="state" widget="badge"
-                       decoration-muted="state == 'not_started'"
-                       decoration-warning="state in ('in_progress', 'draft', 'active')"
+                       decoration-info="state == 'new'"
+                       decoration-warning="state == 'ongoing'"
                        decoration-success="state == 'completed'"
-                       decoration-danger="state == 'postponed'"/>
+                       decoration-danger="state == 'on_hold'"/>
                 <field name="kpi_count" string="KPIs Count"/>
-                <field name="completed_kpi_count" string="Completed KPIs" optional="show"/>
-                <field name="weekly_progress" widget="progressbar" string="Weekly Progress (%)"/>
-                <field name="monthly_achievement" string="Monthly Score (/100)"/>
-                <button name="action_generate_daily_repeating_kpis"
-                        type="object"
-                        title="Generate Today's Repeating Tasks"
-                        icon="fa-refresh"
-                        class="btn-link"/>
+                <field name="weekly_progress" widget="progressbar" string="Progress (%)"/>
                 <field name="active" column_invisible="True"/>
             </list>
         </field>
     </record>
 
+    <!-- KRA Kanban View -->
+    <record id="business_project_kra_kanban" model="ir.ui.view">
+        <field name="name">business.project.kra.kanban</field>
+        <field name="model">business.project.kra</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="stage_id" class="o_kanban_small_column" records_draggable="1">
+                <field name="stage_id" options="{'group_by_tooltip': {'description': 'Stage Details'}}"/>
+                <field name="name"/>
+                <field name="reference"/>
+                <field name="project_id"/>
+                <field name="manager_id"/>
+                <field name="state"/>
+                <field name="priority"/>
+                <field name="start_date"/>
+                <field name="end_date"/>
+                <field name="kpi_count"/>
+                <field name="weekly_progress"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="oe_kanban_global_click p-2">
+                            <!-- Top: Priority and State Badge -->
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <field name="priority" widget="priority"/>
+                                <field name="state" widget="badge"
+                                       decoration-info="state == 'new'"
+                                       decoration-warning="state == 'ongoing'"
+                                       decoration-success="state == 'completed'"
+                                       decoration-danger="state == 'on_hold'"/>
+                            </div>
+
+                            <!-- KRA Name -->
+                            <div class="fw-bold fs-6 text-dark mb-2">
+                                <field name="name"/>
+                            </div>
+
+                            <!-- Project Name -->
+                            <div class="text-muted small mb-2">
+                                <i class="fa fa-folder-open-o me-1 text-primary" title="Project"/>
+                                <strong><field name="project_id"/></strong>
+                            </div>
+
+                            <!-- Progress Bar -->
+                            <div class="my-2">
+                                <field name="weekly_progress" widget="progressbar"/>
+                            </div>
+
+                            <!-- Footer: KRA Manager & KPIs Count -->
+                            <div class="d-flex justify-content-between align-items-center text-muted small mt-2 pt-2 border-top">
+                                <div class="d-flex align-items-center">
+                                    <field name="manager_id" widget="many2one_avatar_user" class="me-1"/>
+                                    <span class="text-truncate" style="max-width: 120px;"><field name="manager_id"/></span>
+                                </div>
+                                <span class="badge bg-light text-dark border">
+                                    <i class="fa fa-tasks me-1 text-secondary"/> <field name="kpi_count"/> KPIs
+                                </span>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- KRA Form View -->
     <record id="business_project_kra_form" model="ir.ui.view">
         <field name="name">business.project.kra.form</field>
         <field name="model">business.project.kra</field>
         <field name="arch" type="xml">
-            <form string="Key Result Area (Main Task)">
+            <form string="Key Result Area (KRA)">
                 <header>
-                    <button name="action_generate_daily_repeating_kpis"
-                            string="Generate Today's Repeating Tasks"
-                            type="object"
-                            class="btn-primary"
-                            icon="fa-refresh"/>
-                    <button name="action_set_in_progress" string="Start Work" type="object"
-                            class="btn-secondary" invisible="state == 'in_progress'"/>
+                    <button name="action_set_ongoing" string="Start / Ongoing" type="object"
+                            class="btn-primary" invisible="state == 'ongoing'"/>
                     <button name="action_set_completed" string="Mark Completed" type="object"
                             class="btn-success" invisible="state == 'completed'"/>
-                    <button name="action_set_postponed" string="Postpone" type="object"
-                            invisible="state == 'postponed'"/>
-                    <button name="action_set_not_started" string="Reset to Not Started" type="object"
-                            invisible="state == 'not_started'"/>
-                    <!-- User stages: Not started, inprogress , completed , Postponed -->
-                    <field name="state" widget="statusbar"
-                           options="{'clickable': True}"
-                           statusbar_visible="not_started,in_progress,completed,postponed"/>
+                    <button name="action_set_on_hold" string="Put On Hold" type="object"
+                            class="btn-secondary" invisible="state == 'on_hold'"/>
+                    <button name="action_set_new" string="Reset to New" type="object"
+                            invisible="state == 'new'"/>
+                    <button name="action_generate_daily_repeating_kpis"
+                            string="Generate Daily Tasks"
+                            type="object"
+                            class="btn-link"
+                            icon="fa-refresh"/>
+                    <field name="stage_id" widget="statusbar"
+                           options="{'clickable': True}"/>
+                    <field name="state" invisible="1"/>
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
+                        <!-- KPI Smart Button: Opens KPI Kanban View Grouped by Stages -->
                         <button name="action_view_kpis" type="object"
                                 class="oe_stat_button" icon="fa-tasks">
-                            <field name="kpi_count" widget="statinfo" string="KPIs (Sub-Tasks)"/>
-                        </button>
-                        <button name="action_generate_daily_repeating_kpis" type="object"
-                                class="oe_stat_button" icon="fa-refresh">
-                            <field name="daily_kpi_total" widget="statinfo" string="Today's Tasks"/>
+                            <field name="kpi_count" widget="statinfo" string="KPIs"/>
                         </button>
                     </div>
                     <div class="oe_title">
                         <span class="text-muted"><field name="reference" readonly="1"/></span>
-                        <h1><field name="name" placeholder="Main Task / KRA Name (e.g. Employee Hiring, Course Delivery, Marketing Campaign)..."/></h1>
+                        <h1><field name="name" placeholder="KRA Name"/></h1>
                     </div>
                     <group>
                         <group string="Project &amp; Ownership">
-                            <field name="project_id" placeholder="Associated Business Project"/>
+                            <!-- Which project under -->
+                            <field name="project_id" string="Project" placeholder="Select Project"/>
+                            <!-- KRA Manager -->
+                            <field name="manager_id" string="KRA Manager"/>
                             <field name="department_id" decoration-bf="1"/>
-                            <field name="responsible_user_id" string="Lead / Responsible User"/>
-                            <field name="manager_id" string="Reviewing Manager"/>
                         </group>
-                        <group string="Timeline &amp; Settings">
+                        <group string="Timeline &amp; Priority">
                             <field name="start_date"/>
                             <field name="end_date"/>
                             <field name="priority" widget="priority"/>
@@ -448,29 +535,8 @@
                         </group>
                     </group>
 
-                    <div class="row my-3 p-3 bg-light rounded border">
-                        <div class="col-md-4 text-center border-end">
-                            <div class="text-muted small">Today's Tasks Completion</div>
-                            <h3 class="my-1"><field name="daily_kpi_completed"/> / <field name="daily_kpi_total"/></h3>
-                            <field name="daily_completion_rate" widget="progressbar"/>
-                        </div>
-                        <div class="col-md-4 text-center border-end">
-                            <div class="text-muted small">Weekly Progress</div>
-                            <h3 class="my-1"><field name="weekly_achievement"/> / <field name="weekly_target_total"/></h3>
-                            <field name="weekly_progress" widget="progressbar"/>
-                        </div>
-                        <div class="col-md-4 text-center">
-                            <div class="text-muted small">Monthly Weightage Score (Target: 100)</div>
-                            <h3 class="my-1 text-primary"><field name="monthly_achievement"/> / 100</h3>
-                            <span class="text-muted small">Fills based on weekly achievements</span>
-                        </div>
-                    </div>
-
                     <notebook>
-                        <!-- User Requirement:
-                             "under that kra i need to add that sub tasks kpi, example if employee hiring is the kra,
-                              kpi's are job posting, interview , onboarding etc.
-                              the project manager can assign the KPI of the kra to different employees" -->
+                        <!-- KPIs Sub-Tasks Page -->
                         <page string="Sub-Tasks (KPIs)" name="kpis">
                             <div class="mb-2">
                                 <button name="action_generate_daily_repeating_kpis"
@@ -482,20 +548,18 @@
                             <field name="kpi_ids" context="{'default_kra_id': id, 'default_project_id': project_id, 'default_department_id': department_id}">
                                 <list editable="bottom">
                                     <field name="sequence" widget="handle"/>
-                                    <field name="date"/>
-                                    <field name="name" string="KPI"/>
-                                    <field name="employee_id" string="Employee"/>
-                                    <field name="is_daily_repeating" string="Repeating" widget="boolean_toggle"/>
+                                    <field name="name" string="KPI Name"/>
+                                    <field name="employee_ids" widget="many2many_tags_avatar" string="Assigned Employees"/>
+                                    <field name="is_daily_repeating" string="Repeating?" widget="boolean_toggle"/>
+                                    <field name="progress" widget="progressbar" string="Progress"/>
+                                    <field name="total_hours_spent" widget="float_time" string="Hours" optional="show"/>
+                                    <field name="stage_id" string="Stage" optional="show"/>
                                     <field name="state" widget="badge"
                                            decoration-muted="state == 'not_started'"
                                            decoration-warning="state == 'in_progress'"
                                            decoration-success="state == 'completed'"
-                                           decoration-danger="state == 'postponed'"/>
-                                    <field name="weekly_target" string="Weekly Target"/>
-                                    <field name="weekly_weightage" string="Weight(%)"/>
-                                    <field name="weekly_achievement" string="Achieved"/>
-                                    <field name="weekly_progress" widget="progressbar" string="Weekly(%)"/>
-                                    <field name="monthly_achievement" string="Monthly (/100)"/>
+                                           decoration-info="state == 'on_hold'"
+                                           decoration-danger="state == 'cancelled'"/>
                                     <button name="action_set_completed"
                                             type="object"
                                             title="Mark Completed"
@@ -506,34 +570,20 @@
                                             title="Mark In Progress"
                                             icon="fa-play text-warning"
                                             invisible="state == 'in_progress'"/>
-                                    <button name="action_set_postponed"
+                                    <button name="action_set_on_hold"
                                             type="object"
-                                            title="Postpone"
-                                            icon="fa-clock-o text-danger"
-                                            invisible="state == 'postponed'"/>
+                                            title="Put On Hold"
+                                            icon="fa-pause text-secondary"
+                                            invisible="state == 'on_hold'"/>
                                 </list>
                             </field>
                         </page>
 
-                        <page string="Description &amp; Objective" name="details">
+                        <page string="Objective &amp; Description" name="details">
                             <group>
                                 <field name="objective" placeholder="Strategic objective or goals of this KRA..."/>
                                 <field name="description" placeholder="Additional guidelines or details..."/>
                             </group>
-                        </page>
-
-                        <page string="Performance Log Entries (Legacy)" name="entries">
-                            <field name="entry_ids">
-                                <list editable="bottom">
-                                    <field name="date"/>
-                                    <field name="name"/>
-                                    <field name="employee_id"/>
-                                    <field name="target"/>
-                                    <field name="achievement"/>
-                                    <field name="progress_percentage" widget="progressbar"/>
-                                    <field name="state"/>
-                                </list>
-                            </field>
                         </page>
                     </notebook>
                 </sheet>
@@ -542,59 +592,7 @@
         </field>
     </record>
 
-    <record id="business_project_kra_kanban" model="ir.ui.view">
-        <field name="name">business.project.kra.kanban</field>
-        <field name="model">business.project.kra</field>
-        <field name="arch" type="xml">
-            <kanban default_group_by="state" class="o_kanban_small_column">
-                <field name="name"/>
-                <field name="reference"/>
-                <field name="project_id"/>
-                <field name="department_id"/>
-                <field name="responsible_user_id"/>
-                <field name="state"/>
-                <field name="kpi_count"/>
-                <field name="weekly_progress"/>
-                <field name="monthly_achievement"/>
-                <templates>
-                    <t t-name="card">
-                        <div class="oe_kanban_global_click p-2">
-                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                <span class="badge bg-primary text-white"><field name="reference"/></span>
-                                <field name="state" widget="badge"
-                                       decoration-muted="state == 'not_started'"
-                                       decoration-warning="state in ('in_progress', 'draft', 'active')"
-                                       decoration-success="state == 'completed'"
-                                       decoration-danger="state == 'postponed'"/>
-                            </div>
-                            <div class="fw-bold fs-6 text-dark mb-1">
-                                <field name="name"/>
-                            </div>
-                            <div class="text-muted small mb-2">
-                                <t t-if="record.project_id.raw_value">
-                                    <span><i class="fa fa-folder-open-o me-1 text-primary" title="Project"/><field name="project_id"/></span>
-                                </t>
-                                <t t-if="record.department_id.raw_value">
-                                    · <span><i class="fa fa-building-o me-1" title="Department"/><field name="department_id"/></span>
-                                </t>
-                            </div>
-                            <div class="d-flex justify-content-between small text-muted my-1">
-                                <span>KPIs: <strong><field name="kpi_count"/></strong></span>
-                                <span>Monthly: <strong><field name="monthly_achievement"/></strong> / 100</span>
-                            </div>
-                            <div class="my-1">
-                                <field name="weekly_progress" widget="progressbar"/>
-                            </div>
-                            <div class="text-muted small mt-2 d-flex justify-content-between align-items-center">
-                                <span><i class="fa fa-user me-1" title="Responsible"/><field name="responsible_user_id"/></span>
-                            </div>
-                        </div>
-                    </t>
-                </templates>
-            </kanban>
-        </field>
-    </record>
-
+    <!-- KRA Search View -->
     <record id="business_project_kra_search" model="ir.ui.view">
         <field name="name">business.project.kra.search</field>
         <field name="model">business.project.kra</field>
@@ -603,88 +601,22 @@
                 <field name="name"/>
                 <field name="reference"/>
                 <field name="project_id"/>
-                <field name="department_id"/>
-                <field name="responsible_user_id"/>
+                <field name="manager_id"/>
+                <field name="stage_id"/>
                 <field name="state"/>
                 <filter name="active" string="Active" domain="[('active', '=', True)]"/>
-                <filter name="completed" string="Completed" domain="[('state', '=', 'completed')]"/>
-                <filter name="in_progress" string="In Progress" domain="[('state', 'in', ('in_progress', 'draft', 'active'))]"/>
-                <filter name="not_started" string="Not Started" domain="[('state', '=', 'not_started')]"/>
-                <filter name="postponed" string="Postponed" domain="[('state', '=', 'postponed')]"/>
+                <filter name="state_new" string="New" domain="[('state', '=', 'new')]"/>
+                <filter name="state_ongoing" string="Ongoing" domain="[('state', '=', 'ongoing')]"/>
+                <filter name="state_completed" string="Completed" domain="[('state', '=', 'completed')]"/>
+                <filter name="state_on_hold" string="On Hold" domain="[('state', '=', 'on_hold')]"/>
                 <separator/>
+                <filter name="group_stage_id" string="Stage" context="{'group_by': 'stage_id'}"/>
+                <filter name="group_state" string="State (Legacy)" context="{'group_by': 'state'}"/>
                 <filter name="group_project" string="Project" context="{'group_by': 'project_id'}"/>
+                <filter name="group_manager" string="KRA Manager" context="{'group_by': 'manager_id'}"/>
                 <filter name="group_department" string="Department" context="{'group_by': 'department_id'}"/>
-                <filter name="group_user" string="Responsible User" context="{'group_by': 'responsible_user_id'}"/>
-                <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
             </search>
         </field>
     </record>
 
-
-    <!-- ==========================================
-         KRA ENTRY VIEWS (BACKWARD COMPATIBILITY)
-    ========================================== -->
-
-    <record id="business_project_kra_entry_list" model="ir.ui.view">
-        <field name="name">business.project.kra.entry.list</field>
-        <field name="model">business.project.kra.entry</field>
-        <field name="arch" type="xml">
-            <list string="Performance Entries">
-                <field name="date"/>
-                <field name="name"/>
-                <field name="kra_id"/>
-                <field name="kpi_id" optional="show"/>
-                <field name="project_id" optional="show"/>
-                <field name="department_id" decoration-bf="1" optional="hide"/>
-                <field name="employee_id"/>
-                <field name="target"/>
-                <field name="achievement"/>
-                <field name="progress_percentage" widget="progressbar"/>
-                <field name="state" widget="badge"
-                       decoration-success="state == 'approved'"
-                       decoration-info="state == 'submitted'"
-                       decoration-danger="state == 'rejected'"
-                       decoration-muted="state == 'draft'"/>
-            </list>
-        </field>
-    </record>
-
-    <record id="business_project_kra_entry_form" model="ir.ui.view">
-        <field name="name">business.project.kra.entry.form</field>
-        <field name="model">business.project.kra.entry</field>
-        <field name="arch" type="xml">
-            <form string="Performance Entry">
-                <header>
-                    <button name="action_submit" string="Submit" type="object"
-                            class="btn-primary" invisible="state != 'draft'"/>
-                    <button name="action_approve" string="Approve" type="object"
-                            class="btn-success" invisible="state not in ('submitted', 'rejected')"/>
-                    <button name="action_reject" string="Reject" type="object"
-                            invisible="state not in ('submitted', 'approved')"/>
-                    <field name="state" widget="statusbar"
-                           statusbar_visible="draft,submitted,approved,rejected"/>
-                </header>
-                <sheet>
-                    <div class="oe_title">
-                        <h1><field name="name"/></h1>
-                    </div>
-                    <group>
-                        <group string="Links">
-                            <field name="kra_id"/>
-                            <field name="kpi_id" domain="kra_id and [('kra_id', '=', kra_id)] or []"/>
-                            <field name="project_id"/>
-                            <field name="department_id"/>
-                            <field name="employee_id"/>
-                        </group>
-                        <group string="Measurement">
-                            <field name="date"/>
-                            <field name="target"/>
-                            <field name="achievement"/>
-                            <field name="progress_percentage" widget="progressbar"/>
-                        </group>
-                    </group>
-                </sheet>
-            </form>
-        </field>
-    </record>
 </odoo>

@@ -52,6 +52,22 @@ class BusinessProjectStage(models.Model):
         default=False
     )
 
+    is_sop_stage = fields.Boolean(
+        string='Is SOP Stage',
+        compute='_compute_is_sop_stage',
+        store=True,
+        readonly=False,
+        help='Indicates whether this stage is specific to SOP development, rollout, and verification (skipped for non-BenAc projects).'
+    )
+
+    @api.depends('name')
+    def _compute_is_sop_stage(self):
+        for stage in self:
+            name_lower = (stage.name or '').lower()
+            stage.is_sop_stage = any(keyword in name_lower for keyword in [
+                'sop', 'rollout', 'consultant verification'
+            ])
+
     requires_approval = fields.Boolean(
         string='Requires Approval',
         default=False

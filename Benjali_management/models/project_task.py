@@ -27,7 +27,7 @@ class ProjectTask(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
-            business_project_id = vals.get('business_project_id')
+            business_project_id = vals.get('business_project_id') or self._context.get('default_business_project_id')
             if business_project_id and not vals.get('project_id'):
                 business_project = self.env['business.project'].browse(
                     business_project_id

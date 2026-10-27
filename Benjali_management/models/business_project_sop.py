@@ -56,7 +56,8 @@ class BusinessProjectSOP(models.Model):
 
     name = fields.Char(string='SOP Title', required=True, tracking=True)
     project_id = fields.Many2one('business.project', string='Business Project',
-                                 required=True, ondelete='cascade', index=True, tracking=True)
+                                 required=True, ondelete='cascade', index=True, tracking=True,
+                                 domain="[('is_sop_required', '=', True)]")
     stage_id = fields.Many2one('business.project.stage', string='Associated Stage',
                                ondelete='set null', tracking=True)
     department_id = fields.Many2one('hr.department', string='Department', required=True,
@@ -131,10 +132,22 @@ class BusinessProjectSOP(models.Model):
     @api.onchange('project_id')
     def _onchange_project_id(self):
         if self.project_id:
+            if not self.department_id and self.project_id.department_id:
+                self.department_id = self.project_id.department_id
             if not self.stage_id:
                 self.stage_id = self.project_id.stage_id
-            if not self.coordinator_id and self.project_id. client_implementation_coordinator_id:
+            if not self.coordinator_id and self.project_id.client_implementation_coordinator_id:
                 self.coordinator_id = self.project_id.client_implementation_coordinator_id
+
+    @api.constrains('project_id')
+    def _check_project_sop_requirement(self):
+        for sop in self:
+            if sop.project_id and not sop.project_id.is_sop_required:
+                dept_name = sop.project_id.department_id.name or 'Unknown'
+                raise ValidationError(
+                    f'SOP is only applicable for BenAc projects. '
+                    f'Project "{sop.project_id.name}" belongs to department "{dept_name}".'
+                )
 
     @api.depends('checklist_ids', 'checklist_ids.frequency', 'checklist_ids.status', 'gap_ids', 'gap_ids.state')
     def _compute_counts(self):

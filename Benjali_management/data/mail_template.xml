@@ -61,15 +61,12 @@
                     <p style="white-space: pre-line;"><t t-out="object.description"/></p>
                 </t>
 
-                <h3 style="color: #17365d;">Sales and Qualification</h3>
-                <p>
-                    <t t-if="object.opportunity_id"><strong>Opportunity:</strong> <t t-out="object.opportunity_id.name"/><br/></t>
-                    <t t-if="object.sale_order_id"><strong>Sales Order:</strong> <t t-out="object.sale_order_id.name"/><br/></t>
-                    <t t-if="object.sales_person_id"><strong>Sales Person:</strong> <t t-out="object.sales_person_id.name"/><br/></t>
-<!--                    <strong>Qualification:</strong>-->
-<!--                    <t t-out="dict(object._fields['qualification_status'].selection).get(object.qualification_status, 'Not checked')"/>-->
-<!--                    <t t-if="object.qualification_notes"><br/><strong>Qualification Notes:</strong> <t t-out="object.qualification_notes"/></t>-->
-                </p>
+                <t t-if="object.opportunity_id">
+                    <h3 style="color: #17365d;">Opportunity</h3>
+                    <p>
+                        <strong>Opportunity:</strong> <t t-out="object.opportunity_id.name"/><br/>
+                    </p>
+                </t>
 
                 <t t-if="object.kickoff_completed or object.kickoff_date or object.kickoff_notes">
                     <h3 style="color: #17365d;">Kick-off</h3>

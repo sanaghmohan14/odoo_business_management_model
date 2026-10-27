@@ -56,7 +56,6 @@ class ProjectProject(models.Model):
                     'name': project.name,
                     'partner_id': project.partner_id.id,
                     'department_id': project.department_id.id,
-                    'sales_person_id': project.user_id.id,
                     'project_id': project.id,
                 })
                 project.business_project_id = business_project.id

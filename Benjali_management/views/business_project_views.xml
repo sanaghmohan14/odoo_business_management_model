@@ -124,12 +124,12 @@
                             icon="fa-play"
                             invisible="not is_on_hold"/>
 
-                    <!--                    <button name="action_complete"-->
-                    <!--                            string="Complete"-->
-                    <!--                            type="object"-->
-                    <!--                            class="btn-primary"-->
-                    <!--                            icon="fa-check"-->
-                    <!--                            invisible="is_completed or is_cancelled or is_on_hold"/>-->
+                    <button name="action_complete"
+                            string="Complete"
+                            type="object"
+                            class="btn-success"
+                            icon="fa-check"
+                            invisible="is_completed or is_cancelled or is_on_hold"/>
 
                     <button name="action_cancel"
                             string="Cancel"
@@ -147,6 +147,7 @@
                     <field name="is_communication_stage" invisible="1"/>
                     <field name="is_client_onboarding_stage" invisible="1"/>
                     <field name="is_sop_active_stage" invisible="1"/>
+                    <field name="is_sop_required" invisible="1"/>
                     <field name="stage_requires_approval" invisible="1"/>
                     <field name="has_pending_approval" invisible="1"/>
                     <field name="is_stage_approved" invisible="1"/>
@@ -214,6 +215,7 @@
                             <field name="priority" widget="priority"/>
                             <!--                            <field name="stage_id"/>-->
                             <field name="project_manager_id"/>
+                            <field name="responsible_user_id"/>
                             <field name="phase"
                                    readonly="1"/>
                         </group>
@@ -227,24 +229,7 @@
                         </group>
 
                     </group>
-                    <!-- ================= SALES INFORMATION ================= -->
-                    <group string="Sales &amp; CRM">
-                        <group>
-                            <field name="opportunity_id"/>
-                            <field name="sale_order_id"/>
-                        </group>
-                        <group>
-                            <field name="sales_person_id"/>
-                            <field name="responsible_user_id"/>
-                        </group>
-                    </group>
-<!--                    <group string="Lead Qualification">-->
 
-<!--                        <field name="qualification_status"/>-->
-
-<!--                        <field name="qualification_notes"-->
-<!--                               placeholder="Enter qualification details..."/>-->
-<!--                    </group>-->
                     <notebook>
 
                         <!-- ================= KRA & KPI MANAGEMENT ================= -->
@@ -270,16 +255,17 @@
                                     <list editable="bottom">
                                         <field name="sequence" widget="handle"/>
                                         <field name="reference" readonly="1"/>
-                                        <field name="name" string="KRA (Main Task)"/>
-                                        <field name="responsible_user_id" string="Lead / Responsible"/>
+                                        <field name="name" string="KRA Name"/>
+                                        <field name="manager_id" string="KRA Manager"/>
+                                        <field name="priority" widget="priority"/>
+                                        <field name="stage_id" string="Stage" optional="show"/>
                                         <field name="state" widget="badge"
-                                               decoration-muted="state == 'not_started'"
-                                               decoration-warning="state in ('in_progress', 'draft', 'active')"
+                                               decoration-info="state == 'new'"
+                                               decoration-warning="state == 'ongoing'"
                                                decoration-success="state == 'completed'"
-                                               decoration-danger="state == 'postponed'"/>
+                                               decoration-danger="state == 'on_hold'"/>
                                         <field name="kpi_count" string="KPIs Count"/>
-                                        <field name="weekly_progress" widget="progressbar" string="Weekly Progress (%)"/>
-                                        <field name="monthly_achievement" string="Monthly (/100)"/>
+                                        <field name="weekly_progress" widget="progressbar" string="Progress (%)"/>
                                         <button name="action_generate_daily_repeating_kpis"
                                                 type="object"
                                                 title="Generate Today's Repeating Tasks"
@@ -293,20 +279,18 @@
                                 <field name="kpi_ids" nolabel="1" context="{'default_project_id': id, 'default_department_id': department_id}">
                                     <list editable="bottom">
                                         <field name="date"/>
-                                        <field name="kra_id" domain="parent.id and [('project_id', '=', parent.id)] or []" string="KRA (Main Task)"/>
-                                        <field name="name" string="KPI (Sub-Task)"/>
-                                        <field name="employee_id" string="Assigned Employee"/>
-                                        <field name="is_daily_repeating" string="Daily Repeating?" widget="boolean_toggle"/>
+                                        <field name="kra_id" domain="parent.id and [('project_id', '=', parent.id)] or []" string="KRA"/>
+                                        <field name="name" string="KPI Name"/>
+                                        <field name="employee_ids" widget="many2many_tags_avatar" string="Assigned Employees"/>
+                                        <field name="is_daily_repeating" string="Repeating?" widget="boolean_toggle"/>
+                                        <field name="progress" widget="progressbar" string="Progress"/>
+                                        <field name="stage_id" string="Stage" optional="show"/>
                                         <field name="state" widget="badge"
                                                decoration-muted="state == 'not_started'"
                                                decoration-warning="state == 'in_progress'"
                                                decoration-success="state == 'completed'"
-                                               decoration-danger="state == 'postponed'"/>
-                                        <field name="weekly_target" string="Weekly Target"/>
-                                        <field name="weekly_weightage" string="Weight (%)"/>
-                                        <field name="weekly_achievement" string="Achieved"/>
-                                        <field name="weekly_progress" widget="progressbar" string="Weekly (%)"/>
-                                        <field name="monthly_achievement" string="Monthly (/100)"/>
+                                               decoration-info="state == 'on_hold'"
+                                               decoration-danger="state == 'cancelled'"/>
                                         <button name="action_set_completed"
                                                 type="object"
                                                 title="Mark Completed"
@@ -317,11 +301,11 @@
                                                 title="Mark In Progress"
                                                 icon="fa-play text-warning"
                                                 invisible="state == 'in_progress'"/>
-                                        <button name="action_set_postponed"
+                                        <button name="action_set_on_hold"
                                                 type="object"
-                                                title="Postpone"
-                                                icon="fa-clock-o text-danger"
-                                                invisible="state == 'postponed'"/>
+                                                title="Put On Hold"
+                                                icon="fa-pause text-secondary"
+                                                invisible="state == 'on_hold'"/>
                                     </list>
                                 </field>
                             </group>
@@ -402,33 +386,16 @@
 
                         </page>
 
-                        <page string="Sub Tasks">
-                            <field name="task_ids">
+                        <page string="Tasks">
+                            <field name="task_ids" context="{'default_business_project_id': id, 'default_project_id': project_id}">
                                 <list editable="bottom">
                                     <field name="name" string="Task"/>
                                     <field name="user_ids" string="Assignees" widget="many2many_tags"/>
-                                    <field name="stage_id"/>
 <!--                                    <field name="completed" string="completed"/>-->
                                 </list>
                             </field>
                         </page>
 
-                        <page string="KRA">
-                            <field name="kra_ids">
-                                <list editable="bottom">
-                                    <field name="sequence"/>
-                                    <field name="name"/>
-                                    <field name="objective"/>
-                                    <field name="responsible_user_id"/>
-                                    <field name="kpi"/>
-                                    <field name="target"/>
-                                    <field name="unit"/>
-                                    <field name="frequency"/>
-                                    <field name="measurement"/>
-                                    <field name="state"/>
-                                </list>
-                            </field>
-                        </page>
                         <page string="Communication" invisible="not is_communication_stage">
                             <group string="Project Communication">
                                 <field name="communication_channel"/>
@@ -493,8 +460,8 @@
                 <field name="stage_id"/>
                 <field name="phase"/>
                 <field name="priority" widget="priority"/>
-                <field name="sales_person_id"/>
-                <field name="project_manager_id"/>
+                <field name="responsible_user_id"/>
+                <field name="client_implementation_coordinator_id"/>
                 <field name="start_date"/>
                 <field name="expected_end_date"/>
                 <field name="actual_end_date"/>

@@ -127,7 +127,6 @@ class BusinessProject(models.Model):
 
     # CRM / SALES
 
-
     opportunity_id = fields.Many2one(
         'crm.lead',
         string='Opportunity',
@@ -136,34 +135,38 @@ class BusinessProject(models.Model):
         index=True
     )
 
-
-
-    lead_id = fields.Many2one(
-        'crm.lead',
-        string='CRM Lead',
-        ondelete='set null'
-    )
-
-    sale_order_id = fields.Many2one(
-        'sale.order',
-        string='Sales Order',
-        tracking=True,
-        ondelete='set null'
-    )
-
-    sales_person_id = fields.Many2one(
-        'res.users',
-        string='Sales Person',
-        # tracking=True,
-        # ondelete='set null'
-    )
-
     department_id = fields.Many2one(
         'hr.department',
         string='Department',
         ondelete='set null',
         index=True
     )
+
+    is_sop_required = fields.Boolean(
+        string='Requires SOP',
+        compute='_compute_is_sop_required',
+        store=True,
+        readonly=False,
+        help='Indicates whether SOPs and checklists are required for this project (enabled for BenAc department).'
+    )
+
+    @api.depends('department_id', 'department_id.requires_sop', 'department_id.name')
+    def _compute_is_sop_required(self):
+        for record in self:
+            if record.department_id:
+                is_benac = 'benac' in (record.department_id.name or '').strip().lower()
+                record.is_sop_required = bool(record.department_id.requires_sop or is_benac)
+            else:
+                record.is_sop_required = False
+
+    @api.onchange('department_id')
+    def _onchange_department_id_sop(self):
+        if self.department_id:
+            is_benac = 'benac' in (self.department_id.name or '').strip().lower()
+            self.is_sop_required = bool(self.department_id.requires_sop or is_benac)
+        else:
+            self.is_sop_required = False
+
     #communication steps
     communication_channel = fields.Selection([
         ('whatsapp', 'WhatsApp'),
@@ -401,7 +404,7 @@ class BusinessProject(models.Model):
     )
 
     client_implementation_coordinator_id = fields.Many2one(
-        'res.partner', string='Project Manager',
+        'res.partner', string='Client Implementation Coordinator',
         tracking=True, ondelete='set null'
     )
 
@@ -570,7 +573,12 @@ class BusinessProject(models.Model):
         )
         if not stage:
             stage = self.env['business.project.stage'].search([
-                ('phase', '=', 'onboarding')
+                ('name', 'ilike', 'Client Onboarding'),
+                ('active', '=', True),
+            ], order='sequence asc', limit=1)
+        if not stage:
+            stage = self.env['business.project.stage'].search([
+                ('active', '=', True),
             ], order='sequence asc', limit=1)
         return stage.id if stage else False
 
@@ -578,7 +586,7 @@ class BusinessProject(models.Model):
     @api.model
     def _read_group_stage_ids(self, stages, domain):
         return self.env['business.project.stage'].search(
-            [('active', '=', True), ('name', 'not ilike', 'proposal')],
+            [('active', '=', True)],
             order='sequence, id'
         )
 
@@ -603,8 +611,11 @@ class BusinessProject(models.Model):
         for record in self:
             responsible_user = record.stage_id.responsible_user_id
 
-            if not responsible_user and record.stage_id.name == 'Team Allocation':
-                responsible_user = record.sales_person_id
+            if not responsible_user and (
+                'team allocation' in (record.stage_id.name or '').lower() or
+                'team designation' in (record.stage_id.name or '').lower()
+            ):
+                responsible_user = record.project_manager_id or record.responsible_user_id
 
             if responsible_user:
                 record.responsible_user_id = responsible_user.id
@@ -637,7 +648,7 @@ class BusinessProject(models.Model):
     # WORKFLOW STATUS
 
 
-    @api.depends('stage_id')
+    @api.depends('stage_id', 'is_sop_required')
     def _compute_workflow_status(self):
 
         for record in self:
@@ -660,7 +671,7 @@ class BusinessProject(models.Model):
             record.is_sop_rollout_stage = 'rollout' in stage_name
             record.is_consultant_verification_stage = 'consultant verification' in stage_name
             record.is_monthly_audit_stage = 'monthly audit' in stage_name or 'audit' in stage_name
-            record.is_sop_active_stage = any([
+            record.is_sop_active_stage = record.is_sop_required and any([
                 record.is_sop_development_stage,
                 record.is_sop_discussion_stage,
                 record.is_sop_rollout_stage,
@@ -700,6 +711,8 @@ class BusinessProject(models.Model):
 
     def action_generate_project_sop_checklists(self):
         for project in self:
+            if not project.is_sop_required:
+                raise UserError('SOP and Checklists are only applicable for BenAc projects.')
             if not project.sop_ids:
                 dept = project.department_id or self.env['hr.department'].search([], limit=1)
                 sop = self.env['business.project.sop'].create({
@@ -930,33 +943,10 @@ class BusinessProject(models.Model):
                     'Please allocate at least one team member before '
                     'moving to the next stage.'
                 )
-            if ('kick-off' in stage_lower or 'kickoff' in stage_lower) and not record.kickoff_completed:
-                raise UserError(
-                    'Please complete the client kick-off before moving '
-                    'to the next stage.'
-                )
-            if 'data collection' in stage_lower:
-                if not record.data_collection_ids:
-                    raise UserError(
-                        'Please add at least one data collection item '
-                        'before moving to the next stage.'
-                    )
-                if any(
-                        item.state not in ('collected', 'verified')
-                        for item in record.data_collection_ids
-                ):
-                    raise UserError(
-                        'All data collection items must be Collected or '
-                        'Verified before moving to Analysis & Findings.'
-                    )
             if 'communication' in stage_lower and not record.communication_created:
                 raise UserError(
                     'Please complete the project communication setup '
                     'before moving to the next stage.'
-                )
-            if 'rollout' in stage_lower and not record.client_implementation_coordinator_id:
-                raise UserError(
-                    'Step 29: Client must designate an Implementation Coordinator before moving to Consultant Verification.'
                 )
 
     def write(self, vals):
@@ -974,12 +964,13 @@ class BusinessProject(models.Model):
             record._check_stage_requirements()
 
             # Normal stage movement
-            next_stage = self.env['business.project.stage'].search([
+            domain = [
                 ('sequence', '>', record.stage_id.sequence),
                 ('active', '=', True),
                 ('name', 'not in', ['On Hold', 'Cancelled']),
-                ('name', 'not ilike', 'proposal'),
-            ], order='sequence asc', limit=1)
+            ]
+
+            next_stage = self.env['business.project.stage'].search(domain, order='sequence asc', limit=1)
 
             if not next_stage:
                 raise UserError(
@@ -987,11 +978,14 @@ class BusinessProject(models.Model):
                 )
 
             old_stage = record.stage_id
-
-            record.with_context(skip_stage_requirements=True).write({
+            vals_to_write = {
                 'previous_stage_id': old_stage.id,
                 'stage_id': next_stage.id,
-            })
+            }
+            if next_stage.name == 'Completed' and not record.actual_end_date:
+                vals_to_write['actual_end_date'] = fields.Date.today()
+
+            record.with_context(skip_stage_requirements=True).write(vals_to_write)
 
             record._assign_stage_responsible_user()
             record._create_stage_activity()
@@ -1009,24 +1003,29 @@ class BusinessProject(models.Model):
 
             current_stage = record.stage_id
 
-            next_stage = self.env[
-                'business.project.stage'
-            ].search([
+            domain = [
                 ('sequence', '>', current_stage.sequence),
                 ('active', '=', True),
                 ('name', 'not in', ['On Hold', 'Cancelled']),
-                ('name', 'not ilike', 'proposal'),
-            ], order='sequence asc', limit=1)
+            ]
+
+            next_stage = self.env[
+                'business.project.stage'
+            ].search(domain, order='sequence asc', limit=1)
 
             if not next_stage:
                 raise UserError(
                     'There is no next stage.'
                 )
 
-            record.with_context(skip_stage_requirements=True).write({
+            vals_to_write = {
                 'previous_stage_id': current_stage.id,
                 'stage_id': next_stage.id,
-            })
+            }
+            if next_stage.name == 'Completed' and not record.actual_end_date:
+                vals_to_write['actual_end_date'] = fields.Date.today()
+
+            record.with_context(skip_stage_requirements=True).write(vals_to_write)
             record._assign_stage_responsible_user()
             record._create_stage_activity()
 
@@ -1061,7 +1060,6 @@ class BusinessProject(models.Model):
                     ('active', '=', True),
                     ('sequence', '<', record.stage_id.sequence),
                     ('name', 'not in', ['On Hold', 'Cancelled']),
-                    ('name', 'not ilike', 'proposal'),
                 ],
                 order='sequence desc',
                 limit=1

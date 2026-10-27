@@ -38,6 +38,8 @@
 
                             <field name="folded"/>
 
+                            <field name="is_sop_stage"/>
+
                         </group>
                         <group string="Approval">
 
@@ -101,7 +103,123 @@
 
                 <field name="folded"/>
 
+                <field name="is_sop_stage" optional="show"/>
+
             </list>
+        </field>
+    </record>
+
+    <!-- ==========================================
+         KRA STAGES VIEWS & ACTION
+    ========================================== -->
+    <record id="action_business_project_kra_stage" model="ir.actions.act_window">
+        <field name="name">KRA Stages</field>
+        <field name="res_model">business.project.kra.stage</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Manage stages for Key Result Areas (KRAs).
+            </p>
+        </field>
+    </record>
+
+    <record id="business_project_kra_stage_list" model="ir.ui.view">
+        <field name="name">business.project.kra.stage.list</field>
+        <field name="model">business.project.kra.stage</field>
+        <field name="arch" type="xml">
+            <list string="KRA Stages" editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="description" optional="show"/>
+                <field name="folded"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="business_project_kra_stage_form" model="ir.ui.view">
+        <field name="name">business.project.kra.stage.form</field>
+        <field name="model">business.project.kra.stage</field>
+        <field name="arch" type="xml">
+            <form string="KRA Stage">
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="sequence"/>
+                            <field name="code"/>
+                        </group>
+                        <group>
+                            <field name="folded"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <group string="Stage Description &amp; Tooltip">
+                        <field name="description" placeholder="Brief tooltip description for this stage..."/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ==========================================
+         KPI STAGES VIEWS & ACTION
+    ========================================== -->
+    <record id="action_business_project_kpi_stage" model="ir.actions.act_window">
+        <field name="name">KPI Stages</field>
+        <field name="res_model">business.project.kpi.stage</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Manage stages for Key Performance Indicators (KPIs).
+            </p>
+        </field>
+    </record>
+
+    <record id="business_project_kpi_stage_list" model="ir.ui.view">
+        <field name="name">business.project.kpi.stage.list</field>
+        <field name="model">business.project.kpi.stage</field>
+        <field name="arch" type="xml">
+            <list string="KPI Stages" editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="description" optional="show"/>
+                <field name="folded"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="business_project_kpi_stage_form" model="ir.ui.view">
+        <field name="name">business.project.kpi.stage.form</field>
+        <field name="model">business.project.kpi.stage</field>
+        <field name="arch" type="xml">
+            <form string="KPI Stage">
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="sequence"/>
+                            <field name="code"/>
+                        </group>
+                        <group>
+                            <field name="folded"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <group string="Stage Description &amp; Tooltip">
+                        <field name="description" placeholder="Brief tooltip description for this stage..."/>
+                    </group>
+                </sheet>
+            </form>
         </field>
     </record>
 </odoo>

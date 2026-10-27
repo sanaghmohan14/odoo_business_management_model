@@ -13,3 +13,4 @@ from . import account_analytic_line
 from . import hr_department
 from . import dashboard
 from . import crm_tag
+from . import hr_employee

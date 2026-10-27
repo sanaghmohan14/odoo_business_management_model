@@ -15,6 +15,7 @@
         "sale_project",
         "account",
         "project",
+        "hr_timesheet",
     ],
     "data": [
         "security/record_rules.xml",
@@ -34,6 +35,7 @@
         "views/reporting.xml",
         "views/dashboard_views.xml",
         "views/hr_department_views.xml",
+        "views/hr_employee_views.xml",
         "views/crm_lead_views.xml",
         "views/business_project_approval_views.xml",
         "views/project_project_views.xml",

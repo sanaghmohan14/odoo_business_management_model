@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Inherit Employee Form to add KPI Smart Button -->
+    <record id="view_employee_form_inherit_kpi" model="ir.ui.view">
+        <field name="name">hr.employee.form.inherit.kpi</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="priority" eval="50"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <field name="kpi_count" invisible="1"/>
+                <button name="action_view_kpis"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-tasks"
+                        invisible="kpi_count == 0">
+                    <field name="kpi_count" widget="statinfo" string="KPIs"/>
+                </button>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

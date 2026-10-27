@@ -5,6 +5,43 @@ from odoo import api, fields, models
 from odoo.exceptions import ValidationError
 
 
+class BusinessProjectKRAStage(models.Model):
+    _name = 'business.project.kra.stage'
+    _description = 'KRA Stage'
+    _order = 'sequence, id'
+
+    name = fields.Char(string='Stage Name', required=True, translate=True)
+    sequence = fields.Integer(string='Sequence', default=10)
+    code = fields.Selection([
+        ('new', 'New'),
+        ('ongoing', 'Ongoing'),
+        ('completed', 'Completed'),
+        ('on_hold', 'On Hold'),
+    ], string='Stage Code', required=True)
+    folded = fields.Boolean(string='Folded in Kanban', default=False)
+    active = fields.Boolean(default=True)
+    description = fields.Text(string='Description')
+
+
+class BusinessProjectKPIStage(models.Model):
+    _name = 'business.project.kpi.stage'
+    _description = 'KPI Stage'
+    _order = 'sequence, id'
+
+    name = fields.Char(string='Stage Name', required=True, translate=True)
+    sequence = fields.Integer(string='Sequence', default=10)
+    code = fields.Selection([
+        ('not_started', 'Not Started'),
+        ('in_progress', 'In Progress'),
+        ('completed', 'Completed'),
+        ('on_hold', 'On Hold'),
+        ('cancelled', 'Cancelled'),
+    ], string='Stage Code', required=True)
+    folded = fields.Boolean(string='Folded in Kanban', default=False)
+    active = fields.Boolean(default=True)
+    description = fields.Text(string='Description')
+
+
 class BusinessProjectKRA(models.Model):
     _name = 'business.project.kra'
     _description = 'Business Project & Department KRA (Main Task)'
@@ -16,35 +53,158 @@ class BusinessProjectKRA(models.Model):
                             default='New', index=True)
 
     project_id = fields.Many2one(
-        'business.project', string='Business Project', required=False,
+        'business.project', string='Project', required=True,
         ondelete='cascade', index=True, tracking=True,
-        help='Project this KRA belongs to. In this project, the project manager can assign KPIs to employees.')
+        help='Project this KRA belongs to.')
     department_id = fields.Many2one(
         'hr.department', string='Department', required=False, index=True,
         compute='_compute_department_id', store=True, readonly=False,
         help='Department responsible for this Key Result Area.')
 
+    manager_id = fields.Many2one(
+        'res.users', string='KRA Manager', index=True,
+        default=lambda self: self.env.user, tracking=True)
     responsible_user_id = fields.Many2one(
         'res.users', string='Responsible Manager / Lead', index=True,
-        default=lambda self: self.env.user, tracking=True)
+        related='manager_id', store=True, readonly=False, tracking=True)
     user_id = fields.Many2one(
         'res.users', string='Assigned User',
-        related='responsible_user_id', store=True, readonly=False, index=True)
-    manager_id = fields.Many2one('res.users', string='Reviewing Manager', index=True)
+        related='manager_id', store=True, readonly=False, index=True)
 
-    # Stages: Not started, inprogress, completed, postponed
+    # Stages: Many2one for kanban ordering & drag, synced with state
+    stage_id = fields.Many2one(
+        'business.project.kra.stage',
+        string='Stage',
+        default=lambda self: self._default_stage_id(),
+        group_expand='_read_group_stage_ids',
+        tracking=True,
+        index=True,
+        copy=False,
+    )
     state = fields.Selection([
-        ('not_started', 'Not Started'),
-        ('draft', 'Draft'),
-        ('active', 'In Progress'),
-        ('in_progress', 'In Progress'),
+        ('new', 'New'),
+        ('ongoing', 'Ongoing'),
         ('completed', 'Completed'),
-        ('postponed', 'Postponed'),
-        ('cancelled', 'Cancelled'),
-    ], string='Status', default='not_started', required=True, index=True, tracking=True)
+        ('on_hold', 'On Hold'),
+    ], string='Status', default='new', required=True, index=True, tracking=True)
+
+    def _default_stage_id(self):
+        stage = self.env['business.project.kra.stage'].search([('code', '=', 'new')], order='sequence, id', limit=1)
+        if not stage:
+            stage = self.env['business.project.kra.stage'].search([], order='sequence, id', limit=1)
+        return stage
+
+    @api.model
+    def _normalize_stages(self):
+        """Ensures exactly the 4 canonical KRA stages exist with correct names, codes, and sequences."""
+        canonical_specs = [
+            ('new', ['new', 'draft'], 'New', 10, False, 'Newly created KRA'),
+            ('ongoing', ['ongoing', 'in_progress', 'active'], 'Ongoing', 20, False, 'KRA is currently in progress'),
+            ('completed', ['completed', 'done', 'closed'], 'Completed', 30, False, 'KRA has been completed'),
+            ('on_hold', ['on_hold', 'hold', 'paused', 'cancelled', 'postponed'], 'On Hold', 40, False, 'KRA is temporarily paused'),
+        ]
+        Stage = self.env['business.project.kra.stage']
+        kept_ids = []
+
+        try:
+            with self.env.cr.savepoint():
+                for code, aliases, name, seq, folded, desc in canonical_specs:
+                    domain = ['|', ('code', 'in', aliases), ('name', 'ilike', name)]
+                    matching = Stage.search(domain, order='id asc')
+
+                    if matching:
+                        primary = matching[0]
+                        for st in matching:
+                            self.env.cr.execute("""
+                                SELECT id FROM ir_model_data
+                                WHERE model = 'business.project.kra.stage' AND res_id = %s
+                                LIMIT 1;
+                            """, (st.id,))
+                            if self.env.cr.fetchone():
+                                primary = st
+                                break
+
+                        primary.write({
+                            'name': name,
+                            'code': code,
+                            'sequence': seq,
+                            'folded': folded,
+                            'description': desc,
+                            'active': True,
+                        })
+                        kept_ids.append(primary.id)
+
+                        duplicates = matching.filtered(lambda s: s.id != primary.id)
+                        if duplicates:
+                            dup_ids = tuple(duplicates.ids)
+                            self.env.cr.execute("""
+                                UPDATE business_project_kra
+                                SET stage_id = %s
+                                WHERE stage_id IN %s;
+                            """, (primary.id, dup_ids))
+                            self.env.cr.execute("""
+                                DELETE FROM ir_model_data
+                                WHERE model = 'business.project.kra.stage' AND res_id IN %s;
+                            """, (dup_ids,))
+                            self.env.cr.execute("""
+                                DELETE FROM business_project_kra_stage
+                                WHERE id IN %s;
+                            """, (dup_ids,))
+                    else:
+                        st = Stage.create({
+                            'name': name,
+                            'code': code,
+                            'sequence': seq,
+                            'folded': folded,
+                            'description': desc,
+                            'active': True,
+                        })
+                        kept_ids.append(st.id)
+
+                if kept_ids:
+                    orphan_stages = Stage.search([('id', 'not in', kept_ids)])
+                    if orphan_stages:
+                        default_stage_id = kept_ids[0]
+                        orphan_ids = tuple(orphan_stages.ids)
+                        self.env.cr.execute("""
+                            UPDATE business_project_kra
+                            SET stage_id = %s
+                            WHERE stage_id IN %s;
+                        """, (default_stage_id, orphan_ids))
+                        self.env.cr.execute("""
+                            DELETE FROM ir_model_data
+                            WHERE model = 'business.project.kra.stage' AND res_id IN %s;
+                        """, (orphan_ids,))
+                        self.env.cr.execute("""
+                            DELETE FROM business_project_kra_stage
+                            WHERE id IN %s;
+                        """, (orphan_ids,))
+
+                self.env.cr.execute("""
+                    UPDATE business_project_kra kra
+                    SET stage_id = st.id
+                    FROM business_project_kra_stage st
+                    WHERE kra.state = st.code AND (kra.stage_id IS NULL OR kra.stage_id != st.id);
+                """)
+                self.env.cr.execute("""
+                    UPDATE business_project_kra kra
+                    SET state = st.code
+                    FROM business_project_kra_stage st
+                    WHERE kra.stage_id = st.id AND kra.state != st.code;
+                """)
+        except Exception:
+            pass
+
+    @api.model
+    def _read_group_stage_ids(self, stages, domain):
+        self._normalize_stages()
+        return self.env['business.project.kra.stage'].search(
+            [('active', '=', True), ('code', 'in', ['new', 'ongoing', 'completed', 'on_hold'])],
+            order='sequence asc, id asc'
+        )
     priority = fields.Selection([
-        ('0', 'Low'), ('1', 'Medium'), ('2', 'High'), ('3', 'Very High'),
-    ], string='Priority', default='1', index=True)
+        ('0', 'Low'), ('1', 'Normal'), ('2', 'High'), ('3', 'Very High'),
+    ], string='Priority', default='0', index=True)
     active = fields.Boolean(string='Active', default=True)
 
     start_date = fields.Date(string='Start Date', default=fields.Date.context_today)
@@ -200,35 +360,111 @@ class BusinessProjectKRA(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        Stage = self.env['business.project.kra.stage']
         for vals in vals_list:
             if not vals.get('reference') or vals.get('reference') == 'New':
                 vals['reference'] = self.env['ir.sequence'].next_by_code('business.project.kra') or 'KRA'
+            if vals.get('stage_id') and not vals.get('state'):
+                st = Stage.browse(vals['stage_id'])
+                if st.code:
+                    vals['state'] = st.code
+            elif vals.get('state') and not vals.get('stage_id'):
+                st = Stage.search([('code', '=', vals['state'])], limit=1)
+                if st:
+                    vals['stage_id'] = st.id
+            elif not vals.get('stage_id') and not vals.get('state'):
+                def_st = self._default_stage_id()
+                if def_st:
+                    vals['stage_id'] = def_st.id
+                    vals['state'] = def_st.code or 'new'
         records = super().create(vals_list)
         for kra in records:
             kra.action_generate_daily_repeating_kpis()
         return records
 
-    # Stage actions
-    def action_set_not_started(self):
-        self.write({'state': 'not_started'})
+    def write(self, vals):
+        Stage = self.env['business.project.kra.stage']
+        if 'stage_id' in vals and 'state' not in vals:
+            st = Stage.browse(vals['stage_id'])
+            if st and st.code:
+                vals['state'] = st.code
+        elif 'state' in vals and 'stage_id' not in vals:
+            st = Stage.search([('code', '=', vals['state'])], limit=1)
+            if st:
+                vals['stage_id'] = st.id
+        return super().write(vals)
 
-    def action_set_in_progress(self):
-        self.write({'state': 'in_progress'})
+    def init(self):
+        super().init()
+        self._normalize_stages()
+        try:
+            self.env.cr.execute("""
+                UPDATE business_project_kra 
+                SET state = CASE 
+                    WHEN state IN ('not_started', 'draft') THEN 'new'
+                    WHEN state IN ('active', 'in_progress') THEN 'ongoing'
+                    WHEN state IN ('postponed', 'cancelled') THEN 'on_hold'
+                    WHEN state = 'completed' THEN 'completed'
+                    ELSE 'new'
+                END
+                WHERE state NOT IN ('new', 'ongoing', 'completed', 'on_hold') OR state IS NULL;
+            """)
+            self.env.cr.execute("""
+                UPDATE business_project_kra kra
+                SET stage_id = st.id
+                FROM business_project_kra_stage st
+                WHERE kra.state = st.code AND (kra.stage_id IS NULL OR kra.stage_id != st.id);
+            """)
+        except Exception:
+            pass
+
+    # Stage actions: New, Ongoing, Completed, On Hold
+    def action_set_new(self):
+        st = self.env['business.project.kra.stage'].search([('code', '=', 'new')], limit=1)
+        vals = {'state': 'new'}
+        if st:
+            vals['stage_id'] = st.id
+        self.write(vals)
+
+    def action_set_ongoing(self):
+        st = self.env['business.project.kra.stage'].search([('code', '=', 'ongoing')], limit=1)
+        vals = {'state': 'ongoing'}
+        if st:
+            vals['stage_id'] = st.id
+        self.write(vals)
 
     def action_set_completed(self):
-        self.write({'state': 'completed'})
+        st = self.env['business.project.kra.stage'].search([('code', '=', 'completed')], limit=1)
+        vals = {'state': 'completed'}
+        if st:
+            vals['stage_id'] = st.id
+        self.write(vals)
+
+    def action_set_on_hold(self):
+        st = self.env['business.project.kra.stage'].search([('code', '=', 'on_hold')], limit=1)
+        vals = {'state': 'on_hold'}
+        if st:
+            vals['stage_id'] = st.id
+        self.write(vals)
+
+    # Backward compatibility aliases
+    def action_set_not_started(self):
+        self.action_set_new()
+
+    def action_set_in_progress(self):
+        self.action_set_ongoing()
 
     def action_set_postponed(self):
-        self.write({'state': 'postponed'})
+        self.action_set_on_hold()
 
     def action_activate(self):
-        self.write({'state': 'in_progress', 'active': True})
+        self.action_set_ongoing()
 
     def action_complete(self):
-        self.write({'state': 'completed'})
+        self.action_set_completed()
 
     def action_cancel(self):
-        self.write({'state': 'cancelled', 'active': False})
+        self.action_set_on_hold()
 
     def action_generate_daily_repeating_kpis(self, target_date=None):
         """
@@ -300,7 +536,7 @@ class BusinessProjectKRA(models.Model):
         today = fields.Date.context_today(self)
         active_kras = self.search([
             ('active', '=', True),
-            ('state', 'in', ['not_started', 'draft', 'active', 'in_progress'])
+            ('state', 'in', ['new', 'ongoing', 'not_started', 'in_progress'])
         ])
         for kra in active_kras:
             kra.action_generate_daily_repeating_kpis(target_date=today)
@@ -310,15 +546,17 @@ class BusinessProjectKRA(models.Model):
         self.ensure_one()
         return {
             'type': 'ir.actions.act_window',
-            'name': f'{self.name} - KPIs (Sub-Tasks)',
+            'name': f'{self.name} - KPIs',
             'res_model': 'business.project.kpi',
-            'view_mode': 'list,kanban,form,pivot,graph',
+            'view_mode': 'kanban,list,form,pivot,graph',
             'domain': [('kra_id', '=', self.id)],
             'context': {
                 'default_kra_id': self.id,
                 'default_project_id': self.project_id.id if self.project_id else False,
+                'default_manager_id': self.manager_id.id if self.manager_id else False,
                 'default_department_id': self.department_id.id if self.department_id else False,
-                'search_default_group_state': 1,
+                'search_default_kra_id': self.id,
+                'search_default_group_stage_id': 1,
             },
         }
 
@@ -344,47 +582,189 @@ class BusinessProjectKPI(models.Model):
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _order = 'date desc, sequence, id desc'
 
-    name = fields.Char(string='Sub-Task / KPI Name', required=True, tracking=True)
+    name = fields.Char(string='KPI Name', required=True, tracking=True)
     code = fields.Char(string='KPI Code', copy=False, default='New')
     kra_id = fields.Many2one(
-        'business.project.kra', string='Main Task (KRA)', required=True,
+        'business.project.kra', string='KRA', required=True,
         ondelete='cascade', index=True, tracking=True)
 
     project_id = fields.Many2one(
-        'business.project', string='Business Project',
-        compute='_compute_project_id', store=True, readonly=False, index=True)
+        'business.project', string='Project',
+        compute='_compute_kra_details', store=True, readonly=False, index=True, tracking=True,
+        help='Project automatically filled when KRA is chosen.')
+    manager_id = fields.Many2one(
+        'res.users', string='KRA Manager',
+        compute='_compute_kra_details', store=True, readonly=False, index=True, tracking=True,
+        help='KRA Manager automatically filled when KRA is chosen.')
+    kra_manager_id = fields.Many2one(
+        'res.users', string='KRA Manager', related='manager_id', readonly=True)
     department_id = fields.Many2one(
         'hr.department', string='Department',
-        compute='_compute_department_id', store=True, readonly=False, index=True)
+        compute='_compute_kra_details', store=True, readonly=False, index=True)
 
-    # User Requirement:
-    # "kra should come under the project in that form the project manager can assign
-    #  the KPI of the kra to different employees"
+    employee_ids = fields.Many2many(
+        'res.users', 'business_project_kpi_user_rel', 'kpi_id', 'user_id',
+        string='Assigned Employees', tracking=True)
     employee_id = fields.Many2one(
-        'res.users', string='Assigned Employee', required=True,
-        default=lambda self: self.env.user, index=True, tracking=True,
-        help='Project manager assigns each KPI sub-task to different employees.')
+        'res.users', string='Assigned Employee',
+        compute='_compute_employee_id', inverse='_inverse_employee_id',
+        store=True, index=True, tracking=True)
+    hr_employee_ids = fields.Many2many(
+        'hr.employee', 'business_project_kpi_hr_employee_rel', 'kpi_id', 'employee_id',
+        string='Assigned HR Employees', compute='_compute_hr_employee_ids', inverse='_inverse_hr_employee_ids',
+        store=True, tracking=True)
 
-    # User Requirement:
-    # "for kpi the stages are Not started, inprogress , completed , Postponed ."
+    # Stages: Many2one for kanban ordering & drag, synced with state
+    stage_id = fields.Many2one(
+        'business.project.kpi.stage',
+        string='Stage',
+        default=lambda self: self._default_stage_id(),
+        group_expand='_read_group_stage_ids',
+        tracking=True,
+        index=True,
+        copy=False,
+    )
     state = fields.Selection([
         ('not_started', 'Not Started'),
         ('in_progress', 'In Progress'),
         ('completed', 'Completed'),
-        ('postponed', 'Postponed'),
-    ], string='Stage', default='not_started', required=True, index=True, tracking=True)
+        ('on_hold', 'On Hold'),
+        ('cancelled', 'Cancelled'),
+    ], string='Status', default='not_started', required=True, index=True, tracking=True)
 
-    # User Requirement:
-    # "In the Kra some tasks are daily repeating task and some are not repeating
-    #  i want to manage that option also the repeating task should come daily
-    #  and need option to add new tasks also, the daily repeating tasks should need
-    #  to be automatically added under the kra as kpi."
+    def _default_stage_id(self):
+        stage = self.env['business.project.kpi.stage'].search([('code', '=', 'not_started')], order='sequence, id', limit=1)
+        if not stage:
+            stage = self.env['business.project.kpi.stage'].search([], order='sequence, id', limit=1)
+        return stage
+
+    @api.model
+    def _normalize_stages(self):
+        """Ensures exactly the 5 canonical KPI stages exist with correct names, codes, and sequences."""
+        canonical_specs = [
+            ('not_started', ['not_started', 'draft', 'new'], 'Not Started', 10, False, 'Task has not been started yet'),
+            ('in_progress', ['in_progress', 'ongoing', 'active'], 'In Progress', 20, False, 'Task is currently in progress'),
+            ('completed', ['completed', 'done', 'closed'], 'Completed', 30, False, 'Task has been completed'),
+            ('on_hold', ['on_hold', 'hold', 'paused', 'postponed'], 'On Hold', 40, False, 'Task is temporarily paused'),
+            ('cancelled', ['cancelled', 'cancel', 'rejected'], 'Cancelled', 50, True, 'Task has been cancelled'),
+        ]
+        Stage = self.env['business.project.kpi.stage']
+        kept_ids = []
+
+        try:
+            with self.env.cr.savepoint():
+                for code, aliases, name, seq, folded, desc in canonical_specs:
+                    domain = ['|', ('code', 'in', aliases), ('name', 'ilike', name)]
+                    matching = Stage.search(domain, order='id asc')
+
+                    if matching:
+                        primary = matching[0]
+                        for st in matching:
+                            self.env.cr.execute("""
+                                SELECT id FROM ir_model_data
+                                WHERE model = 'business.project.kpi.stage' AND res_id = %s
+                                LIMIT 1;
+                            """, (st.id,))
+                            if self.env.cr.fetchone():
+                                primary = st
+                                break
+
+                        primary.write({
+                            'name': name,
+                            'code': code,
+                            'sequence': seq,
+                            'folded': folded,
+                            'description': desc,
+                            'active': True,
+                        })
+                        kept_ids.append(primary.id)
+
+                        duplicates = matching.filtered(lambda s: s.id != primary.id)
+                        if duplicates:
+                            dup_ids = tuple(duplicates.ids)
+                            self.env.cr.execute("""
+                                UPDATE business_project_kpi
+                                SET stage_id = %s
+                                WHERE stage_id IN %s;
+                            """, (primary.id, dup_ids))
+                            self.env.cr.execute("""
+                                DELETE FROM ir_model_data
+                                WHERE model = 'business.project.kpi.stage' AND res_id IN %s;
+                            """, (dup_ids,))
+                            self.env.cr.execute("""
+                                DELETE FROM business_project_kpi_stage
+                                WHERE id IN %s;
+                            """, (dup_ids,))
+                    else:
+                        st = Stage.create({
+                            'name': name,
+                            'code': code,
+                            'sequence': seq,
+                            'folded': folded,
+                            'description': desc,
+                            'active': True,
+                        })
+                        kept_ids.append(st.id)
+
+                if kept_ids:
+                    orphan_stages = Stage.search([('id', 'not in', kept_ids)])
+                    if orphan_stages:
+                        default_stage_id = kept_ids[0]
+                        orphan_ids = tuple(orphan_stages.ids)
+                        self.env.cr.execute("""
+                            UPDATE business_project_kpi
+                            SET stage_id = %s
+                            WHERE stage_id IN %s;
+                        """, (default_stage_id, orphan_ids))
+                        self.env.cr.execute("""
+                            DELETE FROM ir_model_data
+                            WHERE model = 'business.project.kpi.stage' AND res_id IN %s;
+                        """, (orphan_ids,))
+                        self.env.cr.execute("""
+                            DELETE FROM business_project_kpi_stage
+                            WHERE id IN %s;
+                        """, (orphan_ids,))
+
+                self.env.cr.execute("""
+                    UPDATE business_project_kpi kpi
+                    SET stage_id = st.id
+                    FROM business_project_kpi_stage st
+                    WHERE kpi.state = st.code AND (kpi.stage_id IS NULL OR kpi.stage_id != st.id);
+                """)
+                self.env.cr.execute("""
+                    UPDATE business_project_kpi kpi
+                    SET state = st.code
+                    FROM business_project_kpi_stage st
+                    WHERE kpi.stage_id = st.id AND kpi.state != st.code;
+                """)
+        except Exception:
+            pass
+
+    @api.model
+    def _read_group_stage_ids(self, stages, domain):
+        self._normalize_stages()
+        return self.env['business.project.kpi.stage'].search(
+            [('active', '=', True), ('code', 'in', ['not_started', 'in_progress', 'completed', 'on_hold', 'cancelled'])],
+            order='sequence asc, id asc'
+        )
+
     is_daily_repeating = fields.Boolean(
-        string='Daily Repeating Task', default=False, tracking=True,
-        help='If checked, this task automatically repeats daily under the KRA.')
+        string='Repeating Task', default=False, tracking=True,
+        help='If checked, this task is a repeating task.')
+    is_repeating = fields.Boolean(
+        string='Repeating Task', related='is_daily_repeating', readonly=False)
     recurring_template_id = fields.Many2one(
         'business.project.kpi', string='Repeating Source Template',
         ondelete='set null', index=True)
+
+    # Progress bar with sliding option up to 100
+    progress = fields.Float(string='Progress (%)', default=0.0, tracking=True)
+
+    # Timesheets
+    timesheet_ids = fields.One2many(
+        'account.analytic.line', 'kpi_id', string='Timesheets')
+    total_hours_spent = fields.Float(
+        string='Recorded Hours', compute='_compute_total_hours_spent', store=True)
 
     # Date & Period
     date = fields.Date(
@@ -464,21 +844,97 @@ class BusinessProjectKPI(models.Model):
     sequence = fields.Integer(default=10)
     active = fields.Boolean(default=True)
 
-    @api.depends('kra_id', 'kra_id.project_id')
-    def _compute_project_id(self):
-        for kpi in self:
-            if kpi.kra_id and kpi.kra_id.project_id:
-                kpi.project_id = kpi.kra_id.project_id
-            elif not kpi.project_id and kpi.kra_id:
-                kpi.project_id = False
+    def init(self):
+        super().init()
+        try:
+            self.env.cr.execute("""
+                UPDATE business_project_kpi 
+                SET state = CASE 
+                    WHEN state = 'postponed' THEN 'on_hold'
+                    WHEN state IN ('not_started', 'in_progress', 'completed', 'on_hold', 'cancelled') THEN state
+                    ELSE 'not_started'
+                END
+                WHERE state NOT IN ('not_started', 'in_progress', 'completed', 'on_hold', 'cancelled');
+            """)
+        except Exception:
+            pass
 
-    @api.depends('kra_id', 'kra_id.department_id')
-    def _compute_department_id(self):
+    @api.depends('kra_id', 'kra_id.project_id', 'kra_id.manager_id', 'kra_id.responsible_user_id', 'kra_id.department_id')
+    def _compute_kra_details(self):
         for kpi in self:
-            if kpi.kra_id and kpi.kra_id.department_id:
+            if kpi.kra_id:
+                kpi.project_id = kpi.kra_id.project_id
+                kpi.manager_id = kpi.kra_id.manager_id or kpi.kra_id.responsible_user_id
                 kpi.department_id = kpi.kra_id.department_id
-            elif not kpi.department_id and kpi.kra_id:
-                kpi.department_id = False
+            else:
+                if not kpi.project_id:
+                    kpi.project_id = False
+                if not kpi.manager_id:
+                    kpi.manager_id = False
+                if not kpi.department_id:
+                    kpi.department_id = False
+
+    @api.onchange('kra_id')
+    def _onchange_kra_id(self):
+        if self.kra_id:
+            self.project_id = self.kra_id.project_id
+            self.manager_id = self.kra_id.manager_id or self.kra_id.responsible_user_id
+            if self.kra_id.department_id:
+                self.department_id = self.kra_id.department_id
+
+    @api.depends('employee_ids')
+    def _compute_employee_id(self):
+        for kpi in self:
+            if kpi.employee_ids and not kpi.employee_id:
+                kpi.employee_id = kpi.employee_ids[0]
+            elif not kpi.employee_ids:
+                kpi.employee_id = False
+
+    def _inverse_employee_id(self):
+        for kpi in self:
+            if kpi.employee_id and kpi.employee_id not in kpi.employee_ids:
+                kpi.employee_ids = [(4, kpi.employee_id.id)]
+
+    @api.depends('employee_ids')
+    def _compute_hr_employee_ids(self):
+        Employee = self.env['hr.employee']
+        for kpi in self:
+            if kpi.employee_ids:
+                linked_emps = Employee.search([('user_id', 'in', kpi.employee_ids.ids)])
+                manual_emps = kpi.hr_employee_ids.filtered(lambda e: not e.user_id)
+                kpi.hr_employee_ids = linked_emps | manual_emps
+            else:
+                manual_emps = kpi.hr_employee_ids.filtered(lambda e: not e.user_id)
+                kpi.hr_employee_ids = manual_emps
+
+    def _inverse_hr_employee_ids(self):
+        for kpi in self:
+            user_ids = kpi.hr_employee_ids.mapped('user_id')
+            if user_ids:
+                kpi.employee_ids = [(6, 0, user_ids.ids)]
+
+    @api.depends('timesheet_ids.unit_amount')
+    def _compute_total_hours_spent(self):
+        for kpi in self:
+            kpi.total_hours_spent = sum(kpi.timesheet_ids.mapped('unit_amount'))
+
+    @api.onchange('progress')
+    def _onchange_progress(self):
+        if self.progress >= 100.0 and self.state in ('not_started', 'in_progress', 'on_hold'):
+            self.state = 'completed'
+            self.progress = 100.0
+        elif 0.0 < self.progress < 100.0 and self.state in ('not_started', 'completed'):
+            self.state = 'in_progress'
+        elif self.progress <= 0.0 and self.state == 'completed':
+            self.state = 'not_started'
+            self.progress = 0.0
+
+    @api.onchange('state')
+    def _onchange_state(self):
+        if self.state == 'completed' and self.progress < 100.0:
+            self.progress = 100.0
+        elif self.state == 'not_started' and self.progress > 0.0:
+            self.progress = 0.0
 
     @api.depends('date')
     def _compute_period_dates(self):
@@ -550,15 +1006,18 @@ class BusinessProjectKPI(models.Model):
                 ach_sum = sum(r.daily_achievement for r in week_kpis.filtered(lambda r: r.state == 'completed'))
                 kpi.weekly_achievement = max(completed_count, ach_sum)
             else:
-                if kpi.state == 'completed':
+                if kpi.state == 'completed' or kpi.progress >= 100.0:
                     kpi.weekly_achievement = kpi.weekly_target or 1.0
-                elif kpi.state == 'in_progress':
-                    kpi.weekly_achievement = kpi.daily_achievement or (kpi.weekly_target * 0.5 if kpi.weekly_target else 0.5)
+                elif kpi.state == 'in_progress' or kpi.progress > 0.0:
+                    prog_ratio = (kpi.progress / 100.0) if kpi.progress else 0.5
+                    kpi.weekly_achievement = kpi.daily_achievement or ((kpi.weekly_target or 1.0) * prog_ratio)
                 else:
                     kpi.weekly_achievement = kpi.daily_achievement or 0.0
 
             target = kpi.weekly_target or 1.0
             prog = (kpi.weekly_achievement / target * 100.0) if target > 0 else 0.0
+            if kpi.progress > 0:
+                prog = max(prog, kpi.progress)
             kpi.weekly_progress = min(max(prog, 0.0), 100.0)
             kpi.weekly_weighted_score = kpi.weekly_progress * (kpi.weekly_weightage / 100.0)
 
@@ -607,11 +1066,29 @@ class BusinessProjectKPI(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        Stage = self.env['business.project.kpi.stage']
         for vals in vals_list:
             if not vals.get('code') or vals.get('code') == 'New':
                 vals['code'] = self.env['ir.sequence'].next_by_code('business.project.kpi') or 'KPI'
-            if vals.get('state') == 'completed' and 'daily_achievement' not in vals:
-                vals['daily_achievement'] = vals.get('daily_target', 1.0)
+            if vals.get('stage_id') and not vals.get('state'):
+                st = Stage.browse(vals['stage_id'])
+                if st.code:
+                    vals['state'] = st.code
+            elif vals.get('state') and not vals.get('stage_id'):
+                st = Stage.search([('code', '=', vals['state'])], limit=1)
+                if st:
+                    vals['stage_id'] = st.id
+            elif not vals.get('stage_id') and not vals.get('state'):
+                def_st = self._default_stage_id()
+                if def_st:
+                    vals['stage_id'] = def_st.id
+                    vals['state'] = def_st.code or 'not_started'
+
+            if vals.get('state') == 'completed':
+                if 'daily_achievement' not in vals:
+                    vals['daily_achievement'] = vals.get('daily_target', 1.0)
+                if 'progress' not in vals:
+                    vals['progress'] = 100.0
         records = super().create(vals_list)
         for kpi in records:
             if kpi.state in ('in_progress', 'completed'):
@@ -619,16 +1096,69 @@ class BusinessProjectKPI(models.Model):
         return records
 
     def write(self, vals):
+        Stage = self.env['business.project.kpi.stage']
+        if 'stage_id' in vals and 'state' not in vals:
+            st = Stage.browse(vals['stage_id'])
+            if st and st.code:
+                vals['state'] = st.code
+        elif 'state' in vals and 'stage_id' not in vals:
+            st = Stage.search([('code', '=', vals['state'])], limit=1)
+            if st:
+                vals['stage_id'] = st.id
+
         if 'state' in vals:
-            if vals['state'] == 'completed' and 'daily_achievement' not in vals:
-                vals['daily_achievement'] = 1.0
-            elif vals['state'] in ('not_started', 'postponed') and 'daily_achievement' not in vals:
+            if vals['state'] == 'completed':
+                if 'daily_achievement' not in vals:
+                    vals['daily_achievement'] = 1.0
+                if 'progress' not in vals:
+                    vals['progress'] = 100.0
+            elif vals['state'] in ('not_started', 'on_hold', 'cancelled', 'postponed') and 'daily_achievement' not in vals:
                 vals['daily_achievement'] = 0.0
+                if vals['state'] == 'not_started' and 'progress' not in vals:
+                    vals['progress'] = 0.0
+            elif vals['state'] == 'in_progress':
+                if 'progress' not in vals and not any(self.mapped('progress')):
+                    vals['progress'] = 25.0
+
+        if 'progress' in vals:
+            if vals['progress'] >= 100.0 and vals.get('state') not in ('completed', 'cancelled'):
+                vals['state'] = 'completed'
+                st = Stage.search([('code', '=', 'completed')], limit=1)
+                if st:
+                    vals['stage_id'] = st.id
+            elif vals['progress'] <= 0.0 and vals.get('state') == 'completed':
+                vals['state'] = 'not_started'
+                st = Stage.search([('code', '=', 'not_started')], limit=1)
+                if st:
+                    vals['stage_id'] = st.id
+
         res = super().write(vals)
-        if 'state' in vals or 'daily_achievement' in vals:
+        if 'state' in vals or 'stage_id' in vals or 'daily_achievement' in vals:
             for kpi in self:
                 kpi._sync_to_kra_entry()
         return res
+
+    def init(self):
+        super().init()
+        self._normalize_stages()
+        try:
+            self.env.cr.execute("""
+                UPDATE business_project_kpi 
+                SET state = CASE 
+                    WHEN state = 'postponed' THEN 'on_hold'
+                    WHEN state IN ('not_started', 'in_progress', 'completed', 'on_hold', 'cancelled') THEN state
+                    ELSE 'not_started'
+                END
+                WHERE state NOT IN ('not_started', 'in_progress', 'completed', 'on_hold', 'cancelled') OR state IS NULL;
+            """)
+            self.env.cr.execute("""
+                UPDATE business_project_kpi kpi
+                SET stage_id = st.id
+                FROM business_project_kpi_stage st
+                WHERE kpi.state = st.code AND (kpi.stage_id IS NULL OR kpi.stage_id != st.id);
+            """)
+        except Exception:
+            pass
 
     def _sync_to_kra_entry(self):
         """Maintains backward compatibility with entry logs for dashboard stats."""
@@ -641,6 +1171,8 @@ class BusinessProjectKPI(models.Model):
                 'not_started': 'pending',
                 'in_progress': 'in_progress',
                 'completed': 'completed',
+                'on_hold': 'on_hold',
+                'cancelled': 'cancelled',
                 'postponed': 'on_hold',
             }
             entry_vals = {
@@ -661,18 +1193,65 @@ class BusinessProjectKPI(models.Model):
             elif kpi.state in ('in_progress', 'completed'):
                 self.env['business.project.kra.entry'].create(entry_vals)
 
-    # One-click stage change actions
+    # 5 Stage actions: Not Started, In Progress, Completed, On Hold, Cancelled
     def action_set_not_started(self):
-        self.write({'state': 'not_started', 'daily_achievement': 0.0})
+        st = self.env['business.project.kpi.stage'].search([('code', '=', 'not_started')], limit=1)
+        vals = {'state': 'not_started', 'daily_achievement': 0.0, 'progress': 0.0}
+        if st:
+            vals['stage_id'] = st.id
+        self.write(vals)
 
     def action_set_in_progress(self):
-        self.write({'state': 'in_progress'})
+        st = self.env['business.project.kpi.stage'].search([('code', '=', 'in_progress')], limit=1)
+        vals = {'state': 'in_progress'}
+        if st:
+            vals['stage_id'] = st.id
+        self.write(vals)
 
     def action_set_completed(self):
-        self.write({'state': 'completed', 'daily_achievement': 1.0})
+        st = self.env['business.project.kpi.stage'].search([('code', '=', 'completed')], limit=1)
+        vals = {'state': 'completed', 'daily_achievement': 1.0, 'progress': 100.0}
+        if st:
+            vals['stage_id'] = st.id
+        self.write(vals)
+
+    def action_set_on_hold(self):
+        st = self.env['business.project.kpi.stage'].search([('code', '=', 'on_hold')], limit=1)
+        vals = {'state': 'on_hold'}
+        if st:
+            vals['stage_id'] = st.id
+        self.write(vals)
+
+    def action_set_cancelled(self):
+        st = self.env['business.project.kpi.stage'].search([('code', '=', 'cancelled')], limit=1)
+        vals = {'state': 'cancelled'}
+        if st:
+            vals['stage_id'] = st.id
+        self.write(vals)
 
     def action_set_postponed(self):
-        self.write({'state': 'postponed', 'daily_achievement': 0.0})
+        self.action_set_on_hold()
+
+    def action_view_timesheets(self):
+        self.ensure_one()
+        acc = self.env['account.analytic.line']._find_or_create_project_analytic_account(self.project_id)
+        ctx = {
+            'default_kpi_id': self.id,
+            'default_business_project_id': self.project_id.id if self.project_id else False,
+            'default_name': f'Work on {self.name}',
+        }
+        if acc:
+            ctx['default_account_id'] = acc.id
+        if self.project_id and self.project_id.project_id:
+            ctx['default_project_id'] = self.project_id.project_id.id
+        return {
+            'type': 'ir.actions.act_window',
+            'name': f'Timesheets - {self.name}',
+            'res_model': 'account.analytic.line',
+            'view_mode': 'list,form',
+            'domain': [('kpi_id', '=', self.id)],
+            'context': ctx,
+        }
 
     def action_view_entries(self):
         self.ensure_one()

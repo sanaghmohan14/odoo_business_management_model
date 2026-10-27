@@ -495,6 +495,7 @@
                 <field name="coordinator_id"/>
                 <filter name="filter_active" string="Active / Compliant" domain="[('state', '=', 'active')]"/>
                 <filter name="filter_rollout" string="In Rollout / Verification" domain="[('state', 'in', ['rollout', 'verification'])]"/>
+                <filter name="filter_benac" string="BenAc Projects" domain="['|', ('department_id.name', 'ilike', 'benac'), ('project_id.is_sop_required', '=', True)]"/>
                 <group>
                     <filter name="group_stage" string="Project Stage" context="{'group_by': 'stage_id'}"/>
                     <filter name="group_department" string="Department" context="{'group_by': 'department_id'}"/>
@@ -736,12 +737,14 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='partner_id']" position="after">
                 <field name="client_implementation_coordinator_id"
+                       invisible="not is_sop_required"
                        placeholder="Designate coordinator from client's team..."/>
             </xpath>
 
             <xpath expr="//notebook" position="inside">
                 <!-- MASTER SOP & CHECKLISTS TAB -->
-                <page string="SOPs &amp; Checklists" name="page_sops_and_checklists">
+                <page string="SOPs &amp; Checklists" name="page_sops_and_checklists"
+                      invisible="not is_sop_required">
 
                     <!-- STAGE-AWARE NOTIFICATION BANNER -->
                     <div class="alert alert-info d-flex align-items-center justify-content-between mb-3 p-3 shadow-sm"

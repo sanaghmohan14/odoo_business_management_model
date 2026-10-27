@@ -89,6 +89,8 @@
                 <field name="kra_count" string="KRAs"/>
                 <field name="kpi_count" string="KPIs"/>
                 <field name="avg_kra_progress" widget="progressbar" string="Avg KRA Score"/>
+                <field name="requires_sop" widget="boolean_toggle" optional="show"/>
+                <field name="sop_count" string="SOPs" optional="hide"/>
             </list>
         </field>
     </record>
@@ -108,10 +110,18 @@
                             string="Department KPIs" class="btn-secondary"/>
                 </header>
             </xpath>
+            <xpath expr="//field[@name='manager_id']" position="after">
+                <field name="requires_sop" widget="boolean_toggle"/>
+            </xpath>
             <xpath expr="//div[hasclass('oe_button_box')]" position="inside">
                 <button name="action_open_business_projects" type="object"
                         class="oe_stat_button" icon="fa-folder-open">
                     <field name="project_count" widget="statinfo" string="Projects"/>
+                </button>
+                <button name="action_open_department_sops" type="object"
+                        class="oe_stat_button" icon="fa-file-text-o"
+                        invisible="not requires_sop">
+                    <field name="sop_count" widget="statinfo" string="SOPs"/>
                 </button>
                 <button name="action_open_department_kras" type="object"
                         class="oe_stat_button" icon="fa-bullseye">
