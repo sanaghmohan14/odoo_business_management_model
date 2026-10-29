@@ -265,7 +265,7 @@ class BusinessProject(models.Model):
     kpi_ids = fields.One2many(
         'business.project.kpi',
         'project_id',
-        string='KPIs (Sub-Tasks)'
+        string='KPIs'
     )
     kra_count = fields.Integer(
         string='KRAs Count',
@@ -315,7 +315,7 @@ class BusinessProject(models.Model):
         self.ensure_one()
         return {
             'type': 'ir.actions.act_window',
-            'name': f'{self.name} - KPIs (Sub-Tasks)',
+            'name': f'{self.name} - KPIs',
             'res_model': 'business.project.kpi',
             'view_mode': 'list,kanban,form,pivot,graph',
             'domain': [('project_id', '=', self.id)],

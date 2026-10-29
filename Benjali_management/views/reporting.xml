@@ -10,6 +10,7 @@
         name="Reporting"
         parent="benjali_project_root"
         sequence="50"
+        groups="Benjali_management.group_Team_lead"
     />
 
     <!-- Project Analysis -->

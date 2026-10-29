@@ -22,7 +22,8 @@
                         string="Create Business Project (Client Onboarding)"
                         type="object"
                         class="btn-primary"
-                        invisible="won_status != 'won' or business_project_id"/>
+                        invisible="won_status != 'won' or business_project_id"
+                        groups="Benjali_management.group_project_manager"/>
 
                 <button name="create_sale_quotation" string="New Quotation"
                         type="object" class="btn-primary"/>

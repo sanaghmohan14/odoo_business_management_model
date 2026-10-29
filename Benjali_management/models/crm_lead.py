@@ -73,6 +73,17 @@ class CrmLead(models.Model):
     def action_create_business_project(self):
         self.ensure_one()
 
+        is_pm = (
+            self.env.user.has_group('Benjali_management.group_project_manager') or
+            self.env.user.has_group('Benjali_management.group_gvp') or
+            self.env.user.has_group('Benjali_management.group_ceo') or
+            self.env.is_admin()
+        )
+        if not is_pm:
+            raise UserError(
+                'Only Project Managers and Executives can create a Business Project from CRM.'
+            )
+
         # Check whether a Business Project already exists
         if self.business_project_id:
             raise UserError(

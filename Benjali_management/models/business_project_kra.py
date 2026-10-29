@@ -2,7 +2,8 @@ from datetime import timedelta
 import calendar
 
 from odoo import api, fields, models
-from odoo.exceptions import ValidationError
+from odoo.exceptions import ValidationError,UserError
+
 
 
 class BusinessProjectKRAStage(models.Model):
@@ -60,16 +61,52 @@ class BusinessProjectKRA(models.Model):
         'hr.department', string='Department', required=False, index=True,
         compute='_compute_department_id', store=True, readonly=False,
         help='Department responsible for this Key Result Area.')
+    company_id = fields.Many2one(
+        'res.company', string='Company', related='project_id.company_id',
+        store=True, readonly=True)
+    approval_pending = fields.Boolean(
+        string='Approval Pending', default=False, copy=False, tracking=True)
+    approval_status = fields.Char(
+        string='Approval Status', compute='_compute_approval_status', store=True)
+
+    @api.depends('approval_pending')
+    def _compute_approval_status(self):
+        for rec in self:
+            rec.approval_status = 'Approval Pending' if rec.approval_pending else False
 
     manager_id = fields.Many2one(
         'res.users', string='KRA Manager', index=True,
         default=lambda self: self.env.user, tracking=True)
     responsible_user_id = fields.Many2one(
-        'res.users', string='Responsible Manager / Lead', index=True,
-        related='manager_id', store=True, readonly=False, tracking=True)
+        'res.users', string='Project Responsible', index=True,
+        compute='_compute_responsible_user_id', store=True, readonly=False, tracking=True,
+        help='Project Responsible person (Team Lead) for this project and KRA.')
+    project_responsible_id = fields.Many2one(
+        'res.users', string='Project Responsible',
+        related='responsible_user_id', readonly=False)
+    project_manager_id = fields.Many2one(
+        'res.users', string='Project Manager',
+        related='project_id.project_manager_id', store=True, readonly=True,
+        help='Project Manager in charge of this project.')
     user_id = fields.Many2one(
         'res.users', string='Assigned User',
-        related='manager_id', store=True, readonly=False, index=True)
+        related='responsible_user_id', store=True, readonly=False, index=True)
+
+    @api.depends('project_id', 'project_id.responsible_user_id')
+    def _compute_responsible_user_id(self):
+        for kra in self:
+            if kra.project_id and kra.project_id.responsible_user_id:
+                kra.responsible_user_id = kra.project_id.responsible_user_id
+            elif not kra.responsible_user_id:
+                kra.responsible_user_id = False
+
+    @api.onchange('project_id')
+    def _onchange_project_id(self):
+        if self.project_id:
+            if self.project_id.responsible_user_id:
+                self.responsible_user_id = self.project_id.responsible_user_id
+            if self.project_id.department_id:
+                self.department_id = self.project_id.department_id
 
     # Stages: Many2one for kanban ordering & drag, synced with state
     stage_id = fields.Many2one(
@@ -209,6 +246,55 @@ class BusinessProjectKRA(models.Model):
 
     start_date = fields.Date(string='Start Date', default=fields.Date.context_today)
     end_date = fields.Date(string='End Date')
+    is_today = fields.Boolean(
+        string="Today's KRA", compute='_compute_period_flags', search='_search_is_today')
+    is_tomorrow = fields.Boolean(
+        string="Tomorrow's KRA", compute='_compute_period_flags', search='_search_is_tomorrow')
+    is_this_week = fields.Boolean(
+        string="This Week's KRA", compute='_compute_period_flags', search='_search_is_this_week')
+    is_overdue = fields.Boolean(
+        string="Overdue KRA", compute='_compute_period_flags', search='_search_is_overdue')
+
+    def _compute_period_flags(self):
+        today = fields.Date.context_today(self)
+        tomorrow = today + timedelta(days=1)
+        mon = today - timedelta(days=today.weekday())
+        sun = mon + timedelta(days=6)
+        for kra in self:
+            s_date = kra.start_date or (kra.create_date.date() if kra.create_date else today)
+            e_date = kra.end_date or s_date
+            kra.is_today = bool(s_date and e_date and s_date <= today <= e_date)
+            kra.is_tomorrow = bool(s_date and e_date and s_date <= tomorrow <= e_date)
+            kra.is_this_week = bool(s_date and e_date and s_date <= sun and e_date >= mon)
+            kra.is_overdue = bool(kra.end_date and kra.end_date < today and kra.state not in ('completed',))
+
+    def _search_is_today(self, operator, value):
+        today = fields.Date.context_today(self)
+        if (operator in ('=', '!=') and value) or (operator in ('!=', '<>') and not value):
+            return ['|', '&', ('start_date', '<=', today), ('end_date', '>=', today), ('start_date', '=', today)]
+        return ['|', ('start_date', '>', today), '&', ('end_date', '!=', False), ('end_date', '<', today)]
+
+    def _search_is_tomorrow(self, operator, value):
+        today = fields.Date.context_today(self)
+        tomorrow = today + timedelta(days=1)
+        if (operator in ('=', '!=') and value) or (operator in ('!=', '<>') and not value):
+            return ['|', '&', ('start_date', '<=', tomorrow), ('end_date', '>=', tomorrow), ('start_date', '=', tomorrow)]
+        return ['|', ('start_date', '>', tomorrow), '&', ('end_date', '!=', False), ('end_date', '<', tomorrow)]
+
+    def _search_is_this_week(self, operator, value):
+        today = fields.Date.context_today(self)
+        mon = today - timedelta(days=today.weekday())
+        sun = mon + timedelta(days=6)
+        if (operator in ('=', '!=') and value) or (operator in ('!=', '<>') and not value):
+            return ['|', '&', ('start_date', '<=', sun), ('end_date', '>=', mon), '&', ('start_date', '>=', mon), ('start_date', '<=', sun)]
+        return ['|', ('start_date', '>', sun), '&', ('end_date', '!=', False), ('end_date', '<', mon)]
+
+    def _search_is_overdue(self, operator, value):
+        today = fields.Date.context_today(self)
+        if (operator in ('=', '!=') and value) or (operator in ('!=', '<>') and not value):
+            return [('end_date', '!=', False), ('end_date', '<', today), ('state', '!=', 'completed')]
+        return ['|', ('end_date', '=', False), '|', ('end_date', '>=', today), ('state', '=', 'completed')]
+
     description = fields.Text(string='Description / Strategic Objective')
     objective = fields.Text(string='Objective Details')
     sequence = fields.Integer(string='Sequence', default=10)
@@ -216,9 +302,9 @@ class BusinessProjectKRA(models.Model):
         'res.company', string='Company', default=lambda self: self.env.company,
         index=True)
 
-    # Sub-tasks: KPIs
+    # KPIs
     kpi_ids = fields.One2many(
-        'business.project.kpi', 'kra_id', string='KPIs (Sub-Tasks)', copy=True)
+        'business.project.kpi', 'kra_id', string='KPIs', copy=True)
     entry_ids = fields.One2many(
         'business.project.kra.entry', 'kra_id', string='Performance Entries', copy=False)
     task_ids = fields.One2many('project.task', 'kra_id', string='Project Tasks')
@@ -383,6 +469,17 @@ class BusinessProjectKRA(models.Model):
         return records
 
     def write(self, vals):
+        is_pm = (
+            self.env.user.has_group('Benjali_management.group_project_manager') or
+            self.env.user.has_group('Benjali_management.group_gvp') or
+            self.env.user.has_group('Benjali_management.group_ceo') or
+            self.env.is_admin() or
+            self.env.su
+        )
+        if 'state' in vals and vals['state'] == 'completed':
+            if not is_pm:
+                raise UserError("Completing a KRA requires approval from the Project Manager. Please click 'Mark Completed' to submit an approval request.")
+
         Stage = self.env['business.project.kra.stage']
         if 'stage_id' in vals and 'state' not in vals:
             st = Stage.browse(vals['stage_id'])
@@ -396,27 +493,62 @@ class BusinessProjectKRA(models.Model):
 
     def init(self):
         super().init()
-        self._normalize_stages()
         try:
-            self.env.cr.execute("""
-                UPDATE business_project_kra 
-                SET state = CASE 
-                    WHEN state IN ('not_started', 'draft') THEN 'new'
-                    WHEN state IN ('active', 'in_progress') THEN 'ongoing'
-                    WHEN state IN ('postponed', 'cancelled') THEN 'on_hold'
-                    WHEN state = 'completed' THEN 'completed'
-                    ELSE 'new'
-                END
-                WHERE state NOT IN ('new', 'ongoing', 'completed', 'on_hold') OR state IS NULL;
-            """)
-            self.env.cr.execute("""
-                UPDATE business_project_kra kra
-                SET stage_id = st.id
-                FROM business_project_kra_stage st
-                WHERE kra.state = st.code AND (kra.stage_id IS NULL OR kra.stage_id != st.id);
-            """)
+            with self.env.cr.savepoint():
+                self._normalize_stages()
+                self.env.cr.execute("""
+                    UPDATE business_project_kra 
+                    SET state = CASE 
+                        WHEN state IN ('not_started', 'draft') THEN 'new'
+                        WHEN state IN ('active', 'in_progress') THEN 'ongoing'
+                        WHEN state IN ('postponed', 'cancelled') THEN 'on_hold'
+                        WHEN state = 'completed' THEN 'completed'
+                        ELSE 'new'
+                    END
+                    WHERE state NOT IN ('new', 'ongoing', 'completed', 'on_hold') OR state IS NULL;
+                """)
+                self.env.cr.execute("""
+                    UPDATE business_project_kra kra
+                    SET stage_id = st.id
+                    FROM business_project_kra_stage st
+                    WHERE kra.state = st.code AND (kra.stage_id IS NULL OR kra.stage_id != st.id);
+                """)
         except Exception:
             pass
+
+    def write(self, vals):
+        is_tl = (
+            self.env.user.has_group('Benjali_management.group_Team_lead') or
+            self.env.user.has_group('Benjali_management.group_project_manager') or
+            self.env.user.has_group('Benjali_management.group_gvp') or
+            self.env.user.has_group('Benjali_management.group_ceo') or
+            self.env.is_admin() or
+            self.env.su
+        )
+        is_pm = (
+            self.env.user.has_group('Benjali_management.group_project_manager') or
+            self.env.user.has_group('Benjali_management.group_gvp') or
+            self.env.user.has_group('Benjali_management.group_ceo') or
+            self.env.is_admin() or
+            self.env.su
+        )
+        Stage = self.env['business.project.kra.stage']
+        if 'stage_id' in vals and 'state' not in vals:
+            st = Stage.browse(vals['stage_id'])
+            if st and st.code:
+                vals['state'] = st.code
+        elif 'state' in vals and 'stage_id' not in vals:
+            st = Stage.search([('code', '=', vals['state'])], limit=1)
+            if st:
+                vals['stage_id'] = st.id
+
+        if 'state' in vals and vals['state'] == 'completed':
+            if not is_tl:
+                raise UserError("Only the Team Lead / Project Responsible can complete or submit KRA completion.")
+            if not is_pm:
+                raise UserError("Completing a KRA requires approval from the Project Manager. Please click 'Mark Completed' to submit an approval request.")
+
+        return super().write(vals)
 
     # Stage actions: New, Ongoing, Completed, On Hold
     def action_set_new(self):
@@ -434,11 +566,87 @@ class BusinessProjectKRA(models.Model):
         self.write(vals)
 
     def action_set_completed(self):
+        is_tl = (
+            self.env.user.has_group('Benjali_management.group_Team_lead') or
+            self.env.user.has_group('Benjali_management.group_project_manager') or
+            self.env.user.has_group('Benjali_management.group_gvp') or
+            self.env.user.has_group('Benjali_management.group_ceo') or
+            self.env.is_admin()
+        )
+        if not is_tl:
+            raise UserError("Only the Team Lead / Project Responsible can complete or submit KRA completion.")
+
+        is_pm = (
+            self.env.user.has_group('Benjali_management.group_project_manager') or
+            self.env.user.has_group('Benjali_management.group_gvp') or
+            self.env.user.has_group('Benjali_management.group_ceo') or
+            self.env.is_admin()
+        )
+        if is_pm:
+            self._do_mark_completed()
+            return
+
+        for kra in self:
+            if kra.approval_pending:
+                raise UserError(f'An approval request for "{kra.name}" has already been submitted to the Project Manager and is pending approval.')
+
+            approver = kra.project_id.project_manager_id if kra.project_id else False
+            if not approver or approver == self.env.user:
+                pm_users = self.env['res.users'].search([('share', '=', False)]).filtered(
+                    lambda u: u.has_group('Benjali_management.group_project_manager')
+                )
+                if pm_users:
+                    other_pms = pm_users.filtered(lambda u: u != self.env.user)
+                    approver = other_pms[0] if other_pms else pm_users[0]
+
+            if not approver:
+                approver = self.env.ref('base.user_admin', raise_if_not_found=False) or self.env.user
+
+            approval = self.env['business.project.approval'].create({
+                'project_id': kra.project_id.id if kra.project_id else False,
+                'kra_id': kra.id,
+                'approval_type': 'kra_completion',
+                'approver_id': approver.id,
+                'requested_by': self.env.user.id,
+                'requires_approval': True,
+                'company_id': kra.company_id.id if kra.company_id else self.env.company.id,
+            })
+            kra.write({'approval_pending': True})
+            kra.message_post(
+                body=(
+                    f'KRA completion approval request <b>{approval.name}</b> sent to '
+                    f'Project Manager <b>{approver.name}</b> by {self.env.user.name}.'
+                )
+            )
+
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': 'Approval Requested',
+                'message': 'KRA completion approval request has been sent to the Project Manager.',
+                'type': 'success',
+                'sticky': False,
+            }
+        }
+
+    def _do_mark_completed(self):
         st = self.env['business.project.kra.stage'].search([('code', '=', 'completed')], limit=1)
-        vals = {'state': 'completed'}
+        vals = {'state': 'completed', 'approval_pending': False}
         if st:
             vals['stage_id'] = st.id
-        self.write(vals)
+        self.sudo().write(vals)
+        for kra in self:
+            pending_approvals = self.env['business.project.approval'].search([
+                ('kra_id', '=', kra.id),
+                ('approval_type', '=', 'kra_completion'),
+                ('state', '=', 'pending'),
+            ])
+            if pending_approvals:
+                pending_approvals.sudo().write({
+                    'state': 'approved',
+                    'approval_date': fields.Datetime.now(),
+                })
 
     def action_set_on_hold(self):
         st = self.env['business.project.kra.stage'].search([('code', '=', 'on_hold')], limit=1)
@@ -578,7 +786,7 @@ class BusinessProjectKRA(models.Model):
 
 class BusinessProjectKPI(models.Model):
     _name = 'business.project.kpi'
-    _description = 'Business Project & Department KPI (Sub-Task)'
+    _description = 'Business Project & Department KPI'
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _order = 'date desc, sequence, id desc'
 
@@ -596,11 +804,33 @@ class BusinessProjectKPI(models.Model):
         'res.users', string='KRA Manager',
         compute='_compute_kra_details', store=True, readonly=False, index=True, tracking=True,
         help='KRA Manager automatically filled when KRA is chosen.')
+    responsible_user_id = fields.Many2one(
+        'res.users', string='Project Responsible',
+        compute='_compute_kra_details', store=True, readonly=False, index=True, tracking=True,
+        help='Project Responsible person (Team Lead) for this KPI.')
+    project_responsible_id = fields.Many2one(
+        'res.users', string='Project Responsible',
+        related='responsible_user_id', readonly=False)
+    project_manager_id = fields.Many2one(
+        'res.users', string='Project Manager',
+        related='project_id.project_manager_id', store=True, readonly=True)
     kra_manager_id = fields.Many2one(
-        'res.users', string='KRA Manager', related='manager_id', readonly=True)
+        'res.users', string='KRA Manager Reference', related='manager_id', readonly=True)
     department_id = fields.Many2one(
         'hr.department', string='Department',
         compute='_compute_kra_details', store=True, readonly=False, index=True)
+    company_id = fields.Many2one(
+        'res.company', string='Company', related='project_id.company_id',
+        store=True, readonly=True)
+    approval_pending = fields.Boolean(
+        string='Approval Pending', default=False, copy=False, tracking=True)
+    approval_status = fields.Char(
+        string='Approval Status', compute='_compute_approval_status', store=True)
+
+    @api.depends('approval_pending')
+    def _compute_approval_status(self):
+        for rec in self:
+            rec.approval_status = 'Approval Pending' if rec.approval_pending else False
 
     employee_ids = fields.Many2many(
         'res.users', 'business_project_kpi_user_rel', 'kpi_id', 'user_id',
@@ -609,10 +839,6 @@ class BusinessProjectKPI(models.Model):
         'res.users', string='Assigned Employee',
         compute='_compute_employee_id', inverse='_inverse_employee_id',
         store=True, index=True, tracking=True)
-    hr_employee_ids = fields.Many2many(
-        'hr.employee', 'business_project_kpi_hr_employee_rel', 'kpi_id', 'employee_id',
-        string='Assigned HR Employees', compute='_compute_hr_employee_ids', inverse='_inverse_hr_employee_ids',
-        store=True, tracking=True)
 
     # Stages: Many2one for kanban ordering & drag, synced with state
     stage_id = fields.Many2one(
@@ -631,6 +857,7 @@ class BusinessProjectKPI(models.Model):
         ('on_hold', 'On Hold'),
         ('cancelled', 'Cancelled'),
     ], string='Status', default='not_started', required=True, index=True, tracking=True)
+
 
     def _default_stage_id(self):
         stage = self.env['business.project.kpi.stage'].search([('code', '=', 'not_started')], order='sequence, id', limit=1)
@@ -752,13 +979,26 @@ class BusinessProjectKPI(models.Model):
         string='Repeating Task', default=False, tracking=True,
         help='If checked, this task is a repeating task.')
     is_repeating = fields.Boolean(
-        string='Repeating Task', related='is_daily_repeating', readonly=False)
+        string='Repeating Task Alias', related='is_daily_repeating', readonly=False)
     recurring_template_id = fields.Many2one(
         'business.project.kpi', string='Repeating Source Template',
         ondelete='set null', index=True)
 
-    # Progress bar with sliding option up to 100
-    progress = fields.Float(string='Progress (%)', default=0.0, tracking=True)
+    # Subtasks
+    subtask_ids = fields.One2many(
+        'business.project.kpi.subtask', 'kpi_id', string='Subtasks')
+    subtask_count = fields.Integer(
+        string='Subtask Count', compute='_compute_subtask_metrics')
+    subtask_completed_count = fields.Integer(
+        string='Completed Subtasks', compute='_compute_subtask_metrics')
+
+    # Progress bar with sliding option up to 100 (auto-calculated from subtasks if present)
+    progress = fields.Float(
+        string='Progress (%)',
+        compute='_compute_progress',
+        store=True,
+        readonly=False,
+        tracking=True)
 
     # Timesheets
     timesheet_ids = fields.One2many(
@@ -784,10 +1024,14 @@ class BusinessProjectKPI(models.Model):
 
     is_today = fields.Boolean(
         string="Today's Task", compute='_compute_period_flags', search='_search_is_today')
+    is_tomorrow = fields.Boolean(
+        string="Tomorrow's Task", compute='_compute_period_flags', search='_search_is_tomorrow')
     is_this_week = fields.Boolean(
         string="This Week's Task", compute='_compute_period_flags', search='_search_is_this_week')
     is_this_month = fields.Boolean(
         string="This Month's Task", compute='_compute_period_flags', search='_search_is_this_month')
+    is_overdue = fields.Boolean(
+        string="Overdue Task", compute='_compute_period_flags', search='_search_is_overdue')
 
     # Daily values
     daily_target = fields.Float(string='Daily Target', default=1.0)
@@ -844,33 +1088,21 @@ class BusinessProjectKPI(models.Model):
     sequence = fields.Integer(default=10)
     active = fields.Boolean(default=True)
 
-    def init(self):
-        super().init()
-        try:
-            self.env.cr.execute("""
-                UPDATE business_project_kpi 
-                SET state = CASE 
-                    WHEN state = 'postponed' THEN 'on_hold'
-                    WHEN state IN ('not_started', 'in_progress', 'completed', 'on_hold', 'cancelled') THEN state
-                    ELSE 'not_started'
-                END
-                WHERE state NOT IN ('not_started', 'in_progress', 'completed', 'on_hold', 'cancelled');
-            """)
-        except Exception:
-            pass
-
     @api.depends('kra_id', 'kra_id.project_id', 'kra_id.manager_id', 'kra_id.responsible_user_id', 'kra_id.department_id')
     def _compute_kra_details(self):
         for kpi in self:
             if kpi.kra_id:
                 kpi.project_id = kpi.kra_id.project_id
                 kpi.manager_id = kpi.kra_id.manager_id or kpi.kra_id.responsible_user_id
+                kpi.responsible_user_id = kpi.kra_id.responsible_user_id or (kpi.kra_id.project_id and kpi.kra_id.project_id.responsible_user_id)
                 kpi.department_id = kpi.kra_id.department_id
             else:
                 if not kpi.project_id:
                     kpi.project_id = False
                 if not kpi.manager_id:
                     kpi.manager_id = False
+                if not kpi.responsible_user_id:
+                    kpi.responsible_user_id = False
                 if not kpi.department_id:
                     kpi.department_id = False
 
@@ -879,6 +1111,7 @@ class BusinessProjectKPI(models.Model):
         if self.kra_id:
             self.project_id = self.kra_id.project_id
             self.manager_id = self.kra_id.manager_id or self.kra_id.responsible_user_id
+            self.responsible_user_id = self.kra_id.responsible_user_id or (self.kra_id.project_id and self.kra_id.project_id.responsible_user_id)
             if self.kra_id.department_id:
                 self.department_id = self.kra_id.department_id
 
@@ -895,28 +1128,31 @@ class BusinessProjectKPI(models.Model):
             if kpi.employee_id and kpi.employee_id not in kpi.employee_ids:
                 kpi.employee_ids = [(4, kpi.employee_id.id)]
 
-    @api.depends('employee_ids')
-    def _compute_hr_employee_ids(self):
-        Employee = self.env['hr.employee']
-        for kpi in self:
-            if kpi.employee_ids:
-                linked_emps = Employee.search([('user_id', 'in', kpi.employee_ids.ids)])
-                manual_emps = kpi.hr_employee_ids.filtered(lambda e: not e.user_id)
-                kpi.hr_employee_ids = linked_emps | manual_emps
-            else:
-                manual_emps = kpi.hr_employee_ids.filtered(lambda e: not e.user_id)
-                kpi.hr_employee_ids = manual_emps
-
-    def _inverse_hr_employee_ids(self):
-        for kpi in self:
-            user_ids = kpi.hr_employee_ids.mapped('user_id')
-            if user_ids:
-                kpi.employee_ids = [(6, 0, user_ids.ids)]
-
     @api.depends('timesheet_ids.unit_amount')
     def _compute_total_hours_spent(self):
         for kpi in self:
             kpi.total_hours_spent = sum(kpi.timesheet_ids.mapped('unit_amount'))
+
+    @api.depends('subtask_ids', 'subtask_ids.state')
+    def _compute_subtask_metrics(self):
+        for kpi in self:
+            subtasks = kpi.subtask_ids
+            kpi.subtask_count = len(subtasks)
+            kpi.subtask_completed_count = len(subtasks.filtered(lambda s: s.state == 'completed'))
+
+    @api.depends('subtask_ids.progress', 'subtask_ids.state', 'state')
+    def _compute_progress(self):
+        for kpi in self:
+            if kpi.subtask_ids:
+                total_prog = sum(kpi.subtask_ids.mapped('progress'))
+                kpi.progress = round(total_prog / len(kpi.subtask_ids), 2)
+            else:
+                if kpi.state == 'completed':
+                    kpi.progress = 100.0
+                elif kpi.state == 'not_started' and not kpi.progress:
+                    kpi.progress = 0.0
+                else:
+                    kpi.progress = kpi.progress or 0.0
 
     @api.onchange('progress')
     def _onchange_progress(self):
@@ -956,20 +1192,30 @@ class BusinessProjectKPI(models.Model):
 
     def _compute_period_flags(self):
         today = fields.Date.context_today(self)
+        tomorrow = today + timedelta(days=1)
         mon = today - timedelta(days=today.weekday())
         sun = mon + timedelta(days=6)
         m_start = today.replace(day=1)
         next_m = (m_start + timedelta(days=32)).replace(day=1)
         for kpi in self:
             kpi.is_today = (kpi.date == today)
+            kpi.is_tomorrow = (kpi.date == tomorrow)
             kpi.is_this_week = (mon <= kpi.date <= sun) if kpi.date else False
             kpi.is_this_month = (m_start <= kpi.date < next_m) if kpi.date else False
+            kpi.is_overdue = bool(kpi.date and kpi.date < today and kpi.state not in ('completed', 'cancelled'))
 
     def _search_is_today(self, operator, value):
         today = fields.Date.context_today(self)
         if (operator in ('=', '!=') and value) or (operator in ('!=', '<>') and not value):
             return [('date', '=', today)]
         return [('date', '!=', today)]
+
+    def _search_is_tomorrow(self, operator, value):
+        today = fields.Date.context_today(self)
+        tomorrow = today + timedelta(days=1)
+        if (operator in ('=', '!=') and value) or (operator in ('!=', '<>') and not value):
+            return [('date', '=', tomorrow)]
+        return [('date', '!=', tomorrow)]
 
     def _search_is_this_week(self, operator, value):
         today = fields.Date.context_today(self)
@@ -987,6 +1233,12 @@ class BusinessProjectKPI(models.Model):
         if (operator in ('=', '!=') and value) or (operator in ('!=', '<>') and not value):
             return [('date', '>=', first_day), ('date', '<=', last_day)]
         return ['|', ('date', '<', first_day), ('date', '>', last_day)]
+
+    def _search_is_overdue(self, operator, value):
+        today = fields.Date.context_today(self)
+        if (operator in ('=', '!=') and value) or (operator in ('!=', '<>') and not value):
+            return [('date', '!=', False), ('date', '<', today), ('state', 'not in', ('completed', 'cancelled'))]
+        return ['|', ('date', '=', False), '|', ('date', '>=', today), ('state', 'in', ('completed', 'cancelled'))]
 
     @api.depends('state', 'daily_achievement', 'weekly_target', 'weekly_weightage',
                  'is_daily_repeating', 'recurring_template_id', 'date', 'week_start')
@@ -1096,6 +1348,19 @@ class BusinessProjectKPI(models.Model):
         return records
 
     def write(self, vals):
+        is_manager = (
+            self.env.user.has_group('Benjali_management.group_Team_lead') or
+            self.env.user.has_group('Benjali_management.group_project_manager') or
+            self.env.user.has_group('Benjali_management.group_gvp') or
+            self.env.user.has_group('Benjali_management.group_ceo') or
+            self.env.is_admin() or
+            self.env.su
+        )
+        if not is_manager:
+            for kpi in self:
+                is_assigned = (self.env.user in kpi.employee_ids or kpi.employee_id == self.env.user)
+                if not is_assigned:
+                    raise UserError(f'You cannot modify KPI "{kpi.name}" because it is not assigned to you.')
         Stage = self.env['business.project.kpi.stage']
         if 'stage_id' in vals and 'state' not in vals:
             st = Stage.browse(vals['stage_id'])
@@ -1108,6 +1373,8 @@ class BusinessProjectKPI(models.Model):
 
         if 'state' in vals:
             if vals['state'] == 'completed':
+                if not is_manager:
+                    raise UserError("Completing a KPI requires approval from the Team Lead. Please click 'Mark Completed' to submit an approval request.")
                 if 'daily_achievement' not in vals:
                     vals['daily_achievement'] = 1.0
                 if 'progress' not in vals:
@@ -1122,6 +1389,8 @@ class BusinessProjectKPI(models.Model):
 
         if 'progress' in vals:
             if vals['progress'] >= 100.0 and vals.get('state') not in ('completed', 'cancelled'):
+                if not is_manager:
+                    raise UserError("Completing a KPI requires approval from the Team Lead. Please click 'Mark Completed' to submit an approval request.")
                 vals['state'] = 'completed'
                 st = Stage.search([('code', '=', 'completed')], limit=1)
                 if st:
@@ -1140,23 +1409,24 @@ class BusinessProjectKPI(models.Model):
 
     def init(self):
         super().init()
-        self._normalize_stages()
         try:
-            self.env.cr.execute("""
-                UPDATE business_project_kpi 
-                SET state = CASE 
-                    WHEN state = 'postponed' THEN 'on_hold'
-                    WHEN state IN ('not_started', 'in_progress', 'completed', 'on_hold', 'cancelled') THEN state
-                    ELSE 'not_started'
-                END
-                WHERE state NOT IN ('not_started', 'in_progress', 'completed', 'on_hold', 'cancelled') OR state IS NULL;
-            """)
-            self.env.cr.execute("""
-                UPDATE business_project_kpi kpi
-                SET stage_id = st.id
-                FROM business_project_kpi_stage st
-                WHERE kpi.state = st.code AND (kpi.stage_id IS NULL OR kpi.stage_id != st.id);
-            """)
+            with self.env.cr.savepoint():
+                self._normalize_stages()
+                self.env.cr.execute("""
+                    UPDATE business_project_kpi 
+                    SET state = CASE 
+                        WHEN state = 'postponed' THEN 'on_hold'
+                        WHEN state IN ('not_started', 'in_progress', 'completed', 'on_hold', 'cancelled') THEN state
+                        ELSE 'not_started'
+                    END
+                    WHERE state NOT IN ('not_started', 'in_progress', 'completed', 'on_hold', 'cancelled') OR state IS NULL;
+                """)
+                self.env.cr.execute("""
+                    UPDATE business_project_kpi kpi
+                    SET stage_id = st.id
+                    FROM business_project_kpi_stage st
+                    WHERE kpi.state = st.code AND (kpi.stage_id IS NULL OR kpi.stage_id != st.id);
+                """)
         except Exception:
             pass
 
@@ -1209,11 +1479,123 @@ class BusinessProjectKPI(models.Model):
         self.write(vals)
 
     def action_set_completed(self):
+        is_manager = (
+            self.env.user.has_group('Benjali_management.group_Team_lead') or
+            self.env.user.has_group('Benjali_management.group_project_manager') or
+            self.env.user.has_group('Benjali_management.group_gvp') or
+            self.env.user.has_group('Benjali_management.group_ceo') or
+            self.env.is_admin()
+        )
+        if is_manager:
+            self._do_mark_completed()
+            return
+
+        for kpi in self:
+            if not is_manager:
+                is_assigned = (self.env.user in kpi.employee_ids or kpi.employee_id == self.env.user)
+                if not is_assigned:
+                    raise UserError(f'You cannot complete KPI "{kpi.name}" because it is not assigned to you. You can only complete your own assigned tasks.')
+
+            if kpi.approval_pending:
+                raise UserError(f'An approval request for "{kpi.name}" has already been submitted to the Team Lead and is pending approval.')
+
+            approver = (
+                kpi.responsible_user_id or
+                (kpi.kra_id and kpi.kra_id.responsible_user_id) or
+                (kpi.project_id and kpi.project_id.responsible_user_id) or
+                kpi.manager_id
+            )
+            if not approver or approver == self.env.user:
+                tl_users = self.env['res.users'].search([('share', '=', False)]).filtered(
+                    lambda u: u.has_group('Benjali_management.group_Team_lead')
+                )
+                if tl_users:
+                    other_tls = tl_users.filtered(lambda u: u != self.env.user)
+                    approver = other_tls[0] if other_tls else tl_users[0]
+
+            if not approver:
+                approver = self.env.ref('base.user_admin', raise_if_not_found=False) or self.env.user
+
+            approval = self.env['business.project.approval'].create({
+                'project_id': kpi.project_id.id if kpi.project_id else False,
+                'kra_id': kpi.kra_id.id if kpi.kra_id else False,
+                'kpi_id': kpi.id,
+                'approval_type': 'kpi_completion',
+                'approver_id': approver.id,
+                'requested_by': self.env.user.id,
+                'requires_approval': True,
+                'company_id': kpi.company_id.id if kpi.company_id else self.env.company.id,
+            })
+            kpi.sudo().write({'approval_pending': True})
+            kpi.message_post(
+                body=(
+                    f'KPI completion approval request <b>{approval.name}</b> sent to '
+                    f'Project Responsible <b>{approver.name}</b> by {self.env.user.name}.'
+                )
+            )
+
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': 'Approval Requested',
+                'message': 'KPI completion approval request has been sent to the Project Responsible.',
+                'type': 'success',
+                'sticky': False,
+            }
+        }
+
+    def _do_mark_completed(self):
         st = self.env['business.project.kpi.stage'].search([('code', '=', 'completed')], limit=1)
-        vals = {'state': 'completed', 'daily_achievement': 1.0, 'progress': 100.0}
+        vals = {'state': 'completed', 'daily_achievement': 1.0, 'progress': 100.0, 'approval_pending': False}
         if st:
             vals['stage_id'] = st.id
-        self.write(vals)
+        self.sudo().write(vals)
+        for kpi in self:
+            kpi.subtask_ids.filtered(lambda s: s.state != 'completed').sudo().write({
+                'state': 'completed',
+                'progress': 100.0,
+                'approval_pending': False,
+            })
+            pending_approvals = self.env['business.project.approval'].search([
+                ('kpi_id', '=', kpi.id),
+                ('approval_type', '=', 'kpi_completion'),
+                ('state', '=', 'pending'),
+            ])
+            if pending_approvals:
+                pending_approvals.sudo().write({
+                    'state': 'approved',
+                    'approval_date': fields.Datetime.now(),
+                })
+
+    def action_view_subtasks(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': f'Subtasks - {self.name}',
+            'res_model': 'business.project.kpi.subtask',
+            'view_mode': 'list,form',
+            'domain': [('kpi_id', '=', self.id)],
+            'context': {
+                'default_kpi_id': self.id,
+                'default_kra_id': self.kra_id.id if self.kra_id else False,
+                'default_project_id': self.project_id.id if self.project_id else False,
+            },
+        }
+
+    def action_mark_all_subtasks_complete(self):
+        is_manager = (
+            self.env.user.has_group('Benjali_management.group_Team_lead') or
+            self.env.user.has_group('Benjali_management.group_project_manager') or
+            self.env.user.has_group('Benjali_management.group_gvp') or
+            self.env.user.has_group('Benjali_management.group_ceo') or
+            self.env.is_admin()
+        )
+        if not is_manager:
+            raise UserError("Only the Team Lead / Project Responsible can mark all subtasks complete at once.")
+        for kpi in self:
+            kpi.subtask_ids.write({'state': 'completed', 'progress': 100.0})
+            kpi.action_set_completed()
 
     def action_set_on_hold(self):
         st = self.env['business.project.kpi.stage'].search([('code', '=', 'on_hold')], limit=1)
@@ -1372,3 +1754,262 @@ class BusinessProjectKRAEntry(models.Model):
 
     def action_reject(self):
         self.write({'state': 'rejected'})
+
+
+class BusinessProjectKPISubtask(models.Model):
+    _name = 'business.project.kpi.subtask'
+    _description = 'KPI Subtask'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
+    _order = 'sequence, id desc'
+
+    name = fields.Char(string='Subtask Name', required=True, tracking=True)
+    sequence = fields.Integer(string='Sequence', default=10)
+    kpi_id = fields.Many2one(
+        'business.project.kpi', string='KPI', required=True,
+        ondelete='cascade', index=True, tracking=True)
+    kra_id = fields.Many2one(
+        'business.project.kra', string='KRA', related='kpi_id.kra_id',
+        store=True, readonly=True)
+    project_id = fields.Many2one(
+        'business.project', string='Project', related='kpi_id.project_id',
+        store=True, readonly=True)
+    company_id = fields.Many2one(
+        'res.company', string='Company', related='project_id.company_id',
+        store=True, readonly=True)
+    responsible_user_id = fields.Many2one(
+        'res.users', string='Project Responsible', related='kpi_id.responsible_user_id',
+        store=True, readonly=True)
+    approval_pending = fields.Boolean(
+        string='Approval Pending', default=False, copy=False, tracking=True)
+    approval_status = fields.Char(
+        string='Approval Status', compute='_compute_approval_status', store=True)
+
+    @api.depends('approval_pending')
+    def _compute_approval_status(self):
+        for rec in self:
+            rec.approval_status = 'Approval Pending' if rec.approval_pending else False
+    user_id = fields.Many2one(
+        'res.users', string='Assigned User', default=lambda self: self.env.user,
+        index=True, tracking=True)
+    start_date = fields.Date(
+        string='Start Date', default=fields.Date.context_today, tracking=True)
+    end_date = fields.Date(string='End Date', tracking=True)
+    is_today = fields.Boolean(
+        string="Today's Subtask", compute='_compute_period_flags', search='_search_is_today')
+    is_tomorrow = fields.Boolean(
+        string="Tomorrow's Subtask", compute='_compute_period_flags', search='_search_is_tomorrow')
+    is_this_week = fields.Boolean(
+        string="This Week's Subtask", compute='_compute_period_flags', search='_search_is_this_week')
+    is_overdue = fields.Boolean(
+        string="Overdue Subtask", compute='_compute_period_flags', search='_search_is_overdue')
+
+    def _compute_period_flags(self):
+        today = fields.Date.context_today(self)
+        tomorrow = today + timedelta(days=1)
+        mon = today - timedelta(days=today.weekday())
+        sun = mon + timedelta(days=6)
+        for sub in self:
+            s_date = sub.start_date or today
+            e_date = sub.end_date or s_date
+            sub.is_today = bool(s_date and e_date and s_date <= today <= e_date)
+            sub.is_tomorrow = bool(s_date and e_date and s_date <= tomorrow <= e_date)
+            sub.is_this_week = bool(s_date and e_date and s_date <= sun and e_date >= mon)
+            sub.is_overdue = bool(sub.end_date and sub.end_date < today and sub.state not in ('completed', 'cancelled'))
+
+    def _search_is_today(self, operator, value):
+        today = fields.Date.context_today(self)
+        if (operator in ('=', '!=') and value) or (operator in ('!=', '<>') and not value):
+            return ['|', '&', ('start_date', '<=', today), ('end_date', '>=', today), ('start_date', '=', today)]
+        return ['|', ('start_date', '>', today), '&', ('end_date', '!=', False), ('end_date', '<', today)]
+
+    def _search_is_tomorrow(self, operator, value):
+        today = fields.Date.context_today(self)
+        tomorrow = today + timedelta(days=1)
+        if (operator in ('=', '!=') and value) or (operator in ('!=', '<>') and not value):
+            return ['|', '&', ('start_date', '<=', tomorrow), ('end_date', '>=', tomorrow), ('start_date', '=', tomorrow)]
+        return ['|', ('start_date', '>', tomorrow), '&', ('end_date', '!=', False), ('end_date', '<', tomorrow)]
+
+    def _search_is_this_week(self, operator, value):
+        today = fields.Date.context_today(self)
+        mon = today - timedelta(days=today.weekday())
+        sun = mon + timedelta(days=6)
+        if (operator in ('=', '!=') and value) or (operator in ('!=', '<>') and not value):
+            return ['|', '&', ('start_date', '<=', sun), ('end_date', '>=', mon), '&', ('start_date', '>=', mon), ('start_date', '<=', sun)]
+        return ['|', ('start_date', '>', sun), '&', ('end_date', '!=', False), ('end_date', '<', mon)]
+
+    def _search_is_overdue(self, operator, value):
+        today = fields.Date.context_today(self)
+        if (operator in ('=', '!=') and value) or (operator in ('!=', '<>') and not value):
+            return [('end_date', '!=', False), ('end_date', '<', today), ('state', 'not in', ('completed', 'cancelled'))]
+        return ['|', ('end_date', '=', False), '|', ('end_date', '>=', today), ('state', 'in', ('completed', 'cancelled'))]
+    progress = fields.Float(
+        string='Progress (%)', default=0.0, tracking=True)
+    state = fields.Selection([
+        ('not_started', 'Not Started'),
+        ('in_progress', 'In Progress'),
+        ('completed', 'Completed'),
+        ('cancelled', 'Cancelled'),
+    ], string='Status', default='not_started', required=True, index=True, tracking=True)
+    description = fields.Text(string='Notes / Instructions')
+    active = fields.Boolean(default=True)
+
+    @api.onchange('progress')
+    def _onchange_progress(self):
+        if self.progress >= 100.0:
+            self.state = 'completed'
+            self.progress = 100.0
+        elif 0.0 < self.progress < 100.0 and self.state in ('not_started', 'completed'):
+            self.state = 'in_progress'
+        elif self.progress <= 0.0 and self.state == 'completed':
+            self.state = 'not_started'
+            self.progress = 0.0
+
+    @api.onchange('state')
+    def _onchange_state(self):
+        if self.state == 'completed' and self.progress < 100.0:
+            self.progress = 100.0
+        elif self.state == 'not_started' and self.progress > 0.0:
+            self.progress = 0.0
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('progress', 0.0) >= 100.0 and vals.get('state') != 'completed':
+                vals['state'] = 'completed'
+            elif vals.get('state') == 'completed' and vals.get('progress', 0.0) < 100.0:
+                vals['progress'] = 100.0
+        return super().create(vals_list)
+
+    def write(self, vals):
+        vals_dict = dict(vals)
+        is_manager = (
+            self.env.user.has_group('Benjali_management.group_Team_lead') or
+            self.env.user.has_group('Benjali_management.group_project_manager') or
+            self.env.user.has_group('Benjali_management.group_gvp') or
+            self.env.user.has_group('Benjali_management.group_ceo') or
+            self.env.is_admin() or
+            self.env.su
+        )
+        if not is_manager:
+            for subtask in self:
+                if subtask.user_id and subtask.user_id != self.env.user:
+                    raise UserError(f'You cannot modify subtask "{subtask.name}" because it is assigned to {subtask.user_id.name}. You can only update your own assigned tasks.')
+
+        if ('state' in vals_dict and vals_dict['state'] == 'completed') or vals_dict.get('progress', 0.0) >= 100.0:
+            if not is_manager:
+                raise UserError("Completing a subtask requires approval from the Team Lead. Please click 'Mark Complete' to submit an approval request.")
+
+        if 'progress' in vals_dict and 'state' not in vals_dict:
+            if vals_dict['progress'] >= 100.0:
+                vals_dict['state'] = 'completed'
+        elif 'state' in vals_dict and 'progress' not in vals_dict:
+            if vals_dict['state'] == 'completed':
+                vals_dict['progress'] = 100.0
+            elif vals_dict['state'] == 'not_started':
+                vals_dict['progress'] = 0.0
+        return super().write(vals_dict)
+
+    def action_mark_complete(self):
+        is_manager = (
+            self.env.user.has_group('Benjali_management.group_Team_lead') or
+            self.env.user.has_group('Benjali_management.group_project_manager') or
+            self.env.user.has_group('Benjali_management.group_gvp') or
+            self.env.user.has_group('Benjali_management.group_ceo') or
+            self.env.is_admin()
+        )
+        if is_manager:
+            self._do_mark_completed()
+            return
+
+        for subtask in self:
+            if not is_manager and subtask.user_id and subtask.user_id != self.env.user:
+                raise UserError(f'You cannot complete subtask "{subtask.name}" because it is assigned to {subtask.user_id.name}. You can only complete your own assigned tasks.')
+
+            if subtask.approval_pending:
+                raise UserError(f'An approval request for subtask "{subtask.name}" has already been submitted to the Team Lead and is pending approval.')
+
+            approver = (
+                subtask.responsible_user_id or
+                (subtask.kpi_id and subtask.kpi_id.responsible_user_id) or
+                (subtask.kra_id and subtask.kra_id.responsible_user_id) or
+                (subtask.project_id and subtask.project_id.responsible_user_id) or
+                (subtask.kpi_id and subtask.kpi_id.manager_id)
+            )
+            if not approver or approver == self.env.user:
+                tl_users = self.env['res.users'].search([('share', '=', False)]).filtered(
+                    lambda u: u.has_group('Benjali_management.group_Team_lead')
+                )
+                if tl_users:
+                    other_tls = tl_users.filtered(lambda u: u != self.env.user)
+                    approver = other_tls[0] if other_tls else tl_users[0]
+
+            if not approver:
+                approver = self.env.ref('base.user_admin', raise_if_not_found=False) or self.env.user
+
+            approval = self.env['business.project.approval'].create({
+                'project_id': subtask.project_id.id if subtask.project_id else False,
+                'kra_id': subtask.kra_id.id if subtask.kra_id else False,
+                'kpi_id': subtask.kpi_id.id if subtask.kpi_id else False,
+                'subtask_id': subtask.id,
+                'approval_type': 'subtask_completion',
+                'approver_id': approver.id,
+                'requested_by': self.env.user.id,
+                'requires_approval': True,
+                'company_id': subtask.company_id.id if subtask.company_id else self.env.company.id,
+            })
+            subtask.sudo().write({'approval_pending': True})
+            subtask.message_post(
+                body=(
+                    f'Subtask completion approval request <b>{approval.name}</b> sent to '
+                    f'Project Responsible <b>{approver.name}</b> by {self.env.user.name}.'
+                )
+            )
+
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': 'Approval Requested',
+                'message': 'Subtask completion approval request has been sent to the Project Responsible.',
+                'type': 'success',
+                'sticky': False,
+            }
+        }
+
+    def _do_mark_completed(self):
+        self.sudo().write({
+            'state': 'completed',
+            'progress': 100.0,
+            'approval_pending': False,
+        })
+        for subtask in self:
+            pending_approvals = self.env['business.project.approval'].search([
+                ('subtask_id', '=', subtask.id),
+                ('approval_type', '=', 'subtask_completion'),
+                ('state', '=', 'pending'),
+            ])
+            if pending_approvals:
+                pending_approvals.sudo().write({
+                    'state': 'approved',
+                    'approval_date': fields.Datetime.now(),
+                })
+            kpi = subtask.kpi_id
+            if kpi and kpi.subtask_ids:
+                total_prog = sum(kpi.subtask_ids.mapped('progress'))
+                kpi.sudo().write({'progress': round(total_prog / len(kpi.subtask_ids), 2)})
+                if all(s.state == 'completed' for s in kpi.subtask_ids):
+                    kpi._do_mark_completed()
+
+    def action_mark_in_progress(self):
+        for subtask in self:
+            vals = {'state': 'in_progress'}
+            if subtask.progress == 0.0:
+                vals['progress'] = 10.0
+            subtask.write(vals)
+
+    def action_reset(self):
+        self.write({
+            'state': 'not_started',
+            'progress': 0.0,
+        })
+

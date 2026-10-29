@@ -275,7 +275,7 @@
                                 </field>
                             </group>
 
-                            <group string="Key Performance Indicators (KPIs) - Sub-Tasks">
+                            <group string="Key Performance Indicators (KPIs)">
                                 <field name="kpi_ids" nolabel="1" context="{'default_project_id': id, 'default_department_id': department_id}">
                                     <list editable="bottom">
                                         <field name="date"/>

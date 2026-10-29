@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 from odoo import api, fields, models
 
 
@@ -86,28 +86,52 @@ class BenjaliManagementDashboard(models.AbstractModel):
         # Build detailed project list with project-wise KRAs and KPIs
         projects_list = []
         for p in filtered_projects:
-            # Progress calculation
-            prog = 0
-            if p.is_completed or (p.stage_id and p.stage_id.name == 'Completed'):
+            # Stage-based progress calculation:
+            # Progress is strictly determined by the project workflow stage (Completed stage = 100%)
+            stage_name = (p.stage_id.name or '').strip().lower() if p.stage_id else ''
+            if p.is_completed or stage_name == 'completed' or (p.stage_id and p.stage_id.phase == 'closure'):
                 prog = 100
-            elif p.kra_monthly_progress:
-                prog = int(p.kra_monthly_progress)
-            elif p.kra_weekly_progress:
-                prog = int(p.kra_weekly_progress)
-            elif p.stage_id and getattr(p.stage_id, 'sequence', None):
-                prog = min(95, max(15, int(p.stage_id.sequence * 3)))
+            elif p.is_cancelled or stage_name == 'cancelled':
+                prog = 0
+            elif stage_name == 'on hold':
+                prog = 50
+            elif p.stage_id:
+                STAGE_PROGRESS_MAP = {
+                    'new': 10,
+                    'client onboarding': 25,
+                    'project creation & initial client connection': 45,
+                    'internal project understanding & team designation': 65,
+                    'project setup & communication': 85,
+                    'completed': 100,
+                }
+                if stage_name in STAGE_PROGRESS_MAP:
+                    prog = STAGE_PROGRESS_MAP[stage_name]
+                else:
+                    all_stages = Stage.search([('active', '=', True)], order='sequence, id')
+                    active_flow = [s for s in all_stages if (s.name or '').strip().lower() not in ('cancelled', 'on hold')]
+                    if active_flow:
+                        try:
+                            s_idx = [s.id for s in active_flow].index(p.stage_id.id)
+                            prog = int(round(((s_idx + 1) / len(active_flow)) * 100))
+                        except ValueError:
+                            prog = min(95, max(10, int(p.stage_id.sequence or 10)))
+                    else:
+                        prog = 50
             else:
-                prog = 55 if p.active else 10
+                prog = 0
 
             # Determine status
-            if p.is_completed or (p.stage_id and p.stage_id.name == 'Completed') or prog >= 100:
+            if p.is_completed or stage_name == 'completed' or prog >= 100:
                 status = 'done'
                 status_label = 'Done'
                 prog = 100
             elif p.expected_end_date and p.expected_end_date < today:
                 status = 'delayed'
                 status_label = 'Delayed'
-            elif p.is_on_hold or p.priority in ('2', '3') or prog < 40:
+            elif p.is_on_hold or stage_name == 'on hold':
+                status = 'at_risk'
+                status_label = 'On Hold'
+            elif p.priority in ('2', '3'):
                 status = 'at_risk'
                 status_label = 'At risk'
             else:
@@ -135,6 +159,20 @@ class BenjaliManagementDashboard(models.AbstractModel):
                 for kpi in kra.kpi_ids:
                     emp_names = [u.name for u in kpi.employee_ids]
                     assigned_str = ', '.join(emp_names) if emp_names else (kpi.employee_id.name if kpi.employee_id else 'Unassigned')
+                    kpi_users_list = []
+                    kpi_seen_u = set()
+                    users_to_check = kpi.employee_ids or (kpi.employee_id if kpi.employee_id else self.env['res.users'])
+                    for u in users_to_check:
+                        if u.id not in kpi_seen_u:
+                            kpi_seen_u.add(u.id)
+                            kpi_users_list.append({
+                                'id': u.id,
+                                'name': u.name,
+                                'email': u.email or '',
+                                'initials': ''.join([part[0].upper() for part in u.name.split()[:2]]) if u.name else 'EM',
+                            })
+                    subtask_count = len(kpi.subtask_ids)
+                    subtask_completed = len(kpi.subtask_ids.filtered(lambda s: s.state in ('completed', 'done')))
                     kpis_list.append({
                         'id': kpi.id,
                         'name': kpi.name or 'KPI',
@@ -144,6 +182,7 @@ class BenjaliManagementDashboard(models.AbstractModel):
                         'project_id': p.id,
                         'project_name': p.name,
                         'employee': assigned_str,
+                        'employees': kpi_users_list,
                         'target': kpi.weekly_target or '-',
                         'progress': int(kpi.progress or 0),
                         'state': kpi.state or 'not_started',
@@ -152,10 +191,24 @@ class BenjaliManagementDashboard(models.AbstractModel):
                         'stage_name': kpi.stage_id.name if kpi.stage_id else '',
                         'hours_spent': round(kpi.total_hours_spent or 0.0, 1),
                         'timesheet_count': len(kpi.timesheet_ids),
+                        'subtask_count': subtask_count,
+                        'subtask_completed_count': subtask_completed,
                         'is_repeating': bool(kpi.is_repeating or kpi.is_daily_repeating),
                     })
 
                 lead_name = kra.manager_id.name or (kra.responsible_user_id.name if kra.responsible_user_id else 'Unassigned')
+                kra_emp_list = []
+                seen_k_emp = set()
+                for emp in kra.employee_ids:
+                    if emp.id not in seen_k_emp:
+                        seen_k_emp.add(emp.id)
+                        kra_emp_list.append({
+                            'id': emp.id,
+                            'name': emp.name,
+                            'email': emp.email or '',
+                            'initials': ''.join([part[0].upper() for part in emp.name.split()[:2]]) if emp.name else 'EM',
+                        })
+
                 kras_list.append({
                     'id': kra.id,
                     'name': kra.name or 'KRA',
@@ -164,6 +217,8 @@ class BenjaliManagementDashboard(models.AbstractModel):
                     'project_name': p.name,
                     'lead': lead_name,
                     'manager_id': kra.manager_id.id if kra.manager_id else False,
+                    'employees': kra_emp_list,
+                    'employee_names_str': ', '.join([e['name'] for e in kra_emp_list]) if kra_emp_list else 'None',
                     'weekly_progress': int(kra.weekly_progress or kra.progress_percentage or 0),
                     'monthly_achievement': int(kra.monthly_achievement or 0),
                     'state': kra.state or 'new',
@@ -178,10 +233,151 @@ class BenjaliManagementDashboard(models.AbstractModel):
                     'completed_kpi_count': len([k for k in kpis_list if k['state'] == 'completed']),
                 })
 
-            # Project Manager details
-            pm_name = p.project_manager_id.name or p.responsible_user_id.name or 'Unassigned'
-            pm_email = p.project_manager_id.email or p.responsible_user_id.email or ''
-            pm_initials = ''.join([part[0].upper() for part in pm_name.split()[:2]]) if pm_name != 'Unassigned' else 'PM'
+            # Project Manager & Project Responsible details
+            pm_obj = p.project_manager_id
+            pm_name = pm_obj.name if pm_obj else 'Unassigned'
+            pm_email = pm_obj.email if pm_obj and pm_obj.email else ''
+            pm_initials = ''.join([part[0].upper() for part in pm_name.split()[:2]]) if pm_obj else 'PM'
+
+            pr_obj = p.responsible_user_id
+            pr_name = pr_obj.name if pr_obj else 'Unassigned'
+            pr_email = pr_obj.email if pr_obj and pr_obj.email else ''
+            pr_initials = ''.join([part[0].upper() for part in pr_name.split()[:2]]) if pr_obj else 'PR'
+
+            # Build comprehensive employee performance matrix for this project
+            emp_perf_dict = {}
+
+            if pm_obj:
+                emp_perf_dict[pm_obj.id] = {
+                    'id': pm_obj.id,
+                    'name': pm_obj.name,
+                    'email': pm_obj.email or '',
+                    'initials': pm_initials,
+                    'roles': ['Project Manager'],
+                    'is_pm': True,
+                    'is_responsible': False,
+                    'kras': [],
+                    'kpis': [],
+                }
+
+            if pr_obj:
+                if pr_obj.id not in emp_perf_dict:
+                    emp_perf_dict[pr_obj.id] = {
+                        'id': pr_obj.id,
+                        'name': pr_obj.name,
+                        'email': pr_obj.email or '',
+                        'initials': pr_initials,
+                        'roles': ['Project Responsible'],
+                        'is_pm': False,
+                        'is_responsible': True,
+                        'kras': [],
+                        'kpis': [],
+                    }
+                else:
+                    if 'Project Responsible' not in emp_perf_dict[pr_obj.id]['roles']:
+                        emp_perf_dict[pr_obj.id]['roles'].append('Project Responsible')
+                    emp_perf_dict[pr_obj.id]['is_responsible'] = True
+
+            for kra_item in kras_list:
+                kra_id = kra_item['id']
+                kra_name = kra_item['name']
+                kra_code = kra_item['code']
+                kra_prog = kra_item['weekly_progress']
+                kra_st = kra_item['state']
+                kra_lead_id = kra_item['manager_id']
+
+                # KRA Lead
+                if kra_lead_id:
+                    mgr_record = self.env['res.users'].browse(kra_lead_id)
+                    if mgr_record.exists():
+                        if kra_lead_id not in emp_perf_dict:
+                            emp_perf_dict[kra_lead_id] = {
+                                'id': kra_lead_id,
+                                'name': mgr_record.name,
+                                'email': mgr_record.email or '',
+                                'initials': ''.join([part[0].upper() for part in mgr_record.name.split()[:2]]) if mgr_record.name else 'KM',
+                                'roles': ['KRA Lead'],
+                                'is_pm': False,
+                                'is_responsible': False,
+                                'kras': [],
+                                'kpis': [],
+                            }
+                        elif 'KRA Lead' not in emp_perf_dict[kra_lead_id]['roles']:
+                            emp_perf_dict[kra_lead_id]['roles'].append('KRA Lead')
+
+                        if not any(k['id'] == kra_id for k in emp_perf_dict[kra_lead_id]['kras']):
+                            emp_perf_dict[kra_lead_id]['kras'].append({
+                                'id': kra_id,
+                                'name': kra_name,
+                                'code': kra_code,
+                                'role': 'Lead / Manager',
+                                'progress': kra_prog,
+                                'state': kra_st,
+                            })
+
+                # KRA Assigned Employees
+                for emp_info in kra_item['employees']:
+                    eid = emp_info['id']
+                    if eid not in emp_perf_dict:
+                        emp_perf_dict[eid] = {
+                            'id': eid,
+                            'name': emp_info['name'],
+                            'email': emp_info['email'],
+                            'initials': emp_info['initials'],
+                            'roles': ['KRA Member'],
+                            'is_pm': False,
+                            'is_responsible': False,
+                            'kras': [],
+                            'kpis': [],
+                        }
+                    elif 'KRA Member' not in emp_perf_dict[eid]['roles'] and 'KRA Lead' not in emp_perf_dict[eid]['roles']:
+                        emp_perf_dict[eid]['roles'].append('KRA Member')
+
+                    if not any(k['id'] == kra_id for k in emp_perf_dict[eid]['kras']):
+                        emp_perf_dict[eid]['kras'].append({
+                            'id': kra_id,
+                            'name': kra_name,
+                            'code': kra_code,
+                            'role': 'Assigned Member',
+                            'progress': kra_prog,
+                            'state': kra_st,
+                        })
+
+                # KPI Assignees and progress
+                for kpi_item in kra_item['kpis']:
+                    kpi_info = {
+                        'id': kpi_item['id'],
+                        'name': kpi_item['name'],
+                        'code': kpi_item['code'],
+                        'kra_id': kra_id,
+                        'kra_name': kra_name,
+                        'progress': kpi_item['progress'],
+                        'state': kpi_item['state'],
+                        'state_label': kpi_item['state_label'],
+                        'subtask_count': kpi_item['subtask_count'],
+                        'subtask_completed_count': kpi_item['subtask_completed_count'],
+                        'hours_spent': kpi_item['hours_spent'],
+                        'target': kpi_item['target'],
+                    }
+                    for u_info in kpi_item['employees']:
+                        uid = u_info['id']
+                        if uid not in emp_perf_dict:
+                            emp_perf_dict[uid] = {
+                                'id': uid,
+                                'name': u_info['name'],
+                                'email': u_info['email'],
+                                'initials': u_info['initials'],
+                                'roles': ['KPI Assignee'],
+                                'is_pm': False,
+                                'is_responsible': False,
+                                'kras': [],
+                                'kpis': [],
+                            }
+                        elif 'KPI Assignee' not in emp_perf_dict[uid]['roles']:
+                            emp_perf_dict[uid]['roles'].append('KPI Assignee')
+
+                        if not any(k['id'] == kpi_item['id'] for k in emp_perf_dict[uid]['kpis']):
+                            emp_perf_dict[uid]['kpis'].append(kpi_info)
 
             # Allocated Team Members
             team_members = []
@@ -197,6 +393,144 @@ class BenjaliManagementDashboard(models.AbstractModel):
                     'role_label': role_lbl,
                     'notes': tm.notes or '',
                 })
+                if tm.user_id and tm.user_id.id not in emp_perf_dict:
+                    emp_perf_dict[tm.user_id.id] = {
+                        'id': tm.user_id.id,
+                        'name': tm.user_id.name,
+                        'email': tm.user_id.email or '',
+                        'initials': tm_initials,
+                        'roles': [role_lbl],
+                        'is_pm': False,
+                        'is_responsible': False,
+                        'kras': [],
+                        'kpis': [],
+                    }
+
+            # 1. Compute frontline employees (team members directly assigned to KRAs and KPIs)
+            frontline_employees = []
+            for emp in emp_perf_dict.values():
+                if not emp.get('is_pm') and not emp.get('is_responsible'):
+                    k_count = len(emp['kpis'])
+                    comp_count = len([k for k in emp['kpis'] if k['state'] == 'completed'])
+                    in_prog_count = len([k for k in emp['kpis'] if k['state'] == 'in_progress'])
+                    avg_prog = int(sum(k['progress'] for k in emp['kpis']) / k_count) if k_count else 0
+                    total_hours = round(sum(k['hours_spent'] for k in emp['kpis']), 1)
+
+                    if k_count == 0:
+                        perf_label = 'Assigned'
+                        perf_badge = 'info'
+                    elif avg_prog >= 80 or (k_count > 0 and comp_count == k_count):
+                        perf_label = 'High Performer'
+                        perf_badge = 'success'
+                    elif avg_prog >= 50:
+                        perf_label = 'On Track'
+                        perf_badge = 'primary'
+                    else:
+                        perf_label = 'Needs Focus'
+                        perf_badge = 'warning'
+
+                    emp.update({
+                        'kpi_count': k_count,
+                        'completed_kpi_count': comp_count,
+                        'in_progress_kpi_count': in_prog_count,
+                        'avg_progress': avg_prog,
+                        'total_hours': total_hours,
+                        'performance_label': perf_label,
+                        'performance_badge': perf_badge,
+                        'kra_count': len(emp['kras']),
+                        'is_leadership': False,
+                        'hierarchy_level': 3,
+                    })
+                    frontline_employees.append(emp)
+
+            # 2. Derive team-level aggregate employee performance:
+            # Under Project Responsible are the employees!
+            # Under Project Manager is the Project Responsible!
+            emps_with_kpis = [e for e in frontline_employees if e['kpi_count'] > 0]
+            if emps_with_kpis:
+                emp_team_avg_prog = int(sum(e['avg_progress'] for e in emps_with_kpis) / len(emps_with_kpis))
+                emp_team_kpis_completed = sum(e['completed_kpi_count'] for e in emps_with_kpis)
+                emp_team_kpis_total = sum(e['kpi_count'] for e in emps_with_kpis)
+                emp_team_total_hours = round(sum(e['total_hours'] for e in emps_with_kpis), 1)
+            else:
+                emp_team_avg_prog = int(prog)  # fallback to project progress
+                emp_team_kpis_completed = sum(k['completed_kpi_count'] for k in kras_list)
+                emp_team_kpis_total = sum(k['kpi_count'] for k in kras_list)
+                emp_team_total_hours = 0.0
+
+            # 3. Compute Project Responsible performance (Hierarchical Level 2: Supervised Employees)
+            # Under Project Responsible are the Employees. Responsible performance is based on employees performance!
+            resp_score = emp_team_avg_prog
+            if resp_score >= 80 or (emp_team_kpis_total > 0 and emp_team_kpis_completed == emp_team_kpis_total):
+                resp_perf_label = 'High Performer'
+                resp_perf_badge = 'success'
+            elif resp_score >= 50:
+                resp_perf_label = 'On Track'
+                resp_perf_badge = 'primary'
+            else:
+                resp_perf_label = 'Needs Focus'
+                resp_perf_badge = 'warning'
+
+            # 4. Compute Project Manager performance (Hierarchical Level 1: Overall Leadership)
+            # Under Project Manager is Project Responsible, under Project Responsible are Employees.
+            # Manager performance is based on Project Responsible & Employee team delivery!
+            pm_score = emp_team_avg_prog
+            if pm_score >= 80 or (emp_team_kpis_total > 0 and emp_team_kpis_completed == emp_team_kpis_total):
+                pm_perf_label = 'High Performer'
+                pm_perf_badge = 'success'
+            elif pm_score >= 50:
+                pm_perf_label = 'On Track'
+                pm_perf_badge = 'primary'
+            else:
+                pm_perf_label = 'Needs Focus'
+                pm_perf_badge = 'warning'
+
+            # 5. Update leadership records in emp_perf_dict so their scorecards reflect this workflow
+            if pr_obj and pr_obj.id in emp_perf_dict:
+                pr_emp = emp_perf_dict[pr_obj.id]
+                pr_personal_kpis = pr_emp.get('kpis', [])
+                pr_emp.update({
+                    'kpi_count': len(pr_personal_kpis) if pr_personal_kpis else emp_team_kpis_total,
+                    'completed_kpi_count': len([k for k in pr_personal_kpis if k['state'] == 'completed']) if pr_personal_kpis else emp_team_kpis_completed,
+                    'in_progress_kpi_count': len([k for k in pr_personal_kpis if k['state'] == 'in_progress']) if pr_personal_kpis else (emp_team_kpis_total - emp_team_kpis_completed),
+                    'avg_progress': resp_score,
+                    'total_hours': round(sum(k['hours_spent'] for k in pr_personal_kpis), 1) if pr_personal_kpis else emp_team_total_hours,
+                    'performance_label': resp_perf_label,
+                    'performance_badge': resp_perf_badge,
+                    'kra_count': len(pr_emp.get('kras', [])) or len(kras_list),
+                    'is_leadership': True,
+                    'hierarchy_level': 2,
+                    'hierarchy_title': 'Project Responsible',
+                    'hierarchy_basis': f"Based on {len(frontline_employees)} Assigned Employees",
+                    'subordinate_count': len(frontline_employees),
+                })
+
+            if pm_obj and pm_obj.id in emp_perf_dict:
+                pm_emp = emp_perf_dict[pm_obj.id]
+                pm_personal_kpis = pm_emp.get('kpis', [])
+                pm_emp.update({
+                    'kpi_count': len(pm_personal_kpis) if pm_personal_kpis else emp_team_kpis_total,
+                    'completed_kpi_count': len([k for k in pm_personal_kpis if k['state'] == 'completed']) if pm_personal_kpis else emp_team_kpis_completed,
+                    'in_progress_kpi_count': len([k for k in pm_personal_kpis if k['state'] == 'in_progress']) if pm_personal_kpis else (emp_team_kpis_total - emp_team_kpis_completed),
+                    'avg_progress': pm_score,
+                    'total_hours': round(sum(k['hours_spent'] for k in pm_personal_kpis), 1) if pm_personal_kpis else emp_team_total_hours,
+                    'performance_label': pm_perf_label,
+                    'performance_badge': pm_perf_badge,
+                    'kra_count': len(pm_emp.get('kras', [])) or len(kras_list),
+                    'is_leadership': True,
+                    'hierarchy_level': 1,
+                    'hierarchy_title': 'Project Manager',
+                    'hierarchy_basis': f"Based on Responsible ({pr_name}) & {len(frontline_employees)} Employees",
+                    'subordinate_count': len(frontline_employees) + (1 if pr_obj else 0),
+                })
+
+            employee_performance_list = list(emp_perf_dict.values())
+            # Sort leadership first (PM, then PR), then frontline employees by avg progress, KPI count
+            employee_performance_list.sort(key=lambda x: (
+                0 if x.get('is_pm') else (1 if x.get('is_responsible') else (2 if 'KRA Lead' in x['roles'] else 3)),
+                -x['avg_progress'],
+                -x['kpi_count']
+            ))
 
             # Tasks under project
             tasks_list = []
@@ -258,11 +592,40 @@ class BenjaliManagementDashboard(models.AbstractModel):
                 'department_color': dep_color,
                 'owner': owner,
                 'project_manager': {
+                    'id': pm_obj.id if pm_obj else False,
                     'name': pm_name,
                     'email': pm_email,
                     'initials': pm_initials,
-                    'is_assigned': pm_name != 'Unassigned',
+                    'is_assigned': bool(pm_obj),
+                    'performance_score': pm_score,
+                    'performance_label': pm_perf_label,
+                    'performance_badge': pm_perf_badge,
+                    'subordinate_responsible': pr_name,
+                    'subordinate_employees_count': len(frontline_employees),
                 },
+                'project_responsible': {
+                    'id': pr_obj.id if pr_obj else False,
+                    'name': pr_name,
+                    'email': pr_email,
+                    'initials': pr_initials,
+                    'is_assigned': bool(pr_obj),
+                    'performance_score': resp_score,
+                    'performance_label': resp_perf_label,
+                    'performance_badge': resp_perf_badge,
+                    'manager_name': pm_name,
+                    'subordinate_employees_count': len(frontline_employees),
+                    'team_kpi_completed': emp_team_kpis_completed,
+                    'team_kpi_total': emp_team_kpis_total,
+                },
+                'workflow_hierarchy': {
+                    'manager_name': pm_name,
+                    'responsible_name': pr_name,
+                    'employee_count': len(frontline_employees),
+                    'team_avg_progress': emp_team_avg_prog,
+                    'team_kpis_completed': emp_team_kpis_completed,
+                    'team_kpis_total': emp_team_kpis_total,
+                },
+                'employee_performance': employee_performance_list,
                 'team_members': team_members,
                 'team_count': len(team_members),
                 'tasks': tasks_list,
@@ -431,10 +794,26 @@ class BenjaliManagementDashboard(models.AbstractModel):
         on_hold_kpis = len(all_kpis.filtered(lambda k: k.state in ('on_hold', 'hold')))
         cancelled_kpis = len(all_kpis.filtered(lambda k: k.state in ('cancelled', 'cancel')))
 
+        today = fields.Date.context_today(self)
+        tomorrow = today + timedelta(days=1)
+        today_str = str(today)
+        tomorrow_str = str(tomorrow)
+
         # Build comprehensive flat list of all KRAs
         all_kras_flat = []
         for kra in all_kras:
             lead_name = kra.manager_id.name or (kra.responsible_user_id.name if kra.responsible_user_id else 'Unassigned')
+            kra_emp_names = [u.name for u in kra.employee_ids]
+            kra_employees_str = ', '.join(kra_emp_names) if kra_emp_names else 'None'
+            kra_date = kra.end_date or kra.start_date
+            kra_date_str = str(kra_date) if kra_date else ''
+            kra_is_done = kra.state == 'completed'
+            kra_is_cancelled = kra.state in ('cancelled', 'cancel')
+
+            kra_is_today = bool(kra_date and kra_date == today)
+            kra_is_tomorrow = bool(kra_date and kra_date == tomorrow)
+            kra_is_overdue = bool(kra.end_date and kra.end_date < today and not kra_is_done and not kra_is_cancelled)
+
             all_kras_flat.append({
                 'id': kra.id,
                 'name': kra.name or 'KRA',
@@ -444,6 +823,7 @@ class BenjaliManagementDashboard(models.AbstractModel):
                 'department_name': kra.department_id.name if kra.department_id else (kra.project_id.department_id.name if kra.project_id and kra.project_id.department_id else 'General'),
                 'lead': lead_name,
                 'manager_id': kra.manager_id.id if kra.manager_id else False,
+                'employees': kra_employees_str,
                 'weekly_progress': int(kra.weekly_progress or kra.progress_percentage or 0),
                 'monthly_achievement': int(kra.monthly_achievement or 0),
                 'state': kra.state or 'new',
@@ -453,6 +833,13 @@ class BenjaliManagementDashboard(models.AbstractModel):
                 'priority': kra.priority or '0',
                 'start_date': kra.start_date.strftime('%b %d, %Y') if kra.start_date else '',
                 'end_date': kra.end_date.strftime('%b %d, %Y') if kra.end_date else '',
+                'start_date_raw': str(kra.start_date or ''),
+                'end_date_raw': str(kra.end_date or ''),
+                'date': kra_date_str,
+                'date_display': kra_date.strftime('%b %d, %Y') if kra_date else '',
+                'is_today': kra_is_today,
+                'is_tomorrow': kra_is_tomorrow,
+                'is_overdue': kra_is_overdue,
                 'kpi_count': len(kra.kpi_ids),
                 'completed_kpi_count': len(kra.kpi_ids.filtered(lambda k: k.state == 'completed')),
             })
@@ -462,6 +849,17 @@ class BenjaliManagementDashboard(models.AbstractModel):
         for kpi in all_kpis:
             emp_names = [u.name for u in kpi.employee_ids]
             assigned_str = ', '.join(emp_names) if emp_names else (kpi.employee_id.name if kpi.employee_id else 'Unassigned')
+            subtask_count = len(kpi.subtask_ids)
+            subtask_completed = len(kpi.subtask_ids.filtered(lambda s: s.state in ('completed', 'done')))
+            kpi_date = kpi.date
+            kpi_date_str = str(kpi_date) if kpi_date else ''
+            kpi_is_done = kpi.state == 'completed'
+            kpi_is_cancelled = kpi.state == 'cancelled'
+
+            kpi_is_today = bool(kpi_date and kpi_date == today)
+            kpi_is_tomorrow = bool(kpi_date and kpi_date == tomorrow)
+            kpi_is_overdue = bool(kpi_date and kpi_date < today and not kpi_is_done and not kpi_is_cancelled)
+
             all_kpis_flat.append({
                 'id': kpi.id,
                 'name': kpi.name or 'KPI',
@@ -478,10 +876,127 @@ class BenjaliManagementDashboard(models.AbstractModel):
                 'state_label': dict(kpi._fields['state'].selection).get(kpi.state, kpi.state) if 'state' in kpi._fields else kpi.state,
                 'stage_id': kpi.stage_id.id if kpi.stage_id else False,
                 'stage_name': kpi.stage_id.name if kpi.stage_id else '',
+                'date': kpi_date_str,
+                'date_display': kpi_date.strftime('%b %d, %Y') if kpi_date else '',
+                'is_today': kpi_is_today,
+                'is_tomorrow': kpi_is_tomorrow,
+                'is_overdue': kpi_is_overdue,
+                'priority': getattr(kpi, 'priority', '0') or '0',
                 'hours_spent': round(kpi.total_hours_spent or 0.0, 1),
                 'timesheet_count': len(kpi.timesheet_ids),
+                'subtask_count': subtask_count,
+                'subtask_completed_count': subtask_completed,
                 'is_repeating': bool(kpi.is_repeating or kpi.is_daily_repeating),
             })
+
+        # ================= CALENDAR & TASK SCHEDULING DATA =================
+        calendar_events = []
+        today_pending_kpis = []
+        today_completed_kpis = []
+        tomorrow_kpis = []
+        overdue_kpis = []
+
+        for item in all_kpis_flat:
+            task_obj = {
+                'id': item['id'],
+                'type': 'kpi',
+                'type_label': 'KPI',
+                'name': item['name'],
+                'code': item['code'],
+                'date': item['date'],
+                'date_display': item['date_display'],
+                'project_id': item['project_id'],
+                'project_name': item['project_name'],
+                'kra_id': item['kra_id'],
+                'kra_name': item['kra_name'],
+                'assignee': item['employee'],
+                'progress': item['progress'],
+                'state': item['state'],
+                'state_label': item['state_label'],
+                'priority': item['priority'],
+                'is_today': item['is_today'],
+                'is_tomorrow': item['is_tomorrow'],
+                'is_overdue': item['is_overdue'],
+                'hours_spent': item['hours_spent'],
+                'subtask_count': item['subtask_count'],
+                'subtask_completed_count': item['subtask_completed_count'],
+            }
+            if item['is_today']:
+                if item['state'] == 'completed':
+                    today_completed_kpis.append(task_obj)
+                elif item['state'] != 'cancelled':
+                    today_pending_kpis.append(task_obj)
+            if item['is_tomorrow'] and item['state'] != 'cancelled':
+                tomorrow_kpis.append(task_obj)
+            if item['is_overdue']:
+                overdue_kpis.append(task_obj)
+
+            if item['date']:
+                calendar_events.append(task_obj)
+
+        today_pending_kras = []
+        today_completed_kras = []
+        tomorrow_kras = []
+        overdue_kras = []
+
+        for k_item in all_kras_flat:
+            kra_obj = {
+                'id': k_item['id'],
+                'type': 'kra',
+                'type_label': 'KRA',
+                'name': k_item['name'],
+                'code': k_item['code'],
+                'date': k_item['date'],
+                'date_display': k_item['date_display'],
+                'start_date': k_item['start_date'],
+                'end_date': k_item['end_date'],
+                'project_id': k_item['project_id'],
+                'project_name': k_item['project_name'],
+                'assignee': k_item['lead'],
+                'progress': k_item['weekly_progress'],
+                'state': k_item['state'],
+                'state_label': k_item['state_label'],
+                'priority': k_item['priority'],
+                'is_today': k_item['is_today'],
+                'is_tomorrow': k_item['is_tomorrow'],
+                'is_overdue': k_item['is_overdue'],
+                'kpi_count': k_item['kpi_count'],
+                'completed_kpi_count': k_item['completed_kpi_count'],
+            }
+            if k_item['is_today']:
+                if k_item['state'] == 'completed':
+                    today_completed_kras.append(kra_obj)
+                elif k_item['state'] not in ('cancelled', 'cancel'):
+                    today_pending_kras.append(kra_obj)
+            if k_item['is_tomorrow'] and k_item['state'] not in ('cancelled', 'cancel'):
+                tomorrow_kras.append(kra_obj)
+            if k_item['is_overdue']:
+                overdue_kras.append(kra_obj)
+
+            if k_item['date']:
+                calendar_events.append(kra_obj)
+
+        # Sort calendar events by date and priority
+        calendar_events.sort(key=lambda x: (x['date'], -int(x['priority'] or 0), x['name']))
+
+        today_pending_all = today_pending_kpis + today_pending_kras
+        today_completed_all = today_completed_kpis + today_completed_kras
+        tomorrow_all = tomorrow_kpis + tomorrow_kras
+        overdue_all = overdue_kpis + overdue_kras
+
+        calendar_summary = {
+            'today_str': today_str,
+            'tomorrow_str': tomorrow_str,
+            'today_pending_count': len(today_pending_all),
+            'today_completed_count': len(today_completed_all),
+            'tomorrow_count': len(tomorrow_all),
+            'overdue_count': len(overdue_all),
+            'today_pending_tasks': today_pending_all,
+            'today_completed_tasks': today_completed_all,
+            'tomorrow_tasks': tomorrow_all,
+            'overdue_tasks': overdue_all,
+            'events': calendar_events,
+        }
 
         # ================= CHART DATA (BAR & LINE GRAPHICAL VIEWS) =================
         # 1. Projects by Department
@@ -596,6 +1111,7 @@ class BenjaliManagementDashboard(models.AbstractModel):
             'approvals': approval_summary,
             'due_next': due_next,
             'chart_data': chart_data,
+            'calendar': calendar_summary,
         }
 
     @api.model

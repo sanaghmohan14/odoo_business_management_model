@@ -1,35 +1,104 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
+
+    <!-- ========================================================
+         MULTI-COMPANY GLOBAL RULES
+         ======================================================== -->
     <record id="business_management_rule_company" model="ir.rule">
         <field name="name">Business record rules for company</field>
         <field name="model_id" ref="model_business_project"/>
-        <field name="domain_force">[
-            ('company_id', 'in', company_ids)]
-        </field>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
         <field name="global" eval="True"/>
     </record>
 
     <record id="business_management_kra_rule_company" model="ir.rule">
         <field name="name">KRA records for company</field>
         <field name="model_id" ref="model_business_project_kra"/>
-        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
         <field name="global" eval="True"/>
     </record>
 
     <record id="business_management_kra_entry_rule_company" model="ir.rule">
         <field name="name">KRA entry records for company</field>
         <field name="model_id" ref="model_business_project_kra_entry"/>
-        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
         <field name="global" eval="True"/>
     </record>
 
-        <record id="business_management_approval_rule_company" model="ir.rule">
+    <record id="business_management_approval_rule_company" model="ir.rule">
         <field name="name">Business approval record rules for company</field>
         <field name="model_id" ref="model_business_project_approval"/>
-        <field name="domain_force">[
-            ('company_id', 'in', company_ids)]
-        </field>
+        <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
         <field name="global" eval="True"/>
+    </record>
+
+    <!-- ========================================================
+         KRA RECORD RULES: EMPLOYEE VS MANAGERS
+         ======================================================== -->
+    <record id="business_project_kra_rule_employee" model="ir.rule">
+        <field name="name">KRA: Employee Access (Assigned only)</field>
+        <field name="model_id" ref="model_business_project_kra"/>
+        <field name="domain_force">['|', '|', ('user_id', '=', user.id), ('responsible_user_id', '=', user.id), ('kpi_ids.employee_ids', 'in', [user.id])]</field>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <record id="business_project_kra_rule_manager" model="ir.rule">
+        <field name="name">KRA: Team Lead and Above Access</field>
+        <field name="model_id" ref="model_business_project_kra"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('group_Team_lead'))]"/>
+    </record>
+
+    <!-- ========================================================
+         KPI RECORD RULES: EMPLOYEE VS MANAGERS
+         ======================================================== -->
+    <record id="business_project_kpi_rule_employee" model="ir.rule">
+        <field name="name">KPI: Employee Access (Assigned only)</field>
+        <field name="model_id" ref="model_business_project_kpi"/>
+        <field name="domain_force">['|', ('employee_ids', 'in', [user.id]), ('employee_id', '=', user.id)]</field>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <record id="business_project_kpi_rule_manager" model="ir.rule">
+        <field name="name">KPI: Team Lead and Above Access</field>
+        <field name="model_id" ref="model_business_project_kpi"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('group_Team_lead'))]"/>
+    </record>
+
+    <!-- ========================================================
+         KPI SUBTASK RECORD RULES: EMPLOYEE VS MANAGERS
+         ======================================================== -->
+    <record id="business_project_kpi_subtask_rule_employee" model="ir.rule">
+        <field name="name">Subtask: Employee Access (Assigned only)</field>
+        <field name="model_id" ref="model_business_project_kpi_subtask"/>
+        <field name="domain_force">[('user_id', '=', user.id)]</field>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <record id="business_project_kpi_subtask_rule_manager" model="ir.rule">
+        <field name="name">Subtask: Team Lead and Above Access</field>
+        <field name="model_id" ref="model_business_project_kpi_subtask"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('group_Team_lead'))]"/>
+    </record>
+
+    <!-- ========================================================
+         APPROVAL RECORD RULES: TEAM LEAD VS PM/VP/CEO
+         "the project responsible / team lead have the approval request access that came for them"
+         ======================================================== -->
+    <record id="business_project_approval_rule_team_lead" model="ir.rule">
+        <field name="name">Approval: Team Lead / Responsible Access</field>
+        <field name="model_id" ref="model_business_project_approval"/>
+        <field name="domain_force">['|', '|', '|', '|', ('approver_id', '=', user.id), ('requested_by', '=', user.id), ('project_id.responsible_user_id', '=', user.id), ('kra_id.responsible_user_id', '=', user.id), ('kra_id.manager_id', '=', user.id)]</field>
+        <field name="groups" eval="[(4, ref('group_Team_lead'))]"/>
+    </record>
+
+    <record id="business_project_approval_rule_pm" model="ir.rule">
+        <field name="name">Approval: Project Manager and Above Access (All)</field>
+        <field name="model_id" ref="model_business_project_approval"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('group_project_manager'))]"/>
     </record>
 
 </odoo>

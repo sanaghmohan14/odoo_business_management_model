@@ -26,7 +26,7 @@ export class BenjaliDashboard extends Component {
             error: false,
             data: null,
             theme: savedTheme, // 'dark' | 'light'
-            activeTab: "portfolio", // portfolio | kpi | stages | sops | approvals
+            activeTab: "kpi", // 'kpi' | 'portfolio' | 'performance' | 'stages' | 'sops' | 'approvals'
             departmentId: false, // false = All departments
             statusFilter: "all", // all | on_track | at_risk | delayed | done
             searchQuery: "",
@@ -40,6 +40,15 @@ export class BenjaliDashboard extends Component {
             chartType: "bar", // 'bar' | 'line'
             chartMetric: "department", // 'department' | 'status' | 'monthly'
             chartExpanded: true,
+            selectedPerformanceProjectId: false,
+            performanceSearchQuery: "",
+            performanceRoleFilter: "all", // 'all' | 'pm' | 'pr' | 'kra' | 'kpi'
+            expandedEmpCards: {}, // { [empId]: boolean }
+            calendarYear: new Date().getFullYear(),
+            calendarMonth: new Date().getMonth(), // 0-indexed (0 = Jan)
+            calendarFilter: "all", // 'all' | 'pending' | 'today' | 'tomorrow' | 'overdue' | 'kra' | 'kpi'
+            calendarAgendaTab: "today_pending", // 'today_pending' | 'tomorrow' | 'overdue' | 'today_completed' | 'selected'
+            selectedCalendarDate: null, // 'YYYY-MM-DD'
         });
 
         onWillStart(async () => {
@@ -190,6 +199,123 @@ export class BenjaliDashboard extends Component {
                 ` L ${lastP.x.toFixed(1)} ${baseY} Z`;
         }
 
+        // Custom Title when Meter Gauge Speedometer view is selected
+        if (this.state.chartType === "gauge") {
+            if (metric === "department") {
+                title = "Department Performance Speedometer Gauges";
+            } else if (metric === "status") {
+                title = "Portfolio Health & Risk Meter Gauges";
+            } else {
+                title = "Portfolio Performance & Velocity Speedometer Gauges";
+            }
+        }
+
+        // ================= GAUGE METER GEOMETRY COMPUTATIONS =================
+        const createMeterGauge = (cx, cy, r, needleLen, val, label, sublabel, colorOverride = null) => {
+            const clampedVal = Math.min(100, Math.max(0, Math.round(Number(val) || 0)));
+            // Needle angle: -90 deg at 0%, 0 deg at 50%, +90 deg at 100%
+            const needleAngle = -90 + (clampedVal / 100) * 180;
+            const arcLength = Math.PI * r;
+            const arcOffset = arcLength * (1 - clampedVal / 100);
+
+            let statusText = "Needs Focus";
+            let statusBadge = "warning";
+            let zoneColor = "#ef4444";
+            if (clampedVal >= 75) {
+                statusText = "Optimal";
+                statusBadge = "success";
+                zoneColor = "#10b981";
+            } else if (clampedVal >= 40) {
+                statusText = "On Track";
+                statusBadge = "primary";
+                zoneColor = "#f59e0b";
+            }
+
+            // 5 Scale Ticks (0, 25, 50, 75, 100)
+            const ticks = [0, 25, 50, 75, 100].map((tPct) => {
+                const rad = Math.PI * (1 - tPct / 100);
+                const x1 = (cx - (r + 4) * Math.cos(rad)).toFixed(1);
+                const y1 = (cy - (r + 4) * Math.sin(rad)).toFixed(1);
+                const x2 = (cx - (r - 7) * Math.cos(rad)).toFixed(1);
+                const y2 = (cy - (r - 7) * Math.sin(rad)).toFixed(1);
+                const tx = (cx - (r - 18) * Math.cos(rad)).toFixed(1);
+                const ty = (cy - (r - 18) * Math.sin(rad) + 3).toFixed(1);
+                return { pct: tPct, x1, y1, x2, y2, tx, ty };
+            });
+
+            const arcPath = `M ${(cx - r).toFixed(1)} ${cy} A ${r} ${r} 0 0 1 ${(cx + r).toFixed(1)} ${cy}`;
+
+            return {
+                cx,
+                cy,
+                r,
+                needleLen,
+                value: clampedVal,
+                label,
+                sublabel,
+                color: colorOverride || zoneColor,
+                zoneColor,
+                statusText,
+                statusBadge,
+                needleAngle: needleAngle.toFixed(1),
+                arcPath,
+                arcLength: arcLength.toFixed(1),
+                arcOffset: arcOffset.toFixed(1),
+                ticks,
+            };
+        };
+
+        // Main Center Speedometer: Portfolio Completion Velocity
+        const mainProgressVal = (this.state.data && this.state.data.kpis && this.state.data.kpis.avg_progress) || 0;
+        const mainGauge = createMeterGauge(
+            400, 185, 115, 95,
+            mainProgressVal,
+            "Portfolio Completion Velocity",
+            "Overall Health across all active projects"
+        );
+
+        // Sub Gauge Left: Budget Utilization Meter
+        const budgetUsedVal = (this.state.data && this.state.data.kpis && this.state.data.kpis.budget_used_pct) || 0;
+        const budgetSpentStr = (this.state.data && this.state.data.kpis && this.state.data.kpis.budget_spent_str) || "$0K";
+        const budgetTotalStr = (this.state.data && this.state.data.kpis && this.state.data.kpis.budget_total_str) || "$0K";
+        const subGaugeLeft = createMeterGauge(
+            150, 180, 68, 54,
+            budgetUsedVal,
+            "Budget Used",
+            `${budgetSpentStr} of ${budgetTotalStr}`
+        );
+
+        // Sub Gauge Right: KRA & KPI Execution Health Meter
+        const kraPerfVal = (this.state.data && this.state.data.kpis && this.state.data.kpis.avg_kra_performance) || mainProgressVal;
+        const totalKpis = (this.state.data && this.state.data.kpis && this.state.data.kpis.total_kpis) || 0;
+        const subGaugeRight = createMeterGauge(
+            650, 180, 68, 54,
+            kraPerfVal,
+            "Execution Health",
+            `${totalKpis} Total KPIs Tracked`
+        );
+
+        // Department Gauges for when Department metric is selected
+        const depList = (this.state.data && this.state.data.departments) || [];
+        const depGauges = depList.slice(0, 4).map((dep, idx) => {
+            const depX = 130 + idx * 180;
+            return createMeterGauge(
+                depX, 175, 58, 46,
+                dep.progress || 0,
+                dep.name,
+                `${dep.count} Projects · ${dep.budget_str || ""}`,
+                dep.color
+            );
+        });
+
+        const gaugeView = {
+            mainGauge,
+            subGaugeLeft,
+            subGaugeRight,
+            departmentGauges: depGauges,
+            metric,
+        };
+
         return {
             title,
             metric,
@@ -210,7 +336,28 @@ export class BenjaliDashboard extends Component {
             areaPath,
             totalProjectsCount,
             maxVal,
-            hasData: items.length > 0,
+            hasData: items.length > 0 || (this.state.chartType === "gauge"),
+            gaugeView,
+        };
+    }
+
+    // HELPER FOR MINI SEMI-CIRCULAR METER GAUGES
+    getMiniGauge(value, colorOverride = null) {
+        const val = Math.min(100, Math.max(0, Math.round(Number(value) || 0)));
+        const r = 24;
+        const arcLength = Math.PI * r; // ~75.4
+        const arcOffset = arcLength * (1 - val / 100);
+        const needleAngle = -90 + (val / 100) * 180;
+        let color = colorOverride;
+        if (!color) {
+            color = val >= 75 ? "#10b981" : val >= 40 ? "#f59e0b" : "#ef4444";
+        }
+        return {
+            value: val,
+            needleAngle: needleAngle.toFixed(1),
+            arcLength: arcLength.toFixed(1),
+            arcOffset: arcOffset.toFixed(1),
+            color,
         };
     }
 
@@ -334,6 +481,8 @@ export class BenjaliDashboard extends Component {
                 data.projects = Array.isArray(data.projects) ? data.projects : [];
                 for (const proj of data.projects) {
                     proj.project_manager = proj.project_manager || { name: proj.owner || 'Unassigned', email: '', initials: 'PM', is_assigned: false };
+                    proj.project_responsible = proj.project_responsible || { name: 'Unassigned', email: '', initials: 'PR', is_assigned: false };
+                    proj.employee_performance = Array.isArray(proj.employee_performance) ? proj.employee_performance : [];
                     proj.team_members = Array.isArray(proj.team_members) ? proj.team_members : [];
                     proj.tasks = Array.isArray(proj.tasks) ? proj.tasks : [];
                     proj.activities = Array.isArray(proj.activities) ? proj.activities : [];
@@ -343,7 +492,11 @@ export class BenjaliDashboard extends Component {
                     proj.kras = Array.isArray(proj.kras) ? proj.kras : [];
                     for (const kra of proj.kras) {
                         kra.kpis = Array.isArray(kra.kpis) ? kra.kpis : [];
+                        kra.employees = Array.isArray(kra.employees) ? kra.employees : [];
                     }
+                }
+                if (!this.state.selectedPerformanceProjectId && data.projects.length > 0) {
+                    this.state.selectedPerformanceProjectId = data.projects[0].id;
                 }
                 data.due_next = Array.isArray(data.due_next) ? data.due_next : [];
                 data.stages = Array.isArray(data.stages) ? data.stages : [];
@@ -469,6 +622,79 @@ export class BenjaliDashboard extends Component {
                     kra.kpis = [];
                 }
             }
+        }
+
+        return list;
+    }
+
+    // EMPLOYEE PERFORMANCE GETTERS & METHODS
+    selectPerformanceProject(projectId) {
+        this.state.selectedPerformanceProjectId = Number(projectId);
+    }
+
+    setPerformanceRoleFilter(role) {
+        this.state.performanceRoleFilter = role;
+    }
+
+    onPerformanceSearch(event) {
+        this.state.performanceSearchQuery = (event.target.value || "").toLowerCase().trim();
+    }
+
+    toggleEmpCard(empId) {
+        this.state.expandedEmpCards[empId] = !this.state.expandedEmpCards[empId];
+    }
+
+    openProjectPerformance(projectId) {
+        this.state.selectedPerformanceProjectId = Number(projectId);
+        this.state.activeTab = "performance";
+    }
+
+    async openUser(userId) {
+        if (!userId) return;
+        await this.action.doAction({
+            type: "ir.actions.act_window",
+            name: "Employee Profile",
+            res_model: "res.users",
+            res_id: userId,
+            views: [[false, "form"]],
+            target: "current",
+        });
+    }
+
+    get currentPerformanceProject() {
+        const projects = this.filteredProjects;
+        if (!projects || !projects.length) return null;
+        if (this.state.selectedPerformanceProjectId) {
+            const found = projects.find((p) => p.id === this.state.selectedPerformanceProjectId);
+            if (found) return found;
+        }
+        return projects[0];
+    }
+
+    get currentProjectEmployees() {
+        const project = this.currentPerformanceProject;
+        if (!project || !Array.isArray(project.employee_performance)) return [];
+        let list = project.employee_performance;
+
+        if (this.state.performanceSearchQuery) {
+            const query = this.state.performanceSearchQuery;
+            list = list.filter(
+                (emp) =>
+                    (emp.name && emp.name.toLowerCase().includes(query)) ||
+                    (emp.email && emp.email.toLowerCase().includes(query)) ||
+                    (emp.roles && emp.roles.some((r) => r.toLowerCase().includes(query)))
+            );
+        }
+
+        const rf = this.state.performanceRoleFilter;
+        if (rf === "pm") {
+            list = list.filter((e) => e.is_pm);
+        } else if (rf === "pr") {
+            list = list.filter((e) => e.is_responsible);
+        } else if (rf === "kra") {
+            list = list.filter((e) => e.roles && e.roles.some((r) => r.includes("KRA")));
+        } else if (rf === "kpi") {
+            list = list.filter((e) => (e.roles && e.roles.some((r) => r.includes("KPI"))) || e.kpi_count > 0);
         }
 
         return list;
@@ -833,6 +1059,190 @@ export class BenjaliDashboard extends Component {
                 [false, "form"],
             ],
             domain: [["kpi_id", "=", kpiId]],
+        });
+    }
+
+    // ================= CALENDAR & TASK SCHEDULING GETTERS & METHODS =================
+    get calendarData() {
+        return (this.state.data && this.state.data.calendar) || {};
+    }
+
+    get calendarMonthLabel() {
+        const year = this.state.calendarYear;
+        const month = this.state.calendarMonth;
+        const date = new Date(year, month, 1);
+        return date.toLocaleString("default", { month: "long", year: "numeric" });
+    }
+
+    get calendarDays() {
+        const year = this.state.calendarYear;
+        const month = this.state.calendarMonth;
+        const firstDayOfMonth = new Date(year, month, 1);
+        let startDayOfWeek = firstDayOfMonth.getDay() - 1; // 0=Mon, 6=Sun
+        if (startDayOfWeek === -1) startDayOfWeek = 6;
+
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+        const allEvents = (this.calendarData && this.calendarData.events) || [];
+        const todayStr = this.calendarData.today_str || "";
+
+        const days = [];
+
+        // Previous month padding days
+        for (let i = startDayOfWeek - 1; i >= 0; i--) {
+            const d = daysInPrevMonth - i;
+            const prevM = month === 0 ? 11 : month - 1;
+            const prevY = month === 0 ? year - 1 : year;
+            const dateStr = `${prevY}-${String(prevM + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+            days.push(this._buildDayCell(dateStr, d, false, dateStr === todayStr, allEvents));
+        }
+
+        // Current month days
+        for (let d = 1; d <= daysInMonth; d++) {
+            const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+            days.push(this._buildDayCell(dateStr, d, true, dateStr === todayStr, allEvents));
+        }
+
+        // Next month padding days to reach multiple of 7
+        const totalCells = days.length <= 35 ? 35 : 42;
+        let nextD = 1;
+        while (days.length < totalCells) {
+            const nextM = month === 11 ? 0 : month + 1;
+            const nextY = month === 11 ? year + 1 : year;
+            const dateStr = `${nextY}-${String(nextM + 1).padStart(2, "0")}-${String(nextD).padStart(2, "0")}`;
+            days.push(this._buildDayCell(dateStr, nextD, false, dateStr === todayStr, allEvents));
+            nextD++;
+        }
+
+        return days;
+    }
+
+    _buildDayCell(dateStr, dayNum, isCurrentMonth, isToday, allEvents) {
+        let events = allEvents.filter((e) => e.date === dateStr);
+        const filter = this.state.calendarFilter;
+        if (filter === "pending") {
+            events = events.filter((e) => e.state !== "completed" && e.state !== "cancelled");
+        } else if (filter === "kra") {
+            events = events.filter((e) => e.type === "kra");
+        } else if (filter === "kpi") {
+            events = events.filter((e) => e.type === "kpi");
+        } else if (filter === "today") {
+            events = events.filter((e) => e.is_today);
+        } else if (filter === "tomorrow") {
+            events = events.filter((e) => e.is_tomorrow);
+        } else if (filter === "overdue") {
+            events = events.filter((e) => e.is_overdue);
+        }
+
+        const isSelected = this.state.selectedCalendarDate === dateStr;
+        const hasOverdue = events.some((e) => e.is_overdue);
+        const hasPending = events.some((e) => e.state !== "completed" && e.state !== "cancelled");
+
+        return {
+            dateStr,
+            dayNum,
+            isCurrentMonth,
+            isToday,
+            isSelected,
+            hasOverdue,
+            hasPending,
+            events,
+            eventCount: events.length,
+        };
+    }
+
+    get selectedDateEvents() {
+        if (!this.state.selectedCalendarDate) return [];
+        const allEvents = (this.calendarData && this.calendarData.events) || [];
+        return allEvents.filter((e) => e.date === this.state.selectedCalendarDate);
+    }
+
+    get currentAgendaTasks() {
+        const cal = this.calendarData;
+        const tab = this.state.calendarAgendaTab || "today_pending";
+        if (tab === "today_pending") {
+            return cal.today_pending_tasks || [];
+        } else if (tab === "tomorrow") {
+            return cal.tomorrow_tasks || [];
+        } else if (tab === "overdue") {
+            return cal.overdue_tasks || [];
+        } else if (tab === "today_completed") {
+            return cal.today_completed_tasks || [];
+        } else if (tab === "selected") {
+            return this.selectedDateEvents;
+        }
+        return cal.today_pending_tasks || [];
+    }
+
+    prevMonth() {
+        if (this.state.calendarMonth === 0) {
+            this.state.calendarMonth = 11;
+            this.state.calendarYear -= 1;
+        } else {
+            this.state.calendarMonth -= 1;
+        }
+    }
+
+    nextMonth() {
+        if (this.state.calendarMonth === 11) {
+            this.state.calendarMonth = 0;
+            this.state.calendarYear += 1;
+        } else {
+            this.state.calendarMonth += 1;
+        }
+    }
+
+    todayMonth() {
+        const now = new Date();
+        this.state.calendarYear = now.getFullYear();
+        this.state.calendarMonth = now.getMonth();
+        const todayStr = this.calendarData.today_str || `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+        this.selectCalendarDate(todayStr);
+    }
+
+    setCalendarFilter(filter) {
+        this.state.calendarFilter = filter;
+    }
+
+    setCalendarAgendaTab(tab) {
+        this.state.calendarAgendaTab = tab;
+    }
+
+    selectCalendarDate(dateStr) {
+        this.state.selectedCalendarDate = dateStr;
+        this.state.calendarAgendaTab = "selected";
+    }
+
+    async openCalendarEvent(item) {
+        if (!item) return;
+        if (item.type === "kpi") {
+            await this.openKpi(item.id);
+        } else {
+            await this.openKra(item.id);
+        }
+    }
+
+    async openOdooCalendar(modelType) {
+        const isKpi = modelType === "kpi";
+        const model = isKpi ? "business.project.kpi" : "business.project.kra";
+        const actionName = isKpi ? "KPI Calendar View" : "KRA Calendar View";
+        const domain = [];
+        if (this.state.departmentId) {
+            domain.push(["department_id", "=", this.state.departmentId]);
+        }
+        await this.action.doAction({
+            type: "ir.actions.act_window",
+            name: actionName,
+            res_model: model,
+            views: [
+                [false, "calendar"],
+                [false, "kanban"],
+                [false, "list"],
+                [false, "form"],
+            ],
+            domain: domain,
+            target: "current",
         });
     }
 

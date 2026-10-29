@@ -18,9 +18,9 @@
         "hr_timesheet",
     ],
     "data": [
-        "security/record_rules.xml",
         "security/user_groups.xml",
         "security/ir.model.access.csv",
+        "security/record_rules.xml",
         # "data/project_task_type_data.xml",
         "data/approval_sequence.xml",
         "data/sequence_data.xml",

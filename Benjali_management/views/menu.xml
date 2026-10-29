@@ -1,27 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <!-- ================= PROJECTS & WORKFLOW ================= -->
     <menuitem id="menu_project_action_one" name="Projects" parent="benjali_project_root"
-              action="business_project_action" sequence="2"/>
+              action="business_project_action" sequence="2"
+              groups="Benjali_management.group_Team_lead"/>
 
     <menuitem id="menu_project_stage_one" name="Stages"
-              parent="benjali_project_root" action="action_project_stage_one" sequence="4"/>
+              parent="benjali_project_root" action="action_project_stage_one" sequence="4"
+              groups="Benjali_management.group_project_manager"/>
 
-    <menuitem id="menu_project_approval_action_one" name="Project Approval" parent="benjali_project_root"
-              action="business_project_approval_action" sequence="3" groups="Benjali_management.group_ceo"/>
+    <menuitem id="menu_project_approval_action_one" name="Approval" parent="benjali_project_root"
+              action="business_project_approval_action" sequence="3"
+              groups="Benjali_management.group_Team_lead"/>
 
     <menuitem id="menu_project_department_one" name="Departments" parent="benjali_project_root"
-              action="action_business_departments" sequence="1"/>
+              action="action_business_departments" sequence="1"
+              groups="Benjali_management.group_project_manager"/>
 
     <menuitem id="menu_project_dashboard_one" name="Dashboard" parent="benjali_project_root"
-              action="action_benjali_management_dashboard" sequence="5"/>
+              action="action_benjali_management_dashboard" sequence="5"
+              groups="Benjali_management.group_Team_lead"/>
 
     <!-- ================= KRA MENU ================= -->
     <menuitem id="menu_business_project_kra_root" name="KRAs" parent="benjali_project_root"
               action="business_project_kra_action" sequence="6"/>
 
     <menuitem id="menu_business_project_kra_stages" name="KRA Stages" parent="benjali_project_root"
-              action="action_business_project_kra_stage" sequence="65"/>
+              action="action_business_project_kra_stage" sequence="65"
+              groups="Benjali_management.group_Team_lead"/>
 
     <!-- ================= KPI MENU (SEPARATE DEDICATED MENU) ================= -->
     <menuitem id="menu_business_project_kpi_root" name="KPIs" parent="benjali_project_root"
@@ -30,25 +37,33 @@
     <menuitem id="menu_business_project_kpis" name="All KPIs"
               parent="menu_business_project_kpi_root" action="business_project_kpi_action" sequence="1"/>
 
+    <menuitem id="menu_business_project_kpi_subtasks" name="Subtasks"
+              parent="menu_business_project_kpi_root" action="business_project_kpi_subtask_action" sequence="2"/>
+
     <menuitem id="menu_business_project_kpi_daily" name="Daily Report"
-              parent="menu_business_project_kpi_root" action="business_project_daily_report_action" sequence="2"/>
+              parent="menu_business_project_kpi_root" action="business_project_daily_report_action" sequence="3"
+              groups="Benjali_management.group_Team_lead"/>
 
     <menuitem id="menu_business_project_kpi_weekly" name="Weekly Report"
-              parent="menu_business_project_kpi_root" action="business_project_weekly_report_action" sequence="3"/>
+              parent="menu_business_project_kpi_root" action="business_project_weekly_report_action" sequence="4"
+              groups="Benjali_management.group_Team_lead"/>
 
     <menuitem id="menu_business_project_kpi_monthly" name="Monthly Report"
-              parent="menu_business_project_kpi_root" action="business_project_monthly_report_action" sequence="4"/>
+              parent="menu_business_project_kpi_root" action="business_project_monthly_report_action" sequence="5"
+              groups="Benjali_management.group_Team_lead"/>
 
     <menuitem id="menu_business_project_kra_entries" name="Performance Entries"
-              parent="menu_business_project_kpi_root" action="business_project_kra_entry_action" sequence="10"/>
+              parent="menu_business_project_kpi_root" action="business_project_kra_entry_action" sequence="10"
+              groups="Benjali_management.group_Team_lead"/>
 
     <menuitem id="menu_business_project_kpi_stages" name="KPI Stages"
-              parent="menu_business_project_kpi_root" action="action_business_project_kpi_stage" sequence="20"/>
-
+              parent="menu_business_project_kpi_root" action="action_business_project_kpi_stage" sequence="20"
+              groups="Benjali_management.group_Team_lead"/>
 
     <!-- ================= SOP & IMPLEMENTATION ================= -->
     <menuitem id="menu_business_implementation" name="SOP"
-              parent="benjali_project_root" sequence="8"/>
+              parent="benjali_project_root" sequence="8"
+              groups="Benjali_management.group_Team_lead"/>
 
     <menuitem id="menu_business_project_deliverables" name="Project Deliverables"
               parent="menu_business_implementation" action="business_project_deliverable_action" sequence="1"/>
