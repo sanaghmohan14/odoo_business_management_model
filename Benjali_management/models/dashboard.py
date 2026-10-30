@@ -190,6 +190,7 @@ class BenjaliManagementDashboard(models.AbstractModel):
                         'stage_id': kpi.stage_id.id if kpi.stage_id else False,
                         'stage_name': kpi.stage_id.name if kpi.stage_id else '',
                         'hours_spent': round(kpi.total_hours_spent or 0.0, 1),
+                        'priority': kpi.priority or '0',
                         'timesheet_count': len(kpi.timesheet_ids),
                         'subtask_count': subtask_count,
                         'subtask_completed_count': subtask_completed,
@@ -357,6 +358,7 @@ class BenjaliManagementDashboard(models.AbstractModel):
                         'subtask_count': kpi_item['subtask_count'],
                         'subtask_completed_count': kpi_item['subtask_completed_count'],
                         'hours_spent': kpi_item['hours_spent'],
+                        'priority': kpi_item.get('priority', '0'),
                         'target': kpi_item['target'],
                     }
                     for u_info in kpi_item['employees']:

@@ -98,6 +98,7 @@
                 <field name="sequence" widget="handle"/>
                 <field name="date"/>
                 <field name="name" string="KPI Name"/>
+                <field name="priority" widget="priority" optional="show"/>
                 <field name="kra_id" string="KRA"/>
                 <field name="project_id" string="Project" optional="show"/>
                 <field name="responsible_user_id" string="Project Responsible" widget="many2one_avatar_user" optional="show"/>
@@ -152,6 +153,7 @@
                 <field name="employee_ids"/>
                 <field name="employee_id"/>
                 <field name="state"/>
+                <field name="priority"/>
                 <field name="date"/>
                 <field name="is_daily_repeating"/>
                 <field name="progress"/>
@@ -160,20 +162,23 @@
                 <templates>
                     <t t-name="card">
                         <div class="oe_kanban_global_click p-2">
-                            <!-- Top: State and Repeating badge -->
+                            <!-- Top: Priority, State and Repeating badge -->
                             <div class="d-flex justify-content-between align-items-center mb-1">
-                                <field name="state" widget="badge"
-                                       decoration-muted="state == 'not_started'"
-                                       decoration-warning="state == 'in_progress'"
-                                       decoration-success="state == 'completed'"
-                                       decoration-info="state == 'on_hold'"
-                                       decoration-danger="state == 'cancelled'"/>
-                                <t t-if="record.approval_pending and record.approval_pending.raw_value">
-                                    <span class="badge bg-warning text-dark"><i class="fa fa-clock-o me-1"/> Approval Pending</span>
-                                </t>
-                                <t t-if="record.is_daily_repeating and record.is_daily_repeating.raw_value">
-                                    <span class="badge bg-secondary text-white"><i class="fa fa-refresh me-1" title="Repeating Task"/> Repeating</span>
-                                </t>
+                                <field name="priority" widget="priority"/>
+                                <div class="d-flex align-items-center gap-1">
+                                    <field name="state" widget="badge"
+                                           decoration-muted="state == 'not_started'"
+                                           decoration-warning="state == 'in_progress'"
+                                           decoration-success="state == 'completed'"
+                                           decoration-info="state == 'on_hold'"
+                                           decoration-danger="state == 'cancelled'"/>
+                                    <t t-if="record.approval_pending and record.approval_pending.raw_value">
+                                        <span class="badge bg-warning text-dark"><i class="fa fa-clock-o me-1"/> Approval Pending</span>
+                                    </t>
+                                    <t t-if="record.is_daily_repeating and record.is_daily_repeating.raw_value">
+                                        <span class="badge bg-secondary text-white"><i class="fa fa-refresh me-1" title="Repeating Task"/> Repeating</span>
+                                    </t>
+                                </div>
                             </div>
 
                             <!-- KPI Name -->
@@ -266,7 +271,10 @@
                     </div>
                     <div class="oe_title">
                         <span class="text-muted"><field name="code" readonly="1"/></span>
-                        <h1><field name="name" placeholder="KPI Name"/></h1>
+                        <h1 class="d-flex align-items-center justify-content-between">
+                            <field name="name" placeholder="KPI Name"/>
+                            <field name="priority" widget="priority" class="mr-3"/>
+                        </h1>
                     </div>
                     <group>
                         <group string="Scope &amp; Assignment">
@@ -280,6 +288,7 @@
                             <field name="department_id" readonly="1"/>
                         </group>
                         <group string="Schedule &amp; Progress">
+                            <field name="priority" widget="priority"/>
                             <field name="date"/>
                             <field name="is_daily_repeating" string="Repeating Task" widget="boolean_toggle"/>
                             <field name="recurring_template_id" invisible="not is_daily_repeating or not recurring_template_id" readonly="1"/>
@@ -405,7 +414,11 @@
                 <field name="manager_id"/>
                 <field name="employee_ids"/>
                 <field name="stage_id"/>
+                <field name="priority"/>
                 <field name="date"/>
+                <filter name="filter_starred" string="Starred" domain="[('priority', '!=', '0')]"/>
+                <filter name="filter_high_priority" string="High Priority" domain="[('priority', 'in', ('2', '3'))]"/>
+                <separator/>
                 <filter name="filter_my_kpis" string="My Tasks / KPIs" domain="['|', ('employee_ids', 'in', [uid]), ('employee_id', '=', uid)]"/>
                 <separator/>
                 <filter name="filter_today" string="Today's Tasks" domain="[('is_today', '=', True)]"/>
@@ -424,6 +437,7 @@
                 <filter name="filter_cancelled" string="Cancelled" domain="[('state', '=', 'cancelled')]"/>
                 <separator/>
                 <filter name="group_stage_id" string="Stage" context="{'group_by': 'stage_id'}"/>
+                <filter name="group_priority" string="Priority" context="{'group_by': 'priority'}"/>
                 <filter name="group_state" string="State (Legacy)" context="{'group_by': 'state'}"/>
                 <filter name="group_kra" string="KRA" context="{'group_by': 'kra_id'}"/>
                 <filter name="group_project" string="Project" context="{'group_by': 'project_id'}"/>
@@ -666,6 +680,7 @@
                                 <list editable="bottom">
                                     <field name="sequence" widget="handle"/>
                                     <field name="name" string="KPI Name"/>
+                                    <field name="priority" widget="priority" optional="show"/>
                                     <field name="employee_ids" widget="many2many_tags_avatar" string="Assigned Employees"/>
                                     <field name="is_daily_repeating" string="Repeating?" widget="boolean_toggle"/>
                                     <field name="subtask_count" string="Subtasks" optional="show"/>

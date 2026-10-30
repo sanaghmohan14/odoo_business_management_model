@@ -1252,6 +1252,9 @@
                                                                 <span class="kpi_col_name" t-on-click="() => this.openKpi(kpi.id)" title="Click to view KPI">
                                                                     <i t-if="kpi.is_repeating" class="fa fa-repeat text-info me-1" title="Daily Repeating Task"/>
                                                                     <strong><t t-esc="kpi.name"/></strong>
+                                                                    <span t-if="kpi.priority and kpi.priority !== '0'" class="kpi_priority_pill ms-2" title="Priority">
+                                                                        <i class="fa fa-star text-warning me-1"/><t t-esc="kpi.priority === '3' ? 'Very High' : kpi.priority === '2' ? 'High' : 'Normal'"/>
+                                                                    </span>
                                                                 </span>
 
                                                                 <!-- Assigned Employee -->
@@ -1455,6 +1458,9 @@
                                             <span class="all_kpi_col_name" t-on-click="() => this.openKpi(kpi.id)">
                                                 <i t-if="kpi.is_repeating" class="fa fa-repeat text-info me-1" title="Daily Repeating Task"/>
                                                 <strong><t t-esc="kpi.name"/></strong>
+                                                <span t-if="kpi.priority and kpi.priority !== '0'" class="kpi_priority_pill ms-2" title="Priority">
+                                                    <i class="fa fa-star text-warning me-1"/><t t-esc="kpi.priority === '3' ? 'Very High' : kpi.priority === '2' ? 'High' : 'Normal'"/>
+                                                </span>
                                             </span>
 
                                             <!-- Parent KRA & Project -->
@@ -1606,35 +1612,35 @@
                                         t-att-class="'perf_pill ' + (state.performanceRoleFilter === 'all' ? 'active' : '')"
                                         t-on-click="() => this.setPerformanceRoleFilter('all')"
                                     >
-                                        All (<t t-esc="currentPerformanceProject ? currentPerformanceProject.employee_performance.length : 0"/>)
+                                        <i class="fa fa-th-large me-1"/> All (<t t-esc="currentPerformanceProject ? currentPerformanceProject.employee_performance.length : 0"/>)
                                     </button>
                                     <button
                                         type="button"
                                         t-att-class="'perf_pill ' + (state.performanceRoleFilter === 'pm' ? 'active' : '')"
                                         t-on-click="() => this.setPerformanceRoleFilter('pm')"
                                     >
-                                        Project Manager
+                                        <i class="fa fa-shield me-1"/> Project Manager
                                     </button>
                                     <button
                                         type="button"
                                         t-att-class="'perf_pill ' + (state.performanceRoleFilter === 'pr' ? 'active' : '')"
                                         t-on-click="() => this.setPerformanceRoleFilter('pr')"
                                     >
-                                        Responsible
+                                        <i class="fa fa-user-circle me-1"/> Responsible
                                     </button>
                                     <button
                                         type="button"
                                         t-att-class="'perf_pill ' + (state.performanceRoleFilter === 'kra' ? 'active' : '')"
                                         t-on-click="() => this.setPerformanceRoleFilter('kra')"
                                     >
-                                        Under KRA
+                                        <i class="fa fa-cubes me-1"/> Under KRA (<t t-esc="kraPerformanceSummary.total"/>)
                                     </button>
                                     <button
                                         type="button"
                                         t-att-class="'perf_pill ' + (state.performanceRoleFilter === 'kpi' ? 'active' : '')"
                                         t-on-click="() => this.setPerformanceRoleFilter('kpi')"
                                     >
-                                        KPI Assignees
+                                        <i class="fa fa-tasks me-1"/> KPI Assignees (<t t-esc="kpiPerformanceSummary.assigneeCount"/>)
                                     </button>
                                 </div>
                             </div>
@@ -1642,6 +1648,11 @@
 
                         <!-- MAIN PERFORMANCE CONTENT FOR SELECTED PROJECT -->
                         <t t-if="currentPerformanceProject">
+
+                            <!-- ============================================== -->
+                            <!-- VIEW 1: ALL ROLES OVERVIEW & HIERARCHY CASCADE -->
+                            <!-- ============================================== -->
+                            <t t-if="state.performanceRoleFilter === 'all'">
 
                             <!-- ============================================== -->
                             <!-- 1. WORKFLOW HIERARCHY FLOW BANNER              -->
@@ -2007,6 +2018,9 @@
                                                                     <!-- Name & Code -->
                                                                     <span class="td_name" t-on-click="() => this.openKpi(kpi.id)" title="Click to view KPI">
                                                                         <strong><t t-esc="kpi.name"/></strong>
+                                                                        <span t-if="kpi.priority and kpi.priority !== '0'" class="kpi_priority_pill ms-2" title="Priority">
+                                                                            <i class="fa fa-star text-warning me-1"/><t t-esc="kpi.priority === '3' ? 'Very High' : kpi.priority === '2' ? 'High' : 'Normal'"/>
+                                                                        </span>
                                                                     </span>
 
                                                                     <!-- KRA -->
@@ -2088,7 +2102,663 @@
                                     <p class="text-muted m-0">No employees match your search or filter criteria for this project.</p>
                                 </div>
                             </div>
+                            </t>
 
+                            <!-- ============================================== -->
+                            <!-- VIEW 2: PROJECT MANAGER PERFORMANCE STATISTICS -->
+                            <!-- ============================================== -->
+                            <t t-elif="state.performanceRoleFilter === 'pm'">
+                                <div class="perf_role_view_container">
+                                    <!-- Executive Hero Header -->
+                                    <div class="perf_hero_banner pm_theme">
+                                        <div class="hero_identity_block">
+                                            <div class="hero_avatar_wrapper">
+                                                <div class="hero_big_avatar pm_glow">
+                                                    <t t-esc="currentPerformanceProject.project_manager.initials"/>
+                                                </div>
+                                                <span class="hero_role_badge">Level 1 · Exec</span>
+                                            </div>
+                                            <div class="hero_details_col">
+                                                <div class="d-flex align-items-center gap-2 flex-wrap">
+                                                    <h2 class="hero_person_name" t-on-click="() => this.openUser(currentPerformanceProject.project_manager.id)" title="Click to view manager profile">
+                                                        <t t-esc="currentPerformanceProject.project_manager.name"/>
+                                                    </h2>
+                                                    <span t-att-class="'hero_perf_pill ' + currentPerformanceProject.project_manager.performance_badge">
+                                                        <span class="status_dot"/>
+                                                        <t t-esc="currentPerformanceProject.project_manager.performance_label"/>
+                                                    </span>
+                                                </div>
+                                                <div class="hero_meta_row">
+                                                    <span class="meta_chip"><i class="fa fa-shield text-primary me-1"/>Project Manager</span>
+                                                    <span class="meta_chip"><i class="fa fa-folder-open text-info me-1"/><strong class="text-white"><t t-esc="currentPerformanceProject.name"/></strong></span>
+                                                    <span t-if="currentPerformanceProject.project_manager.email" class="meta_chip"><i class="fa fa-envelope-o me-1"/><t t-esc="currentPerformanceProject.project_manager.email"/></span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="hero_quick_actions">
+                                            <button type="button" class="btn_hero_btn primary" t-on-click="() => this.openProject(currentPerformanceProject.id)">
+                                                <i class="fa fa-external-link me-1"/> Open Project
+                                            </button>
+                                            <button type="button" class="btn_hero_btn secondary" t-on-click="() => this.openUser(currentPerformanceProject.project_manager.id)">
+                                                <i class="fa fa-user me-1"/> Manager Profile
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Executive Delivery Gauge & Explanation Card -->
+                                    <div class="perf_summary_banner pm_card">
+                                        <div class="summary_left_gauge">
+                                            <div class="score_ring_box">
+                                                <span class="ring_score_val text-primary"><t t-esc="currentPerformanceProject.project_manager.performance_score"/>%</span>
+                                                <span class="ring_score_lbl">Delivery Score</span>
+                                            </div>
+                                            <div class="gauge_bars_col">
+                                                <div class="gauge_row">
+                                                    <div class="d-flex justify-content-between text-xs mb-1">
+                                                        <span class="gauge_name"><i class="fa fa-line-chart me-1 text-primary"/>Executive Delivery Score</span>
+                                                        <strong class="text-primary"><t t-esc="currentPerformanceProject.project_manager.performance_score"/>%</strong>
+                                                    </div>
+                                                    <div class="gauge_track">
+                                                        <div class="gauge_fill blue" t-att-style="'width: ' + currentPerformanceProject.project_manager.performance_score + '%;'"/>
+                                                    </div>
+                                                </div>
+                                                <div class="gauge_row">
+                                                    <div class="d-flex justify-content-between text-xs mb-1">
+                                                        <span class="gauge_name"><i class="fa fa-pie-chart me-1 text-success"/>Overall Project Completion</span>
+                                                        <strong class="text-success"><t t-esc="currentPerformanceProject.progress"/>%</strong>
+                                                    </div>
+                                                    <div class="gauge_track">
+                                                        <div class="gauge_fill green" t-att-style="'width: ' + currentPerformanceProject.progress + '%;'"/>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="summary_right_explanation">
+                                            <div class="explanation_title">
+                                                <i class="fa fa-info-circle text-primary me-2"/>
+                                                <span>How Executive Performance is Calculated</span>
+                                            </div>
+                                            <p class="explanation_text">
+                                                As Project Manager, <strong><t t-esc="currentPerformanceProject.project_manager.name"/></strong> is accountable for the end-to-end outcome. The delivery score of <strong class="text-primary"><t t-esc="currentPerformanceProject.project_manager.performance_score"/>%</strong> is calculated from milestone completion (<strong class="text-white"><t t-esc="currentPerformanceProject.progress"/>%</strong>) and total team execution across <strong class="text-white"><t t-esc="currentPerformanceProject.kra_count"/> KRAs</strong> and <strong class="text-white"><t t-esc="currentPerformanceProject.kpi_count"/> KPIs</strong> managed through Project Responsible <strong><t t-esc="currentPerformanceProject.project_responsible.name"/></strong>.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <!-- 6 Executive KPI Metric Cards (Grid) -->
+                                    <div class="perf_stats_cards_grid">
+                                        <div class="metric_card card_blue">
+                                            <div class="card_icon"><i class="fa fa-trophy"/></div>
+                                            <div class="card_content">
+                                                <span class="card_val text-primary"><t t-esc="currentPerformanceProject.project_manager.performance_score"/>%</span>
+                                                <span class="card_title">Delivery Performance Score</span>
+                                                <span class="card_sub">Calculated Executive Index</span>
+                                            </div>
+                                        </div>
+                                        <div class="metric_card card_green">
+                                            <div class="card_icon"><i class="fa fa-pie-chart"/></div>
+                                            <div class="card_content">
+                                                <span class="card_val text-success"><t t-esc="currentPerformanceProject.progress"/>%</span>
+                                                <span class="card_title">Project Milestone Progress</span>
+                                                <span class="card_sub">Overall Completion</span>
+                                            </div>
+                                        </div>
+                                        <div class="metric_card card_amber">
+                                            <div class="card_icon"><i class="fa fa-cubes"/></div>
+                                            <div class="card_content">
+                                                <span class="card_val text-warning"><t t-esc="currentPerformanceProject.kra_count"/></span>
+                                                <span class="card_title">KRAs Overseen</span>
+                                                <span class="card_sub">Key Result Focus Areas</span>
+                                            </div>
+                                        </div>
+                                        <div class="metric_card card_cyan">
+                                            <div class="card_icon"><i class="fa fa-tasks"/></div>
+                                            <div class="card_content">
+                                                <span class="card_val text-info"><t t-esc="currentPerformanceProject.kpi_count"/></span>
+                                                <span class="card_title">Total KPIs in Flow</span>
+                                                <span class="card_sub">Active Project Objectives</span>
+                                            </div>
+                                        </div>
+                                        <div class="metric_card card_indigo">
+                                            <div class="card_icon"><i class="fa fa-check-circle"/></div>
+                                            <div class="card_content">
+                                                <span class="card_val text-white"><t t-esc="currentPerformanceProject.workflow_hierarchy ? currentPerformanceProject.workflow_hierarchy.team_kpis_completed : 0"/> / <t t-esc="currentPerformanceProject.workflow_hierarchy ? currentPerformanceProject.workflow_hierarchy.team_kpis_total : currentPerformanceProject.kpi_count"/></span>
+                                                <span class="card_title">Team KPIs Completed</span>
+                                                <span class="card_sub">Delivered Deliverables</span>
+                                            </div>
+                                        </div>
+                                        <div class="metric_card card_purple">
+                                            <div class="card_icon"><i class="fa fa-users"/></div>
+                                            <div class="card_content">
+                                                <span class="card_val text-purple"><t t-esc="currentPerformanceProject.workflow_hierarchy ? currentPerformanceProject.workflow_hierarchy.employee_count : currentPerformanceProject.team_count"/></span>
+                                                <span class="card_title">Supervised Team Size</span>
+                                                <span class="card_sub">Direct &amp; Frontline Personnel</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Supervised Operational Command (Direct Report) -->
+                                    <div class="perf_command_section">
+                                        <div class="section_title_bar">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div class="section_icon text-success"><i class="fa fa-sitemap"/></div>
+                                                <div>
+                                                    <h4 class="section_main_heading">Supervised Operational Command</h4>
+                                                    <span class="section_sub_heading">Level 2 Operational Lead reporting directly to this Project Manager</span>
+                                                </div>
+                                            </div>
+                                            <button type="button" class="btn_section_act" t-on-click="() => this.setPerformanceRoleFilter('pr')">
+                                                <i class="fa fa-user-circle me-1"/> Switch to Responsible View
+                                            </button>
+                                        </div>
+
+                                        <div class="command_lead_card">
+                                            <div class="lead_avatar_col">
+                                                <div class="lead_avatar_circle resp_glow">
+                                                    <t t-esc="currentPerformanceProject.project_responsible.initials"/>
+                                                </div>
+                                            </div>
+                                            <div class="lead_info_col">
+                                                <div class="d-flex align-items-center gap-2 flex-wrap">
+                                                    <span class="hierarchy_level_pill">Level 2 · Operational Lead</span>
+                                                    <h3 class="lead_display_name" t-on-click="() => this.openUser(currentPerformanceProject.project_responsible.id)" title="Click to view responsible profile">
+                                                        <t t-esc="currentPerformanceProject.project_responsible.name"/>
+                                                    </h3>
+                                                    <span t-att-class="'hero_perf_pill ' + currentPerformanceProject.project_responsible.performance_badge">
+                                                        <t t-esc="currentPerformanceProject.project_responsible.performance_label"/>
+                                                    </span>
+                                                </div>
+                                                <p class="lead_role_desc mb-0 mt-1">
+                                                    Directly manages <strong class="text-white"><t t-esc="currentPerformanceProject.project_responsible.subordinate_employees_count"/> assigned employees</strong> and monitors day-to-day task deliverables under this project.
+                                                </p>
+                                            </div>
+                                            <div class="lead_stats_col">
+                                                <div class="lead_stat_unit">
+                                                    <span class="stat_unit_val text-success"><t t-esc="currentPerformanceProject.project_responsible.performance_score"/>%</span>
+                                                    <span class="stat_unit_lbl">Operational Score</span>
+                                                </div>
+                                                <div class="lead_stat_unit">
+                                                    <span class="stat_unit_val text-warning"><t t-esc="currentPerformanceProject.project_responsible.subordinate_employees_count"/></span>
+                                                    <span class="stat_unit_lbl">Subordinate Team</span>
+                                                </div>
+                                                <div class="lead_stat_unit">
+                                                    <span class="stat_unit_val text-info"><t t-esc="currentPerformanceProject.project_responsible.team_kpi_completed"/> / <t t-esc="currentPerformanceProject.project_responsible.team_kpi_total"/></span>
+                                                    <span class="stat_unit_lbl">KPIs Delivered</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </t>
+
+                            <!-- ============================================== -->
+                            <!-- VIEW 3: PROJECT RESPONSIBLE PERFORMANCE STATS  -->
+                            <!-- ============================================== -->
+                            <t t-elif="state.performanceRoleFilter === 'pr'">
+                                <div class="perf_role_view_container">
+                                    <!-- Responsible Hero Header -->
+                                    <div class="perf_hero_banner resp_theme">
+                                        <div class="hero_identity_block">
+                                            <div class="hero_avatar_wrapper">
+                                                <div class="hero_big_avatar resp_glow">
+                                                    <t t-esc="currentPerformanceProject.project_responsible.initials"/>
+                                                </div>
+                                                <span class="hero_role_badge resp_badge">Level 2 · Lead</span>
+                                            </div>
+                                            <div class="hero_details_col">
+                                                <div class="d-flex align-items-center gap-2 flex-wrap">
+                                                    <h2 class="hero_person_name" t-on-click="() => this.openUser(currentPerformanceProject.project_responsible.id)" title="Click to view responsible profile">
+                                                        <t t-esc="currentPerformanceProject.project_responsible.name"/>
+                                                    </h2>
+                                                    <span t-att-class="'hero_perf_pill ' + currentPerformanceProject.project_responsible.performance_badge">
+                                                        <span class="status_dot"/>
+                                                        <t t-esc="currentPerformanceProject.project_responsible.performance_label"/>
+                                                    </span>
+                                                </div>
+                                                <div class="hero_meta_row">
+                                                    <span class="meta_chip"><i class="fa fa-user-circle text-success me-1"/>Project Responsible</span>
+                                                    <span class="meta_chip"><i class="fa fa-shield text-primary me-1"/>Supervised by PM: <strong class="text-white"><t t-esc="currentPerformanceProject.project_manager.name"/></strong></span>
+                                                    <span t-if="currentPerformanceProject.project_responsible.email" class="meta_chip"><i class="fa fa-envelope-o me-1"/><t t-esc="currentPerformanceProject.project_responsible.email"/></span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="hero_quick_actions">
+                                            <button type="button" class="btn_hero_btn primary" t-on-click="() => this.openUser(currentPerformanceProject.project_responsible.id)">
+                                                <i class="fa fa-user me-1"/> Responsible Profile
+                                            </button>
+                                            <button type="button" class="btn_hero_btn secondary" t-on-click="() => this.createKpi(false, currentPerformanceProject.id)">
+                                                <i class="fa fa-plus me-1"/> Add KPI Task
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Operational Delivery Gauge & Explanation Card -->
+                                    <div class="perf_summary_banner resp_card">
+                                        <div class="summary_left_gauge">
+                                            <div class="score_ring_box resp_ring">
+                                                <span class="ring_score_val text-success"><t t-esc="currentPerformanceProject.project_responsible.performance_score"/>%</span>
+                                                <span class="ring_score_lbl">Operational Score</span>
+                                            </div>
+                                            <div class="gauge_bars_col">
+                                                <div class="gauge_row">
+                                                    <div class="d-flex justify-content-between text-xs mb-1">
+                                                        <span class="gauge_name"><i class="fa fa-line-chart me-1 text-success"/>Operational Delivery Score</span>
+                                                        <strong class="text-success"><t t-esc="currentPerformanceProject.project_responsible.performance_score"/>%</strong>
+                                                    </div>
+                                                    <div class="gauge_track">
+                                                        <div class="gauge_fill green" t-att-style="'width: ' + currentPerformanceProject.project_responsible.performance_score + '%;'"/>
+                                                    </div>
+                                                </div>
+                                                <div class="gauge_row">
+                                                    <div class="d-flex justify-content-between text-xs mb-1">
+                                                        <span class="gauge_name"><i class="fa fa-users me-1 text-info"/>Frontline Team Average Progress</span>
+                                                        <strong class="text-info"><t t-esc="currentPerformanceProject.workflow_hierarchy ? currentPerformanceProject.workflow_hierarchy.team_avg_progress : currentPerformanceProject.progress"/>%</strong>
+                                                    </div>
+                                                    <div class="gauge_track">
+                                                        <div class="gauge_fill blue" t-att-style="'width: ' + (currentPerformanceProject.workflow_hierarchy ? currentPerformanceProject.workflow_hierarchy.team_avg_progress : currentPerformanceProject.progress) + '%;'"/>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="summary_right_explanation">
+                                            <div class="explanation_title">
+                                                <i class="fa fa-info-circle text-success me-2"/>
+                                                <span>How Operational Performance is Cascaded</span>
+                                            </div>
+                                            <p class="explanation_text">
+                                                Project Responsible <strong><t t-esc="currentPerformanceProject.project_responsible.name"/></strong> is the frontline operational supervisor. Their score (<strong class="text-success"><t t-esc="currentPerformanceProject.project_responsible.performance_score"/>%</strong>) is calculated directly from the achievements of <strong class="text-white"><t t-esc="currentPerformanceProject.project_responsible.subordinate_employees_count"/> assigned employees</strong> delivering on <strong class="text-white"><t t-esc="currentPerformanceProject.project_responsible.team_kpi_total"/> KPIs</strong>.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <!-- 6 Operational KPI Metric Cards -->
+                                    <div class="perf_stats_cards_grid">
+                                        <div class="metric_card card_green">
+                                            <div class="card_icon"><i class="fa fa-trophy"/></div>
+                                            <div class="card_content">
+                                                <span class="card_val text-success"><t t-esc="currentPerformanceProject.project_responsible.performance_score"/>%</span>
+                                                <span class="card_title">Operational Delivery Score</span>
+                                                <span class="card_sub">Cascaded From Frontline Team</span>
+                                            </div>
+                                        </div>
+                                        <div class="metric_card card_amber">
+                                            <div class="card_icon"><i class="fa fa-users"/></div>
+                                            <div class="card_content">
+                                                <span class="card_val text-warning"><t t-esc="currentPerformanceProject.project_responsible.subordinate_employees_count"/></span>
+                                                <span class="card_title">Directly Managed Employees</span>
+                                                <span class="card_sub">Active Frontline Team Members</span>
+                                            </div>
+                                        </div>
+                                        <div class="metric_card card_cyan">
+                                            <div class="card_icon"><i class="fa fa-check-square-o"/></div>
+                                            <div class="card_content">
+                                                <span class="card_val text-info"><t t-esc="currentPerformanceProject.project_responsible.team_kpi_completed"/> / <t t-esc="currentPerformanceProject.project_responsible.team_kpi_total"/></span>
+                                                <span class="card_title">Team KPIs Delivered</span>
+                                                <span class="card_sub">Completed Deliverables</span>
+                                            </div>
+                                        </div>
+                                        <div class="metric_card card_blue">
+                                            <div class="card_icon"><i class="fa fa-line-chart"/></div>
+                                            <div class="card_content">
+                                                <span class="card_val text-primary"><t t-esc="currentPerformanceProject.workflow_hierarchy ? currentPerformanceProject.workflow_hierarchy.team_avg_progress : currentPerformanceProject.progress"/>%</span>
+                                                <span class="card_title">Team Average Progress</span>
+                                                <span class="card_sub">Frontline Velocity</span>
+                                            </div>
+                                        </div>
+                                        <div class="metric_card card_red">
+                                            <div class="card_icon"><i class="fa fa-clock-o"/></div>
+                                            <div class="card_content">
+                                                <span class="card_val text-white"><t t-esc="Math.max(0, currentPerformanceProject.project_responsible.team_kpi_total - currentPerformanceProject.project_responsible.team_kpi_completed)"/></span>
+                                                <span class="card_title">KPIs Pending Delivery</span>
+                                                <span class="card_sub">Awaiting Completion</span>
+                                            </div>
+                                        </div>
+                                        <div class="metric_card card_purple">
+                                            <div class="card_icon"><i class="fa fa-hourglass-half"/></div>
+                                            <div class="card_content">
+                                                <span class="card_val text-purple"><t t-esc="currentPrEmployee ? currentPrEmployee.total_hours : 0"/>h</span>
+                                                <span class="card_title">Hours Logged</span>
+                                                <span class="card_sub">Responsible Timesheet</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </t>
+
+                            <!-- ============================================== -->
+                            <!-- VIEW 4: UNDER KRA PERFORMANCE STATISTICS       -->
+                            <!-- ============================================== -->
+                            <t t-elif="state.performanceRoleFilter === 'kra'">
+                                <div class="perf_role_view_container">
+                                    <!-- 4 KRA Summary Stat Cards -->
+                                    <div class="perf_role_stat_summary mb-4">
+                                        <div class="summary_stat_card blue_stat">
+                                            <div class="stat_icon_circle"><i class="fa fa-cubes"/></div>
+                                            <div class="stat_info">
+                                                <span class="stat_num"><t t-esc="kraPerformanceSummary.total"/></span>
+                                                <span class="stat_label">Total Key Result Areas</span>
+                                            </div>
+                                        </div>
+                                        <div class="summary_stat_card green_stat">
+                                            <div class="stat_icon_circle"><i class="fa fa-check-circle"/></div>
+                                            <div class="stat_info">
+                                                <span class="stat_num"><t t-esc="kraPerformanceSummary.completed"/></span>
+                                                <span class="stat_label">Completed KRAs</span>
+                                            </div>
+                                        </div>
+                                        <div class="summary_stat_card orange_stat">
+                                            <div class="stat_icon_circle"><i class="fa fa-clock-o"/></div>
+                                            <div class="stat_info">
+                                                <span class="stat_num"><t t-esc="kraPerformanceSummary.ongoing"/></span>
+                                                <span class="stat_label">Active / In Progress KRAs</span>
+                                            </div>
+                                        </div>
+                                        <div class="summary_stat_card purple_stat">
+                                            <div class="stat_icon_circle"><i class="fa fa-line-chart"/></div>
+                                            <div class="stat_info">
+                                                <span class="stat_num"><t t-esc="kraPerformanceSummary.avgProg"/>%</span>
+                                                <span class="stat_label">Average KRA Progress</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- KRA Grid Section -->
+                                    <div class="perf_section_wrapper mb-4">
+                                        <div class="perf_section_head">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div class="perf_head_icon text-primary"><i class="fa fa-cubes"/></div>
+                                                <div>
+                                                    <h4 class="perf_head_title">Key Result Areas under this Project</h4>
+                                                    <span class="perf_head_sub">Review KRA weekly progress, lead managers, targets, and assigned team members</span>
+                                                </div>
+                                            </div>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <button type="button" class="btn_perf_action" t-on-click="() => this.createKra(currentPerformanceProject.id)">
+                                                    <i class="fa fa-plus me-1"/> Add KRA
+                                                </button>
+                                                <button type="button" class="btn_perf_action" t-on-click="openKraKanban">
+                                                    <i class="fa fa-columns me-1"/> KRA Kanban
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div t-if="currentProjectKras and currentProjectKras.length" class="perf_kras_grid">
+                                            <t t-foreach="currentProjectKras" t-as="kra" t-key="kra.id">
+                                                <div class="perf_kra_box">
+                                                    <div class="perf_kra_box_top">
+                                                        <div class="d-flex align-items-center gap-2">
+                                                            <span class="kra_code_tag"><t t-esc="kra.code"/></span>
+                                                            <h5 class="kra_box_title" t-on-click="() => this.openKra(kra.id)" title="Open KRA Form">
+                                                                <t t-esc="kra.name"/>
+                                                            </h5>
+                                                        </div>
+                                                        <span t-att-class="'kra_stage_badge ' + kra.state">
+                                                            <t t-esc="kra.state_label"/>
+                                                        </span>
+                                                    </div>
+
+                                                    <div class="perf_kra_box_meta">
+                                                        <div class="meta_item">
+                                                            <i class="fa fa-user-circle me-1 text-muted"/>
+                                                            <span class="meta_lbl">Lead:</span>
+                                                            <strong class="text-white ms-1"><t t-esc="kra.lead"/></strong>
+                                                        </div>
+                                                        <div class="meta_item">
+                                                            <i class="fa fa-balance-scale me-1 text-muted"/>
+                                                            <span class="meta_lbl">Weight:</span>
+                                                            <strong class="text-white ms-1"><t t-esc="kra.weightage"/>%</strong>
+                                                        </div>
+                                                        <div class="meta_item">
+                                                            <i class="fa fa-tasks me-1 text-muted"/>
+                                                            <span class="meta_lbl">KPIs:</span>
+                                                            <strong class="text-white ms-1"><t t-esc="kra.kpi_count"/></strong>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Progress Bar -->
+                                                    <div class="perf_kra_prog_wrap mt-2">
+                                                        <div class="d-flex justify-content-between align-items-center text-xs mb-1">
+                                                            <span class="text-muted">Target Progress</span>
+                                                            <strong class="text-primary"><t t-esc="kra.weekly_progress"/>%</strong>
+                                                        </div>
+                                                        <div class="perf_kra_prog_track">
+                                                            <div class="perf_kra_prog_fill"
+                                                                 t-att-style="'width: ' + kra.weekly_progress + '%; background-color: ' + (kra.weekly_progress >= 75 ? '#10b981' : kra.weekly_progress >= 40 ? '#3b82f6' : '#f59e0b') + ';'"/>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Employees in KRA -->
+                                                    <div t-if="kra.employees and kra.employees.length" class="perf_kra_members_row mt-3">
+                                                        <span class="members_lbl">Assigned Members:</span>
+                                                        <div class="members_avatars_group">
+                                                            <t t-foreach="kra.employees" t-as="m" t-key="m.id">
+                                                                <span class="mini_avatar" t-att-title="m.name">
+                                                                    <t t-esc="m.name ? m.name.substring(0, 2).toUpperCase() : 'EM'"/>
+                                                                </span>
+                                                            </t>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </t>
+                                        </div>
+                                        <div t-else="" class="perf_empty_state_card">
+                                            <i class="fa fa-cubes fa-2x text-muted mb-2"/>
+                                            <p class="text-muted m-0">No Key Result Areas match your criteria for this project.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </t>
+
+                            <!-- ============================================== -->
+                            <!-- VIEW 5: KPI ASSIGNEES PERFORMANCE STATISTICS   -->
+                            <!-- ============================================== -->
+                            <t t-elif="state.performanceRoleFilter === 'kpi'">
+                                <div class="perf_role_view_container">
+                                    <!-- 4 KPI Summary Stat Cards -->
+                                    <div class="perf_role_stat_summary mb-4">
+                                        <div class="summary_stat_card blue_stat">
+                                            <div class="stat_icon_circle"><i class="fa fa-tasks"/></div>
+                                            <div class="stat_info">
+                                                <span class="stat_num"><t t-esc="kpiPerformanceSummary.total"/></span>
+                                                <span class="stat_label">Total Project KPIs</span>
+                                            </div>
+                                        </div>
+                                        <div class="summary_stat_card green_stat">
+                                            <div class="stat_icon_circle"><i class="fa fa-check-square-o"/></div>
+                                            <div class="stat_info">
+                                                <span class="stat_num"><t t-esc="kpiPerformanceSummary.completed"/></span>
+                                                <span class="stat_label">Completed KPIs</span>
+                                            </div>
+                                        </div>
+                                        <div class="summary_stat_card orange_stat">
+                                            <div class="stat_icon_circle"><i class="fa fa-hourglass-half"/></div>
+                                            <div class="stat_info">
+                                                <span class="stat_num"><t t-esc="kpiPerformanceSummary.pending"/></span>
+                                                <span class="stat_label">Pending / In Progress</span>
+                                            </div>
+                                        </div>
+                                        <div class="summary_stat_card purple_stat">
+                                            <div class="stat_icon_circle"><i class="fa fa-line-chart"/></div>
+                                            <div class="stat_info">
+                                                <span class="stat_num"><t t-esc="kpiPerformanceSummary.avgProg"/>%</span>
+                                                <span class="stat_label">Average KPI Completion</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Frontline KPI Employees Grid -->
+                                    <div class="perf_section_wrapper">
+                                        <div class="perf_section_head">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div class="perf_head_icon text-success"><i class="fa fa-users"/></div>
+                                                <div>
+                                                    <h4 class="perf_head_title">KPI Assigned Frontline Employees</h4>
+                                                    <span class="perf_head_sub">Live KPI delivery scorecard, progress bars, and individual subtasks</span>
+                                                </div>
+                                            </div>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <button type="button" class="btn_perf_action" t-on-click="() => this.createKpi(false, currentPerformanceProject.id)">
+                                                    <i class="fa fa-plus me-1"/> Add KPI
+                                                </button>
+                                                <button type="button" class="btn_perf_action" t-on-click="openKpiKanban">
+                                                    <i class="fa fa-columns me-1"/> KPI Kanban
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div t-if="currentProjectEmployees and currentProjectEmployees.length" class="perf_emp_list_grid">
+                                            <t t-foreach="currentProjectEmployees" t-as="emp" t-key="emp.id">
+                                                <div t-att-class="'perf_employee_card ' + (state.expandedEmpCards[emp.id] ? 'expanded' : '')">
+                                                    <!-- Card Header -->
+                                                    <div class="emp_card_top">
+                                                        <div class="emp_card_avatar_col">
+                                                            <div class="emp_big_avatar">
+                                                                <t t-esc="emp.initials"/>
+                                                            </div>
+                                                        </div>
+                                                        <div class="emp_card_info_col">
+                                                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                                                <h4 class="emp_display_name" t-on-click="() => this.openUser(emp.id)" title="Click to view user profile">
+                                                                    <t t-esc="emp.name"/>
+                                                                </h4>
+                                                                <span t-att-class="'emp_status_pill ' + emp.performance_badge">
+                                                                    <t t-esc="emp.performance_label"/>
+                                                                </span>
+                                                            </div>
+                                                            <div class="emp_roles_chips">
+                                                                <t t-foreach="emp.roles" t-as="r" t-key="r">
+                                                                    <span class="role_tag"><t t-esc="r"/></span>
+                                                                </t>
+                                                            </div>
+                                                            <span t-if="emp.email" class="emp_contact_email">
+                                                                <i class="fa fa-envelope-o me-1"/><t t-esc="emp.email"/>
+                                                            </span>
+                                                        </div>
+
+                                                        <!-- Score Units -->
+                                                        <div class="emp_card_scores">
+                                                            <div class="score_box">
+                                                                <span class="score_num text-primary"><t t-esc="emp.avg_progress"/>%</span>
+                                                                <span class="score_lbl">Avg KPI Progress</span>
+                                                            </div>
+                                                            <div class="score_box">
+                                                                <span class="score_num text-success"><t t-esc="emp.completed_kpi_count"/>/<t t-esc="emp.kpi_count"/></span>
+                                                                <span class="score_lbl">KPIs Completed</span>
+                                                            </div>
+                                                            <div class="score_box">
+                                                                <span class="score_num text-info"><t t-esc="emp.total_hours"/>h</span>
+                                                                <span class="score_lbl">Hours Logged</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Progress Track Bar -->
+                                                    <div class="emp_card_prog_row">
+                                                        <div class="emp_prog_track">
+                                                            <div
+                                                                class="emp_prog_fill"
+                                                                t-att-style="'width: ' + emp.avg_progress + '%; background-color: ' + (emp.avg_progress >= 75 ? '#10b981' : emp.avg_progress >= 40 ? '#3b82f6' : '#f59e0b') + ';'"
+                                                            />
+                                                        </div>
+                                                        <span class="emp_prog_text">
+                                                            <strong><t t-esc="emp.avg_progress"/>%</strong> Overall KPI Completion
+                                                        </span>
+                                                    </div>
+
+                                                    <!-- KPIs Breakdown Section -->
+                                                    <div class="emp_kpis_breakdown">
+                                                        <div class="breakdown_header" t-on-click="() => this.toggleEmpCard(emp.id)">
+                                                            <div class="d-flex align-items-center gap-2">
+                                                                <i t-att-class="'fa ' + (state.expandedEmpCards[emp.id] ? 'fa-chevron-down' : 'fa-chevron-right') + ' arrow_icon'"/>
+                                                                <span class="breakdown_title fw-bold">Assigned KPIs &amp; Subtasks (<t t-esc="emp.kpi_count"/>)</span>
+                                                            </div>
+                                                            <span class="toggle_hint">
+                                                                <t t-if="state.expandedEmpCards[emp.id]">Collapse</t>
+                                                                <t t-else="">Expand Details</t>
+                                                            </span>
+                                                        </div>
+
+                                                        <!-- Expandable Table of KPIs -->
+                                                        <div t-if="state.expandedEmpCards[emp.id] or emp.kpi_count &lt;= 2" class="breakdown_content">
+                                                            <t t-if="emp.kpis and emp.kpis.length">
+                                                                <div class="perf_kpis_table">
+                                                                    <div class="perf_kpis_thead">
+                                                                        <span class="th_name">KPI (Task)</span>
+                                                                        <span class="th_kra">Under KRA</span>
+                                                                        <span class="th_status">Status</span>
+                                                                        <span class="th_prog">Progress</span>
+                                                                        <span class="th_subtasks">Subtasks</span>
+                                                                        <span class="th_act text-end">Action</span>
+                                                                    </div>
+                                                                    <t t-foreach="emp.kpis" t-as="kpi" t-key="kpi.id">
+                                                                        <div class="perf_kpis_trow">
+                                                                            <span class="td_name" t-on-click="() => this.openKpi(kpi.id)" title="Click to view KPI">
+                                                                                <strong><t t-esc="kpi.name"/></strong>
+                                                                                <span t-if="kpi.priority and kpi.priority !== '0'" class="kpi_priority_pill ms-2" title="Priority">
+                                                                                    <i class="fa fa-star text-warning me-1"/><t t-esc="kpi.priority === '3' ? 'Very High' : kpi.priority === '2' ? 'High' : 'Normal'"/>
+                                                                                </span>
+                                                                            </span>
+                                                                            <span class="td_kra">
+                                                                                <span class="kra_pill_badge"><t t-esc="kpi.kra_name"/></span>
+                                                                            </span>
+                                                                            <span class="td_status" t-on-click.stop="">
+                                                                                <select
+                                                                                    t-att-class="'kpi_stage_select_tag ' + kpi.state"
+                                                                                    t-att-value="kpi.state"
+                                                                                    t-on-change="(ev) => this.setKpiStage(kpi.id, ev.target.value)"
+                                                                                    title="Change KPI stage"
+                                                                                >
+                                                                                    <option value="not_started" t-att-selected="kpi.state == 'not_started' ? 'selected' : undefined">Not Started</option>
+                                                                                    <option value="in_progress" t-att-selected="kpi.state == 'in_progress' ? 'selected' : undefined">In Progress</option>
+                                                                                    <option value="completed" t-att-selected="kpi.state == 'completed' ? 'selected' : undefined">Completed</option>
+                                                                                    <option value="on_hold" t-att-selected="kpi.state == 'on_hold' ? 'selected' : undefined">On Hold</option>
+                                                                                    <option value="cancelled" t-att-selected="kpi.state == 'cancelled' ? 'selected' : undefined">Cancelled</option>
+                                                                                </select>
+                                                                            </span>
+                                                                            <span class="td_prog">
+                                                                                <div class="kpi_progress_bar_wrap">
+                                                                                    <div class="kpi_progress_bar_track">
+                                                                                        <div class="kpi_progress_bar_fill"
+                                                                                             t-att-style="'width: ' + kpi.progress + '%; background-color: ' + (kpi.progress >= 100 ? '#10b981' : kpi.progress >= 50 ? '#3b82f6' : kpi.progress > 0 ? '#f59e0b' : '#94a3b8') + ';'"/>
+                                                                                    </div>
+                                                                                    <span class="kpi_progress_val"><t t-esc="kpi.progress"/>%</span>
+                                                                                </div>
+                                                                            </span>
+                                                                            <span class="td_subtasks">
+                                                                                <t t-if="kpi.subtasks and kpi.subtasks.length">
+                                                                                    <span class="subtasks_count_badge">
+                                                                                        <i class="fa fa-list-ul me-1"/><t t-esc="kpi.completed_subtasks"/>/<t t-esc="kpi.subtasks.length"/>
+                                                                                    </span>
+                                                                                </t>
+                                                                                <t t-else="">
+                                                                                    <span class="text-muted small">-</span>
+                                                                                </t>
+                                                                            </span>
+                                                                            <span class="td_act text-end" t-on-click.stop="">
+                                                                                <button type="button" class="btn_icon_open" t-on-click="() => this.openKpi(kpi.id)" title="Open KPI">
+                                                                                    <i class="fa fa-external-link"/>
+                                                                                </button>
+                                                                            </span>
+                                                                        </div>
+                                                                    </t>
+                                                                </div>
+                                                            </t>
+                                                            <div t-else="" class="text-muted small py-3 px-3">
+                                                                <i class="fa fa-info-circle me-1"/>No KPIs assigned directly to this employee under this project.
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </t>
+                                        </div>
+                                        <div t-else="" class="perf_empty_state_card">
+                                            <i class="fa fa-tasks fa-2x text-muted mb-2"/>
+                                            <p class="text-muted m-0">No KPI assignees match your search criteria for this project.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </t>
                         </t>
                         <div t-else="" class="perf_empty_state_card py-5">
                             <i class="fa fa-folder-open-o fa-3x text-muted mb-3"/>
@@ -2571,7 +3241,13 @@
                                 <div class="cal_card_value"><t t-esc="calendarData.today_pending_count || 0"/></div>
                                 <div class="cal_card_label">Today's Pending Tasks</div>
                                 <div class="cal_card_sub">Due for completion today</div>
-                                <div class="cal_card_footer">
+                                <div
+                                    class="cal_card_footer"
+                                    role="button"
+                                    tabindex="0"
+                                    title="Open full Odoo list view of Today's Pending Tasks"
+                                    t-on-click.stop="() => this.openCalendarTaskList('today_pending')"
+                                >
                                     <span>View list</span>
                                     <i class="fa fa-arrow-right"/>
                                 </div>
@@ -2591,7 +3267,13 @@
                                 <div class="cal_card_value"><t t-esc="calendarData.tomorrow_count || 0"/></div>
                                 <div class="cal_card_label">Tomorrow's Tasks</div>
                                 <div class="cal_card_sub">Upcoming tomorrow</div>
-                                <div class="cal_card_footer">
+                                <div
+                                    class="cal_card_footer"
+                                    role="button"
+                                    tabindex="0"
+                                    title="Open full Odoo list view of Tomorrow's Tasks"
+                                    t-on-click.stop="() => this.openCalendarTaskList('tomorrow')"
+                                >
                                     <span>View list</span>
                                     <i class="fa fa-arrow-right"/>
                                 </div>
@@ -2611,7 +3293,13 @@
                                 <div class="cal_card_value"><t t-esc="calendarData.overdue_count || 0"/></div>
                                 <div class="cal_card_label">Overdue Tasks</div>
                                 <div class="cal_card_sub">Past deadline deliverables</div>
-                                <div class="cal_card_footer">
+                                <div
+                                    class="cal_card_footer"
+                                    role="button"
+                                    tabindex="0"
+                                    title="Open full Odoo list view of Overdue Tasks"
+                                    t-on-click.stop="() => this.openCalendarTaskList('overdue')"
+                                >
                                     <span>View list</span>
                                     <i class="fa fa-arrow-right"/>
                                 </div>
@@ -2631,7 +3319,13 @@
                                 <div class="cal_card_value"><t t-esc="calendarData.today_completed_count || 0"/></div>
                                 <div class="cal_card_label">Completed Today</div>
                                 <div class="cal_card_sub">Finished on schedule</div>
-                                <div class="cal_card_footer">
+                                <div
+                                    class="cal_card_footer"
+                                    role="button"
+                                    tabindex="0"
+                                    title="Open full Odoo list view of Completed Tasks"
+                                    t-on-click.stop="() => this.openCalendarTaskList('today_completed')"
+                                >
                                     <span>View list</span>
                                     <i class="fa fa-arrow-right"/>
                                 </div>
@@ -2768,6 +3462,14 @@
                                             <span class="badge_count red"><t t-esc="calendarData.overdue_count || 0"/></span>
                                         </button>
                                         <button
+                                            type="button"
+                                            t-att-class="'cal_agenda_tab ' + (state.calendarAgendaTab === 'today_completed' ? 'active' : '')"
+                                            t-on-click="() => this.setCalendarAgendaTab('today_completed')"
+                                        >
+                                            Completed Today
+                                            <span class="badge_count green"><t t-esc="calendarData.today_completed_count || 0"/></span>
+                                        </button>
+                                        <button
                                             t-if="state.selectedCalendarDate"
                                             type="button"
                                             t-att-class="'cal_agenda_tab ' + (state.calendarAgendaTab === 'selected' ? 'active' : '')"
@@ -2777,6 +3479,14 @@
                                             <span class="badge_count purple"><t t-esc="selectedDateEvents.length || 0"/></span>
                                         </button>
                                     </div>
+                                    <button
+                                        type="button"
+                                        class="cal_open_full_list_btn"
+                                        t-on-click="() => this.openCalendarTaskList(state.calendarAgendaTab || 'today_pending')"
+                                        title="Open current filtered list in full Odoo List View"
+                                    >
+                                        <i class="fa fa-external-link me-1"/> Open in List View
+                                    </button>
                                 </div>
 
                                 <div class="cal_agenda_subhead">

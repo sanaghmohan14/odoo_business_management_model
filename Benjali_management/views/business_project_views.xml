@@ -281,6 +281,7 @@
                                         <field name="date"/>
                                         <field name="kra_id" domain="parent.id and [('project_id', '=', parent.id)] or []" string="KRA"/>
                                         <field name="name" string="KPI Name"/>
+                                        <field name="priority" widget="priority" optional="show"/>
                                         <field name="employee_ids" widget="many2many_tags_avatar" string="Assigned Employees"/>
                                         <field name="is_daily_repeating" string="Repeating?" widget="boolean_toggle"/>
                                         <field name="progress" widget="progressbar" string="Progress"/>

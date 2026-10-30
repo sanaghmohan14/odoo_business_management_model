@@ -692,12 +692,61 @@ export class BenjaliDashboard extends Component {
         } else if (rf === "pr") {
             list = list.filter((e) => e.is_responsible);
         } else if (rf === "kra") {
-            list = list.filter((e) => e.roles && e.roles.some((r) => r.includes("KRA")));
+            list = list.filter((e) => (e.roles && e.roles.some((r) => r.includes("KRA"))) || (e.kras && e.kras.length > 0));
         } else if (rf === "kpi") {
             list = list.filter((e) => (e.roles && e.roles.some((r) => r.includes("KPI"))) || e.kpi_count > 0);
         }
 
         return list;
+    }
+
+    get currentProjectKras() {
+        const project = this.currentPerformanceProject;
+        if (!project || !Array.isArray(project.kras)) return [];
+        let list = project.kras;
+        if (this.state.performanceSearchQuery) {
+            const query = this.state.performanceSearchQuery;
+            list = list.filter(
+                (k) =>
+                    (k.name && k.name.toLowerCase().includes(query)) ||
+                    (k.code && k.code.toLowerCase().includes(query)) ||
+                    (k.lead && k.lead.toLowerCase().includes(query)) ||
+                    (k.employees && k.employees.some((e) => e.name && e.name.toLowerCase().includes(query)))
+            );
+        }
+        return list;
+    }
+
+    get kraPerformanceSummary() {
+        const kras = (this.currentPerformanceProject && this.currentPerformanceProject.kras) || [];
+        const total = kras.length;
+        const completed = kras.filter((k) => k.state === "completed").length;
+        const ongoing = kras.filter((k) => k.state !== "completed" && k.state !== "cancelled").length;
+        const avgProg = total > 0 ? Math.round(kras.reduce((acc, k) => acc + (Number(k.weekly_progress) || 0), 0) / total) : 0;
+        return { total, completed, ongoing, avgProg };
+    }
+
+    get kpiPerformanceSummary() {
+        const p = this.currentPerformanceProject;
+        if (!p) return { total: 0, completed: 0, pending: 0, avgProg: 0, assigneeCount: 0 };
+        const employees = (p.employee_performance || []).filter((e) => (e.roles && e.roles.some((r) => r.includes("KPI"))) || e.kpi_count > 0);
+        const total = p.kpi_count || 0;
+        const completed = (p.workflow_hierarchy && p.workflow_hierarchy.team_kpis_completed) || 0;
+        const pending = Math.max(0, total - completed);
+        const avgProg = (p.workflow_hierarchy && p.workflow_hierarchy.team_avg_progress) || p.progress || 0;
+        return { total, completed, pending, avgProg, assigneeCount: employees.length };
+    }
+
+    get currentPmEmployee() {
+        const p = this.currentPerformanceProject;
+        if (!p || !Array.isArray(p.employee_performance)) return null;
+        return p.employee_performance.find((e) => e.is_pm) || null;
+    }
+
+    get currentPrEmployee() {
+        const p = this.currentPerformanceProject;
+        if (!p || !Array.isArray(p.employee_performance)) return null;
+        return p.employee_performance.find((e) => e.is_responsible) || null;
     }
 
     // OPEN PROJECT FORM VIEW
@@ -1221,6 +1270,54 @@ export class BenjaliDashboard extends Component {
         } else {
             await this.openKra(item.id);
         }
+    }
+
+    async openCalendarTaskList(filterType) {
+        this.setCalendarAgendaTab(filterType);
+        let actionName = "Deliverables";
+        const domain = [];
+
+        if (this.state.departmentId) {
+            domain.push(["department_id", "=", this.state.departmentId]);
+        }
+
+        if (filterType === "today_pending") {
+            actionName = "Today's Pending Tasks (KPIs)";
+            domain.push(["is_today", "=", true]);
+            domain.push(["state", "not in", ["completed", "cancelled"]]);
+        } else if (filterType === "tomorrow") {
+            actionName = "Tomorrow's Tasks (KPIs)";
+            domain.push(["is_tomorrow", "=", true]);
+            domain.push(["state", "not in", ["completed", "cancelled"]]);
+        } else if (filterType === "overdue") {
+            actionName = "Overdue Tasks (KPIs)";
+            domain.push(["is_overdue", "=", true]);
+        } else if (filterType === "today_completed") {
+            actionName = "Completed Today (KPIs)";
+            domain.push(["is_today", "=", true]);
+            domain.push(["state", "=", "completed"]);
+        } else if (filterType === "selected" && this.state.selectedCalendarDate) {
+            actionName = `Tasks for ${this.state.selectedCalendarDate}`;
+            domain.push(["date", "=", this.state.selectedCalendarDate]);
+        }
+
+        await this.action.doAction({
+            type: "ir.actions.act_window",
+            name: actionName,
+            res_model: "business.project.kpi",
+            views: [
+                [false, "list"],
+                [false, "kanban"],
+                [false, "calendar"],
+                [false, "form"],
+            ],
+            domain: domain,
+            context: {
+                default_department_id: this.state.departmentId || false,
+                search_default_group_stage_id: 1,
+            },
+            target: "current",
+        });
     }
 
     async openOdooCalendar(modelType) {

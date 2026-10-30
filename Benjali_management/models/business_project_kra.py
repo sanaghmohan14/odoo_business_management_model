@@ -788,10 +788,16 @@ class BusinessProjectKPI(models.Model):
     _name = 'business.project.kpi'
     _description = 'Business Project & Department KPI'
     _inherit = ['mail.thread', 'mail.activity.mixin']
-    _order = 'date desc, sequence, id desc'
+    _order = 'priority desc, date desc, sequence, id desc'
 
     name = fields.Char(string='KPI Name', required=True, tracking=True)
     code = fields.Char(string='KPI Code', copy=False, default='New')
+    priority = fields.Selection([
+        ('0', 'Low'),
+        ('1', 'Normal'),
+        ('2', 'High'),
+        ('3', 'Very High'),
+    ], string='Priority', default='0', index=True, tracking=True)
     kra_id = fields.Many2one(
         'business.project.kra', string='KRA', required=True,
         ondelete='cascade', index=True, tracking=True)
