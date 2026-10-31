@@ -113,11 +113,7 @@ class BusinessProject(models.Model):
         tracking=True
     )
 
-    team_member_ids = fields.One2many(
-        'business.project.team',
-        'project_id',
-        string='Team Members'
-    )
+
     #time sheets
     timesheet_ids = fields.One2many(
         'account.analytic.line',
@@ -1024,11 +1020,6 @@ class BusinessProject(models.Model):
                     )
 
             stage_lower = (record.stage_id.name or '').lower()
-            if ('team allocation' in stage_lower or 'team designation' in stage_lower) and not record.team_member_ids:
-                raise UserError(
-                    'Please allocate at least one team member before '
-                    'moving to the next stage.'
-                )
             if 'communication' in stage_lower and not record.communication_created:
                 raise UserError(
                     'Please complete the project communication setup '

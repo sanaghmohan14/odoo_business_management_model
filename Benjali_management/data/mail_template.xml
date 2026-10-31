@@ -78,14 +78,6 @@
                     </p>
                 </t>
 
-                <t t-if="object.team_member_ids">
-                    <h3 style="color: #17365d;">Project Team</h3>
-                    <ul>
-                        <li t-foreach="object.team_member_ids" t-as="member">
-                            <t t-out="member.user_id.name"/> — <t t-out="dict(member._fields['role'].selection).get(member.role, member.role or '')"/>
-                        </li>
-                    </ul>
-                </t>
 
                 <t t-if="object.task_ids">
                     <h3 style="color: #17365d;">Tasks</h3>

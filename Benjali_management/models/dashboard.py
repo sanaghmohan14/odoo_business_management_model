@@ -381,32 +381,42 @@ class BenjaliManagementDashboard(models.AbstractModel):
                         if not any(k['id'] == kpi_item['id'] for k in emp_perf_dict[uid]['kpis']):
                             emp_perf_dict[uid]['kpis'].append(kpi_info)
 
-            # Allocated Team Members
+            # Allocated Team Members (derived from Project Manager, Project Responsible, and Scopes & Tasks)
             team_members = []
-            for tm in p.team_member_ids:
-                role_lbl = dict(tm._fields['role'].selection).get(tm.role, tm.role) if 'role' in tm._fields and tm.role else 'Team Member'
-                tm_name = tm.user_id.name if tm.user_id else 'Member'
-                tm_initials = ''.join([part[0].upper() for part in tm_name.split()[:2]]) if tm_name else 'TM'
+            if p.project_manager_id:
+                pm_u = p.project_manager_id
+                pm_initials = ''.join([part[0].upper() for part in pm_u.name.split()[:2]]) if pm_u.name else 'PM'
                 team_members.append({
-                    'id': tm.id,
-                    'name': tm_name,
-                    'initials': tm_initials,
-                    'role': tm.role or 'other',
-                    'role_label': role_lbl,
-                    'notes': tm.notes or '',
+                    'id': pm_u.id,
+                    'name': pm_u.name,
+                    'initials': pm_initials,
+                    'role': 'project_manager',
+                    'role_label': 'Project Manager',
+                    'notes': '',
                 })
-                if tm.user_id and tm.user_id.id not in emp_perf_dict:
-                    emp_perf_dict[tm.user_id.id] = {
-                        'id': tm.user_id.id,
-                        'name': tm.user_id.name,
-                        'email': tm.user_id.email or '',
-                        'initials': tm_initials,
-                        'roles': [role_lbl],
-                        'is_pm': False,
-                        'is_responsible': False,
-                        'kras': [],
-                        'kpis': [],
-                    }
+            if p.responsible_user_id and p.responsible_user_id != p.project_manager_id:
+                resp_u = p.responsible_user_id
+                resp_initials = ''.join([part[0].upper() for part in resp_u.name.split()[:2]]) if resp_u.name else 'TL'
+                team_members.append({
+                    'id': resp_u.id,
+                    'name': resp_u.name,
+                    'initials': resp_initials,
+                    'role': 'team_lead',
+                    'role_label': 'Project Responsible / Team Lead',
+                    'notes': '',
+                })
+            seen_uids = {tm['id'] for tm in team_members}
+            for uid, emp_data in emp_perf_dict.items():
+                if uid not in seen_uids:
+                    team_members.append({
+                        'id': uid,
+                        'name': emp_data['name'],
+                        'initials': emp_data['initials'],
+                        'role': 'consultant',
+                        'role_label': 'Consultant / Task Assignee',
+                        'notes': '',
+                    })
+                    seen_uids.add(uid)
 
             # 1. Compute frontline employees (team members directly assigned to KRAs and KPIs)
             frontline_employees = []

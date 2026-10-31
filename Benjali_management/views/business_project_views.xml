@@ -334,15 +334,7 @@
                                 </list>
                             </field>
                         </page>
-                        <page string="Team Allocation" invisible="not is_team_allocation_stage">
-                            <field name="team_member_ids">
-                                <list editable="bottom">
-                                    <field name="user_id"/>
-                                    <field name="role"/>
-                                    <field name="notes"/>
-                                </list>
-                            </field>
-                        </page>
+
 <!--                        <page string="Timesheets">-->
 <!--                            <field name="timesheet_ids">-->
 <!--                                <list editable="bottom">-->
