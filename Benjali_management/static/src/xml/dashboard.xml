@@ -19,7 +19,7 @@
                             t-on-click="() => this.setTab('kpi')"
                         >
                             <i class="fa fa-tasks me-1"/>
-                            <span>KRAs &amp; KPIs</span>
+                            <span>Scopes &amp; Tasks</span>
                         </button>
                         <button
                             type="button"
@@ -739,6 +739,16 @@
                                 </button>
                             </div>
 
+                            <!-- Priority Filter Pills (Tab 1) -->
+                            <div class="filter_pill_row priority_pill_row mt-2">
+                                <span class="small text-muted fw-semibold me-1 d-flex align-items-center"><i class="fa fa-star text-warning me-1"/>Priority:</span>
+                                <button type="button" t-att-class="'filter_pill ' + (state.projectPriorityFilter === 'all' ? 'active' : '')" t-on-click="() => this.setProjectPriorityFilter('all')">All (<t t-esc="projectPriorityCounts.all"/>)</button>
+                                <button type="button" t-att-class="'filter_pill ' + (state.projectPriorityFilter === '3' ? 'active' : '')" t-on-click="() => this.setProjectPriorityFilter('3')"><i class="fa fa-star text-warning me-1"/>3 Star (<t t-esc="projectPriorityCounts['3']"/>)</button>
+                                <button type="button" t-att-class="'filter_pill ' + (state.projectPriorityFilter === '2' ? 'active' : '')" t-on-click="() => this.setProjectPriorityFilter('2')"><i class="fa fa-star text-warning me-1"/>2 Star (<t t-esc="projectPriorityCounts['2']"/>)</button>
+                                <button type="button" t-att-class="'filter_pill ' + (state.projectPriorityFilter === '1' ? 'active' : '')" t-on-click="() => this.setProjectPriorityFilter('1')"><i class="fa fa-star text-warning me-1"/>1 Star (<t t-esc="projectPriorityCounts['1']"/>)</button>
+                                <button type="button" t-att-class="'filter_pill ' + (state.projectPriorityFilter === '0' ? 'active' : '')" t-on-click="() => this.setProjectPriorityFilter('0')"><i class="fa fa-star-o text-muted me-1"/>0 Star (<t t-esc="projectPriorityCounts['0']"/>)</button>
+                            </div>
+
                             <!-- Projects Card Rows -->
                             <div class="projects_card_list">
                                 <t t-foreach="filteredProjects" t-as="project" t-key="project.id">
@@ -747,9 +757,21 @@
                                         <div class="project_item_card" t-on-click="() => this.toggleProjectDetails(project.id)">
                                             <!-- Left Info -->
                                             <div class="p_info_col">
-                                                <div class="d-flex align-items-center gap-2">
+                                                <div class="d-flex align-items-center gap-2 flex-wrap">
                                                     <i t-att-class="'fa ' + (state.expandedProjectDetails[project.id] ? 'fa-chevron-down' : 'fa-chevron-right') + ' p_expand_arrow'"/>
                                                     <h4 class="p_title"><t t-esc="project.name"/></h4>
+                                                    <!-- Project Priority Stars -->
+                                                    <div class="project_priority_stars ms-1" t-on-click.stop="" title="Project Priority: Click star to change">
+                                                        <i t-att-class="'priority_star fa ' + (project.priority >= '1' ? 'fa-star active_star' : 'fa-star-o inactive_star')"
+                                                           t-on-click="() => this.setProjectPriority(project.id, project.priority === '1' ? '0' : '1')"
+                                                           title="Priority 1 Star"/>
+                                                        <i t-att-class="'priority_star fa ' + (project.priority >= '2' ? 'fa-star active_star' : 'fa-star-o inactive_star')"
+                                                           t-on-click="() => this.setProjectPriority(project.id, '2')"
+                                                           title="Priority 2 Stars"/>
+                                                        <i t-att-class="'priority_star fa ' + (project.priority >= '3' ? 'fa-star active_star' : 'fa-star-o inactive_star')"
+                                                           t-on-click="() => this.setProjectPriority(project.id, '3')"
+                                                           title="Priority 3 Stars"/>
+                                                    </div>
                                                 </div>
                                                 <div class="p_details">
                                                     <span class="p_dot" t-att-style="'background-color: ' + project.department_color + ';'"/>
@@ -811,10 +833,10 @@
                                                     type="button"
                                                     class="btn_card_add_kra"
                                                     t-on-click="() => this.createKra(project.id)"
-                                                    title="Create new KRA for this project"
+                                                    title="Create new Scope for this project"
                                                 >
                                                     <i class="fa fa-plus me-1"/>
-                                                    <span>KRA</span>
+                                                    <span>Scope</span>
                                                 </button>
                                                 <button
                                                     type="button"
@@ -1045,24 +1067,24 @@
                     <!-- ======================================================== -->
                     <div t-if="state.activeTab === 'kpi'" class="dash_kpi_section">
 
-                        <!-- KPI Summary & Top Action Bar -->
+                        <!-- Task/Scope Summary & Top Action Bar -->
                         <div class="kpi_sub_summary_bar">
                             <div class="kpi_stats_group">
                                 <div class="kpi_summary_stat">
                                     <span class="stat_num"><t t-esc="kpis.total_kras"/></span>
-                                    <span class="stat_lbl">Total KRAs</span>
+                                    <span class="stat_lbl">Total Scopes</span>
                                 </div>
                                 <div class="kpi_summary_stat">
                                     <span class="stat_num text-warning"><t t-esc="kpis.active_kras"/></span>
-                                    <span class="stat_lbl">Active KRAs</span>
+                                    <span class="stat_lbl">Active Scopes</span>
                                 </div>
                                 <div class="kpi_summary_stat">
                                     <span class="stat_num text-success"><t t-esc="kpis.completed_kras || 0"/></span>
-                                    <span class="stat_lbl">Completed KRAs</span>
+                                    <span class="stat_lbl">Completed Scopes</span>
                                 </div>
                                 <div class="kpi_summary_stat">
                                     <span class="stat_num"><t t-esc="kpis.total_kpis"/></span>
-                                    <span class="stat_lbl">Total KPIs</span>
+                                    <span class="stat_lbl">Total Tasks</span>
                                 </div>
                                 <div class="kpi_summary_stat">
                                     <span class="stat_num text-primary"><t t-esc="kpis.avg_kra_performance"/>%</span>
@@ -1074,19 +1096,19 @@
                             <div class="kpi_top_actions_group">
                                 <button type="button" class="btn_kpi_head_action btn_create_kra_head" t-on-click="() => this.createKra()">
                                     <i class="fa fa-plus-circle me-1"/>
-                                    <span>Create KRA</span>
+                                    <span>Create Scope</span>
                                 </button>
                                 <button type="button" class="btn_kpi_head_action btn_create_kpi_head" t-on-click="() => this.createKpi()">
                                     <i class="fa fa-plus-circle me-1"/>
-                                    <span>Create KPI</span>
+                                    <span>Create Task</span>
                                 </button>
-                                <button type="button" class="btn_kpi_head_action btn_kanban_shortcut" t-on-click="openKraKanban" title="Open KRA Kanban Stages View">
+                                <button type="button" class="btn_kpi_head_action btn_kanban_shortcut" t-on-click="openKraKanban" title="Open Scope Kanban Stages View">
                                     <i class="fa fa-columns me-1"/>
-                                    <span>KRA Kanban</span>
+                                    <span>Scope Kanban</span>
                                 </button>
-                                <button type="button" class="btn_kpi_head_action btn_kanban_shortcut" t-on-click="openKpiKanban" title="Open KPI Kanban Stages View">
+                                <button type="button" class="btn_kpi_head_action btn_kanban_shortcut" t-on-click="openKpiKanban" title="Open Task Kanban Stages View">
                                     <i class="fa fa-tasks me-1"/>
-                                    <span>KPI Kanban</span>
+                                    <span>Task Kanban</span>
                                 </button>
                             </div>
                         </div>
@@ -1108,7 +1130,7 @@
                                     t-on-click="() => this.setKpiViewMode('all_kras')"
                                 >
                                     <i class="fa fa-cubes me-1"/>
-                                    <span>All KRAs (<t t-esc="allKras.length"/>)</span>
+                                    <span>All Scopes (<t t-esc="allKras.length"/>)</span>
                                 </button>
                                 <button
                                     type="button"
@@ -1116,28 +1138,94 @@
                                     t-on-click="() => this.setKpiViewMode('all_kpis')"
                                 >
                                     <i class="fa fa-list-check me-1"/>
-                                    <span>All KPIs (<t t-esc="allKpis.length"/>)</span>
+                                    <span>All Tasks (<t t-esc="allKpis.length"/>)</span>
                                 </button>
                             </div>
 
-                            <!-- Stage Filter for All KRAs -->
-                            <div t-if="state.kpiViewMode === 'all_kras'" class="stage_filter_pills">
-                                <button type="button" t-att-class="'filter_pill ' + (state.kraStageFilter === 'all' ? 'active' : '')" t-on-click="() => this.setKraStageFilter('all')">All</button>
-                                <button type="button" t-att-class="'filter_pill ' + (state.kraStageFilter === 'new' ? 'active' : '')" t-on-click="() => this.setKraStageFilter('new')">New</button>
-                                <button type="button" t-att-class="'filter_pill ' + (state.kraStageFilter === 'ongoing' ? 'active' : '')" t-on-click="() => this.setKraStageFilter('ongoing')">Ongoing</button>
-                                <button type="button" t-att-class="'filter_pill ' + (state.kraStageFilter === 'completed' ? 'active' : '')" t-on-click="() => this.setKraStageFilter('completed')">Completed</button>
-                                <button type="button" t-att-class="'filter_pill ' + (state.kraStageFilter === 'on_hold' ? 'active' : '')" t-on-click="() => this.setKraStageFilter('on_hold')">On Hold</button>
+                            <!-- Priority Filter for Projects (By Project View) -->
+                            <div t-if="state.kpiViewMode === 'projects'" class="stage_filter_pills project_priority_filters">
+                                <span class="filter_title_tag me-1 small text-muted fw-semibold d-none d-sm-inline-flex align-items-center">
+                                    <i class="fa fa-star text-warning me-1"/>Priority:
+                                </span>
+                                <button type="button" t-att-class="'filter_pill ' + (state.projectPriorityFilter === 'all' ? 'active' : '')" t-on-click="() => this.setProjectPriorityFilter('all')">
+                                    All (<t t-esc="projectPriorityCounts.all"/>)
+                                </button>
+                                <button type="button" t-att-class="'filter_pill ' + (state.projectPriorityFilter === '3' ? 'active' : '')" t-on-click="() => this.setProjectPriorityFilter('3')">
+                                    <i class="fa fa-star text-warning me-1"/>3 Star (<t t-esc="projectPriorityCounts['3']"/>)
+                                </button>
+                                <button type="button" t-att-class="'filter_pill ' + (state.projectPriorityFilter === '2' ? 'active' : '')" t-on-click="() => this.setProjectPriorityFilter('2')">
+                                    <i class="fa fa-star text-warning me-1"/>2 Star (<t t-esc="projectPriorityCounts['2']"/>)
+                                </button>
+                                <button type="button" t-att-class="'filter_pill ' + (state.projectPriorityFilter === '1' ? 'active' : '')" t-on-click="() => this.setProjectPriorityFilter('1')">
+                                    <i class="fa fa-star text-warning me-1"/>1 Star (<t t-esc="projectPriorityCounts['1']"/>)
+                                </button>
+                                <button type="button" t-att-class="'filter_pill ' + (state.projectPriorityFilter === '0' ? 'active' : '')" t-on-click="() => this.setProjectPriorityFilter('0')">
+                                    <i class="fa fa-star-o text-muted me-1"/>0 Star (<t t-esc="projectPriorityCounts['0']"/>)
+                                </button>
                             </div>
 
-                            <!-- Stage Filter for All KPIs -->
-                            <div t-if="state.kpiViewMode === 'all_kpis'" class="stage_filter_pills">
-                                <button type="button" t-att-class="'filter_pill ' + (state.kpiStageFilter === 'all' ? 'active' : '')" t-on-click="() => this.setKpiStageFilter('all')">All</button>
-                                <button type="button" t-att-class="'filter_pill ' + (state.kpiStageFilter === 'not_started' ? 'active' : '')" t-on-click="() => this.setKpiStageFilter('not_started')">Not Started</button>
-                                <button type="button" t-att-class="'filter_pill ' + (state.kpiStageFilter === 'in_progress' ? 'active' : '')" t-on-click="() => this.setKpiStageFilter('in_progress')">In Progress</button>
-                                <button type="button" t-att-class="'filter_pill ' + (state.kpiStageFilter === 'completed' ? 'active' : '')" t-on-click="() => this.setKpiStageFilter('completed')">Completed</button>
-                                <button type="button" t-att-class="'filter_pill ' + (state.kpiStageFilter === 'on_hold' ? 'active' : '')" t-on-click="() => this.setKpiStageFilter('on_hold')">On Hold</button>
-                                <button type="button" t-att-class="'filter_pill ' + (state.kpiStageFilter === 'cancelled' ? 'active' : '')" t-on-click="() => this.setKpiStageFilter('cancelled')">Cancelled</button>
-                            </div>
+                            <!-- Filters for All KRAs (Priority Stars & Stage) -->
+                            <t t-if="state.kpiViewMode === 'all_kras'">
+                                <div class="stage_filter_pills kra_priority_filters me-2">
+                                    <span class="filter_title_tag me-1 small text-muted fw-semibold d-none d-sm-inline-flex align-items-center">
+                                        <i class="fa fa-star text-warning me-1"/>Priority:
+                                    </span>
+                                    <button type="button" t-att-class="'filter_pill ' + (state.kraPriorityFilter === 'all' ? 'active' : '')" t-on-click="() => this.setKraPriorityFilter('all')">
+                                        All (<t t-esc="kraPriorityCounts.all"/>)
+                                    </button>
+                                    <button type="button" t-att-class="'filter_pill ' + (state.kraPriorityFilter === '3' ? 'active' : '')" t-on-click="() => this.setKraPriorityFilter('3')">
+                                        <i class="fa fa-star text-warning me-1"/>3 Star (<t t-esc="kraPriorityCounts['3']"/>)
+                                    </button>
+                                    <button type="button" t-att-class="'filter_pill ' + (state.kraPriorityFilter === '2' ? 'active' : '')" t-on-click="() => this.setKraPriorityFilter('2')">
+                                        <i class="fa fa-star text-warning me-1"/>2 Star (<t t-esc="kraPriorityCounts['2']"/>)
+                                    </button>
+                                    <button type="button" t-att-class="'filter_pill ' + (state.kraPriorityFilter === '1' ? 'active' : '')" t-on-click="() => this.setKraPriorityFilter('1')">
+                                        <i class="fa fa-star text-warning me-1"/>1 Star (<t t-esc="kraPriorityCounts['1']"/>)
+                                    </button>
+                                    <button type="button" t-att-class="'filter_pill ' + (state.kraPriorityFilter === '0' ? 'active' : '')" t-on-click="() => this.setKraPriorityFilter('0')">
+                                        <i class="fa fa-star-o text-muted me-1"/>0 Star (<t t-esc="kraPriorityCounts['0']"/>)
+                                    </button>
+                                </div>
+                                <div class="stage_filter_pills">
+                                    <button type="button" t-att-class="'filter_pill ' + (state.kraStageFilter === 'all' ? 'active' : '')" t-on-click="() => this.setKraStageFilter('all')">All</button>
+                                    <button type="button" t-att-class="'filter_pill ' + (state.kraStageFilter === 'new' ? 'active' : '')" t-on-click="() => this.setKraStageFilter('new')">New</button>
+                                    <button type="button" t-att-class="'filter_pill ' + (state.kraStageFilter === 'ongoing' ? 'active' : '')" t-on-click="() => this.setKraStageFilter('ongoing')">Ongoing</button>
+                                    <button type="button" t-att-class="'filter_pill ' + (state.kraStageFilter === 'completed' ? 'active' : '')" t-on-click="() => this.setKraStageFilter('completed')">Completed</button>
+                                    <button type="button" t-att-class="'filter_pill ' + (state.kraStageFilter === 'on_hold' ? 'active' : '')" t-on-click="() => this.setKraStageFilter('on_hold')">On Hold</button>
+                                </div>
+                            </t>
+
+                            <!-- Filters for All KPIs (Priority Stars & Stage) -->
+                            <t t-if="state.kpiViewMode === 'all_kpis'">
+                                <div class="stage_filter_pills kpi_priority_filters me-2">
+                                    <span class="filter_title_tag me-1 small text-muted fw-semibold d-none d-sm-inline-flex align-items-center">
+                                        <i class="fa fa-star text-warning me-1"/>Priority:
+                                    </span>
+                                    <button type="button" t-att-class="'filter_pill ' + (state.kpiPriorityFilter === 'all' ? 'active' : '')" t-on-click="() => this.setKpiPriorityFilter('all')">
+                                        All (<t t-esc="kpiPriorityCounts.all"/>)
+                                    </button>
+                                    <button type="button" t-att-class="'filter_pill ' + (state.kpiPriorityFilter === '3' ? 'active' : '')" t-on-click="() => this.setKpiPriorityFilter('3')">
+                                        <i class="fa fa-star text-warning me-1"/>3 Star (<t t-esc="kpiPriorityCounts['3']"/>)
+                                    </button>
+                                    <button type="button" t-att-class="'filter_pill ' + (state.kpiPriorityFilter === '2' ? 'active' : '')" t-on-click="() => this.setKpiPriorityFilter('2')">
+                                        <i class="fa fa-star text-warning me-1"/>2 Star (<t t-esc="kpiPriorityCounts['2']"/>)
+                                    </button>
+                                    <button type="button" t-att-class="'filter_pill ' + (state.kpiPriorityFilter === '1' ? 'active' : '')" t-on-click="() => this.setKpiPriorityFilter('1')">
+                                        <i class="fa fa-star text-warning me-1"/>1 Star (<t t-esc="kpiPriorityCounts['1']"/>)
+                                    </button>
+                                    <button type="button" t-att-class="'filter_pill ' + (state.kpiPriorityFilter === '0' ? 'active' : '')" t-on-click="() => this.setKpiPriorityFilter('0')">
+                                        <i class="fa fa-star-o text-muted me-1"/>0 Star (<t t-esc="kpiPriorityCounts['0']"/>)
+                                    </button>
+                                </div>
+                                <div class="stage_filter_pills">
+                                    <button type="button" t-att-class="'filter_pill ' + (state.kpiStageFilter === 'all' ? 'active' : '')" t-on-click="() => this.setKpiStageFilter('all')">All</button>
+                                    <button type="button" t-att-class="'filter_pill ' + (state.kpiStageFilter === 'not_started' ? 'active' : '')" t-on-click="() => this.setKpiStageFilter('not_started')">Not Started</button>
+                                    <button type="button" t-att-class="'filter_pill ' + (state.kpiStageFilter === 'in_progress' ? 'active' : '')" t-on-click="() => this.setKpiStageFilter('in_progress')">In Progress</button>
+                                    <button type="button" t-att-class="'filter_pill ' + (state.kpiStageFilter === 'completed' ? 'active' : '')" t-on-click="() => this.setKpiStageFilter('completed')">Completed</button>
+                                    <button type="button" t-att-class="'filter_pill ' + (state.kpiStageFilter === 'on_hold' ? 'active' : '')" t-on-click="() => this.setKpiStageFilter('on_hold')">On Hold</button>
+                                    <button type="button" t-att-class="'filter_pill ' + (state.kpiStageFilter === 'cancelled' ? 'active' : '')" t-on-click="() => this.setKpiStageFilter('cancelled')">Cancelled</button>
+                                </div>
+                            </t>
                         </div>
 
                         <!-- ======================================================== -->
@@ -1149,13 +1237,29 @@
                                     <!-- Project Header Bar -->
                                     <div class="p_kra_header" t-on-click="() => this.toggleProjectKra(project.id)">
                                         <div class="p_kra_title_col">
-                                            <div class="d-flex align-items-center gap-2">
+                                            <div class="d-flex align-items-center gap-2 flex-wrap">
                                                 <i t-att-class="'fa ' + (state.expandedProjects[project.id] ? 'fa-chevron-down' : 'fa-chevron-right') + ' chevron_icon'"/>
                                                 <h3 class="m-0 fs-5 fw-bold"><t t-esc="project.name"/></h3>
                                                 <span class="badge_pill" t-att-style="'background-color: ' + project.department_color + '22; color: ' + project.department_color + '; border: 1px solid ' + project.department_color + '44;'"><t t-esc="project.department_name"/></span>
+
+                                                <!-- Project Priority Interactive Stars Widget -->
+                                                <div class="project_priority_stars ms-1" t-on-click.stop="" title="Project Priority: Click any star to change">
+                                                    <i t-att-class="'priority_star fa ' + (project.priority >= '1' ? 'fa-star active_star' : 'fa-star-o inactive_star')"
+                                                       t-on-click="() => this.setProjectPriority(project.id, project.priority === '1' ? '0' : '1')"
+                                                       title="Priority 1 Star"/>
+                                                    <i t-att-class="'priority_star fa ' + (project.priority >= '2' ? 'fa-star active_star' : 'fa-star-o inactive_star')"
+                                                       t-on-click="() => this.setProjectPriority(project.id, '2')"
+                                                       title="Priority 2 Stars"/>
+                                                    <i t-att-class="'priority_star fa ' + (project.priority >= '3' ? 'fa-star active_star' : 'fa-star-o inactive_star')"
+                                                       t-on-click="() => this.setProjectPriority(project.id, '3')"
+                                                       title="Priority 3 Stars"/>
+                                                    <span t-if="project.priority and project.priority !== '0'" class="priority_num_tag ms-1">
+                                                        <t t-esc="project.priority"/>★
+                                                    </span>
+                                                </div>
                                             </div>
                                             <div class="p_kra_meta small mt-1">
-                                                PM: <strong><t t-esc="project.project_manager.name"/></strong> · KRAs: <strong><t t-esc="project.kra_count"/></strong> · KPIs: <strong><t t-esc="project.kpi_count"/></strong>
+                                                PM: <strong><t t-esc="project.project_manager.name"/></strong> · Scopes: <strong><t t-esc="project.kra_count"/></strong> · Tasks: <strong><t t-esc="project.kpi_count"/></strong>
                                             </div>
                                         </div>
 
@@ -1165,9 +1269,9 @@
                                                     <span class="small text-muted me-1">Progress:</span>
                                                     <strong><t t-esc="project.progress"/>%</strong>
                                                 </div>
-                                                <button type="button" class="btn_proj_add_kra" t-on-click="() => this.createKra(project.id)" title="Add new KRA to this project">
+                                                <button type="button" class="btn_proj_add_kra" t-on-click="() => this.createKra(project.id)" title="Add new Scope to this project">
                                                     <i class="fa fa-plus me-1"/>
-                                                    <span>Add KRA</span>
+                                                    <span>Add Scope</span>
                                                 </button>
                                                 <button type="button" class="btn_view_project" t-on-click="() => this.openProject(project.id)" title="Open project view">
                                                     <span>View Project</span>
@@ -1177,7 +1281,7 @@
                                         </div>
                                     </div>
 
-                                    <!-- Expandable KRAs and KPIs Detail -->
+                                    <!-- Expandable Scopes and Tasks Detail -->
                                     <div t-if="state.expandedProjects[project.id]" class="p_kra_body">
                                         <t t-if="project.kras and project.kras.length">
                                             <t t-foreach="project.kras || []" t-as="kra" t-key="kra.id">
@@ -1185,20 +1289,32 @@
                                                     <div class="kra_row_header">
                                                         <div class="kra_header_left d-flex align-items-center gap-2">
                                                             <i class="fa fa-check-circle text-primary"/>
-                                                            <strong class="kra_name" t-on-click="() => this.openKra(kra.id)" title="Click to view/edit KRA">
+                                                            <strong class="kra_name" t-on-click="() => this.openKra(kra.id)" title="Click to view/edit Scope">
                                                                 <t t-esc="kra.name"/>
                                                             </strong>
-                                                            <span t-if="kra.priority and kra.priority !== '0'" class="kra_priority_pill" title="Priority">
-                                                                <i class="fa fa-star text-warning me-1"/><t t-esc="kra.priority === '3' ? 'Very High' : kra.priority === '2' ? 'High' : 'Normal'"/>
-                                                            </span>
+                                                            <!-- Scope Priority Interactive Stars Widget -->
+                                                            <div class="project_priority_stars ms-1" t-on-click.stop="" title="Scope Priority: Click star to change">
+                                                                <i t-att-class="'priority_star fa ' + (kra.priority >= '1' ? 'fa-star active_star' : 'fa-star-o inactive_star')"
+                                                                   t-on-click="() => this.setKraPriority(kra.id, kra.priority === '1' ? '0' : '1')"
+                                                                   title="Priority 1 Star"/>
+                                                                <i t-att-class="'priority_star fa ' + (kra.priority >= '2' ? 'fa-star active_star' : 'fa-star-o inactive_star')"
+                                                                   t-on-click="() => this.setKraPriority(kra.id, '2')"
+                                                                   title="Priority 2 Stars"/>
+                                                                <i t-att-class="'priority_star fa ' + (kra.priority >= '3' ? 'fa-star active_star' : 'fa-star-o inactive_star')"
+                                                                   t-on-click="() => this.setKraPriority(kra.id, '3')"
+                                                                   title="Priority 3 Stars"/>
+                                                                <span t-if="kra.priority and kra.priority !== '0'" class="priority_num_tag ms-1">
+                                                                    <t t-esc="kra.priority"/>★
+                                                                </span>
+                                                            </div>
 
-                                                            <!-- Interactive KRA Stage Dropdown -->
+                                                            <!-- Interactive Scope Stage Dropdown -->
                                                             <div class="kra_stage_dropdown" t-on-click.stop="">
                                                                 <select
                                                                     class="kra_stage_select"
                                                                     t-att-value="kra.state"
                                                                     t-on-change="(ev) => this.setKraStage(kra.id, ev.target.value)"
-                                                                    title="Change KRA stage"
+                                                                    title="Change Scope stage"
                                                                 >
                                                                     <option value="new">New</option>
                                                                     <option value="ongoing">Ongoing</option>
@@ -1213,22 +1329,22 @@
                                                             <span class="small">Monthly: <strong><t t-esc="kra.monthly_achievement"/>/100</strong></span>
                                                             <span class="small">Lead: <strong><t t-esc="kra.lead"/></strong></span>
 
-                                                            <!-- Inline Action Buttons on KRA -->
+                                                            <!-- Inline Action Buttons on Scope -->
                                                             <div class="kra_btn_group d-flex align-items-center gap-1" t-on-click.stop="">
                                                                 <button
                                                                     type="button"
                                                                     class="btn_kra_add_kpi"
                                                                     t-on-click="() => this.createKpi(kra.id, project.id)"
-                                                                    title="Add KPI (Sub-Task) under this KRA"
+                                                                    title="Add Task under this Scope"
                                                                 >
                                                                     <i class="fa fa-plus me-1"/>
-                                                                    <span>Add KPI</span>
+                                                                    <span>Add Task</span>
                                                                 </button>
                                                                 <button
                                                                     type="button"
                                                                     class="btn_kra_open"
                                                                     t-on-click="() => this.openKra(kra.id)"
-                                                                    title="Open full KRA details"
+                                                                    title="Open full Scope details"
                                                                 >
                                                                     <i class="fa fa-external-link"/>
                                                                 </button>
@@ -1236,10 +1352,10 @@
                                                         </div>
                                                     </div>
 
-                                                    <!-- Sub KPIs List -->
+                                                    <!-- Tasks List -->
                                                     <div t-if="kra.kpis and kra.kpis.length" class="kpi_sub_list">
                                                         <div class="kpi_table_header">
-                                                            <span>KPI</span>
+                                                            <span>Task</span>
                                                             <span>Assigned Employee</span>
                                                             <span>Progress</span>
                                                             <span>Status</span>
@@ -1249,12 +1365,23 @@
                                                         <t t-foreach="kra.kpis || []" t-as="kpi" t-key="kpi.id">
                                                             <div class="kpi_table_row">
                                                                 <!-- KPI Name & Code -->
-                                                                <span class="kpi_col_name" t-on-click="() => this.openKpi(kpi.id)" title="Click to view KPI">
+                                                                <span class="kpi_col_name" t-on-click="() => this.openKpi(kpi.id)" title="Click to view Task">
                                                                     <i t-if="kpi.is_repeating" class="fa fa-repeat text-info me-1" title="Daily Repeating Task"/>
                                                                     <strong><t t-esc="kpi.name"/></strong>
-                                                                    <span t-if="kpi.priority and kpi.priority !== '0'" class="kpi_priority_pill ms-2" title="Priority">
-                                                                        <i class="fa fa-star text-warning me-1"/><t t-esc="kpi.priority === '3' ? 'Very High' : kpi.priority === '2' ? 'High' : 'Normal'"/>
-                                                                    </span>
+                                                                    <div class="project_priority_stars ms-2 d-inline-flex" t-on-click.stop="" title="Task Priority: Click star to change">
+                                                                        <i t-att-class="'priority_star fa ' + (kpi.priority >= '1' ? 'fa-star active_star' : 'fa-star-o inactive_star')"
+                                                                           t-on-click="() => this.setKpiPriority(kpi.id, kpi.priority === '1' ? '0' : '1')"
+                                                                           title="Priority 1 Star"/>
+                                                                        <i t-att-class="'priority_star fa ' + (kpi.priority >= '2' ? 'fa-star active_star' : 'fa-star-o inactive_star')"
+                                                                           t-on-click="() => this.setKpiPriority(kpi.id, '2')"
+                                                                           title="Priority 2 Stars"/>
+                                                                        <i t-att-class="'priority_star fa ' + (kpi.priority >= '3' ? 'fa-star active_star' : 'fa-star-o inactive_star')"
+                                                                           t-on-click="() => this.setKpiPriority(kpi.id, '3')"
+                                                                           title="Priority 3 Stars"/>
+                                                                        <span t-if="kpi.priority and kpi.priority !== '0'" class="priority_num_tag ms-1">
+                                                                            <t t-esc="kpi.priority"/>★
+                                                                        </span>
+                                                                    </div>
                                                                 </span>
 
                                                                 <!-- Assigned Employee -->
@@ -1280,7 +1407,7 @@
                                                                         t-att-class="'kpi_stage_select_tag ' + kpi.state"
                                                                         t-att-value="kpi.state"
                                                                         t-on-change="(ev) => this.setKpiStage(kpi.id, ev.target.value)"
-                                                                        title="Change KPI stage"
+                                                                        title="Change Task stage"
                                                                     >
                                                                         <option value="not_started">Not Started</option>
                                                                         <option value="in_progress">In Progress</option>
@@ -1296,7 +1423,7 @@
                                                                         type="button"
                                                                         class="btn_kpi_log_ts"
                                                                         t-on-click="() => this.logKpiTimesheet(kpi.id, project.id)"
-                                                                        title="Log Timesheet hours on this KPI"
+                                                                        title="Log Timesheet hours on this Task"
                                                                     >
                                                                         <i class="fa fa-clock-o me-1"/>
                                                                         <t t-if="kpi.hours_spent > 0">
@@ -1323,7 +1450,7 @@
                                                                         type="button"
                                                                         class="btn_kpi_open_rec"
                                                                         t-on-click="() => this.openKpi(kpi.id)"
-                                                                        title="Open KPI full form"
+                                                                        title="Open Task full form"
                                                                     >
                                                                         <i class="fa fa-external-link"/>
                                                                     </button>
@@ -1333,28 +1460,28 @@
                                                     </div>
                                                     <div t-else="" class="empty_kpi_notice d-flex align-items-center justify-content-between">
                                                         <span class="text-muted small fst-italic">
-                                                            <i class="fa fa-info-circle me-1"/>No sub-tasks (KPIs) under this KRA yet.
+                                                            <i class="fa fa-info-circle me-1"/>No tasks under this Scope yet.
                                                         </span>
                                                         <button
                                                             type="button"
                                                             class="btn_kpi_quick_add"
                                                             t-on-click="() => this.createKpi(kra.id, project.id)"
                                                         >
-                                                            <i class="fa fa-plus me-1"/>Add first KPI
+                                                            <i class="fa fa-plus me-1"/>Add first Task
                                                         </button>
                                                     </div>
                                                 </div>
                                             </t>
                                         </t>
                                         <div t-else="" class="empty_project_kras text-center py-4">
-                                            <p class="text-muted mb-2">No KRAs created for this project yet.</p>
+                                            <p class="text-muted mb-2">No Scopes created for this project yet.</p>
                                             <button
                                                 type="button"
                                                 class="btn_dash_action btn_create_kra_head"
                                                 t-on-click="() => this.createKra(project.id)"
                                             >
                                                 <i class="fa fa-plus-circle me-1"/>
-                                                <span>Create First KRA for this Project</span>
+                                                <span>Create First Scope for this Project</span>
                                             </button>
                                         </div>
                                     </div>
@@ -1375,7 +1502,24 @@
                                     <div class="kra_standalone_card">
                                         <div class="kra_card_top">
                                             <div class="d-flex align-items-center justify-content-between">
-                                                <span class="kra_code_badge"><t t-esc="kra.code"/></span>
+                                                <div class="d-flex align-items-center gap-1">
+                                                    <span class="kra_code_badge"><t t-esc="kra.code"/></span>
+                                                    <!-- KRA Priority Interactive Stars -->
+                                                    <div class="project_priority_stars ms-1" t-on-click.stop="" title="Scope Priority: Click star to change">
+                                                        <i t-att-class="'priority_star fa ' + (kra.priority >= '1' ? 'fa-star active_star' : 'fa-star-o inactive_star')"
+                                                           t-on-click="() => this.setKraPriority(kra.id, kra.priority === '1' ? '0' : '1')"
+                                                           title="Priority 1 Star"/>
+                                                        <i t-att-class="'priority_star fa ' + (kra.priority >= '2' ? 'fa-star active_star' : 'fa-star-o inactive_star')"
+                                                           t-on-click="() => this.setKraPriority(kra.id, '2')"
+                                                           title="Priority 2 Stars"/>
+                                                        <i t-att-class="'priority_star fa ' + (kra.priority >= '3' ? 'fa-star active_star' : 'fa-star-o inactive_star')"
+                                                           t-on-click="() => this.setKraPriority(kra.id, '3')"
+                                                           title="Priority 3 Stars"/>
+                                                        <span t-if="kra.priority and kra.priority !== '0'" class="priority_num_tag ms-1">
+                                                            <t t-esc="kra.priority"/>★
+                                                        </span>
+                                                    </div>
+                                                </div>
                                                 <div class="kra_card_controls" t-on-click.stop="">
                                                     <select
                                                         class="kra_stage_select"
@@ -1408,7 +1552,7 @@
                                             </div>
                                             <div class="kra_card_meta_row mt-2 d-flex justify-content-between small text-muted">
                                                 <span>Lead: <strong><t t-esc="kra.lead"/></strong></span>
-                                                <span>KPIs: <strong><t t-esc="kra.completed_kpi_count"/>/<t t-esc="kra.kpi_count"/></strong></span>
+                                                <span>Tasks: <strong><t t-esc="kra.completed_kpi_count"/>/<t t-esc="kra.kpi_count"/></strong></span>
                                             </div>
                                         </div>
 
@@ -1418,14 +1562,14 @@
                                                 class="btn_card_add_subkpi"
                                                 t-on-click="() => this.createKpi(kra.id, kra.project_id)"
                                             >
-                                                <i class="fa fa-plus me-1"/> KPI
+                                                <i class="fa fa-plus me-1"/> Task
                                             </button>
                                             <button
                                                 type="button"
                                                 class="btn_card_view_subkra"
                                                 t-on-click="() => this.openKra(kra.id)"
                                             >
-                                                View KRA <i class="fa fa-arrow-right ms-1"/>
+                                                View Scope <i class="fa fa-arrow-right ms-1"/>
                                             </button>
                                         </div>
                                     </div>
@@ -1433,7 +1577,7 @@
                             </div>
                             <div t-if="!allKras.length" class="empty_projects_notice">
                                 <i class="fa fa-cubes fa-2x mb-2 text-muted"/>
-                                <p>No KRAs found. Click "Create KRA" to add one.</p>
+                                <p>No Scopes found. Click "Create Scope" to add one.</p>
                             </div>
                         </div>
 
@@ -1443,8 +1587,8 @@
                         <div t-elif="state.kpiViewMode === 'all_kpis'" class="all_kpis_table_container">
                             <div class="all_kpi_table_card">
                                 <div class="all_kpi_table_head">
-                                    <span>KPI Name</span>
-                                    <span>KRA &amp; Project</span>
+                                    <span>Task Name</span>
+                                    <span>Scope &amp; Project</span>
                                     <span>Assigned Employee</span>
                                     <span>Progress (Slider)</span>
                                     <span>Status</span>
@@ -1458,14 +1602,26 @@
                                             <span class="all_kpi_col_name" t-on-click="() => this.openKpi(kpi.id)">
                                                 <i t-if="kpi.is_repeating" class="fa fa-repeat text-info me-1" title="Daily Repeating Task"/>
                                                 <strong><t t-esc="kpi.name"/></strong>
-                                                <span t-if="kpi.priority and kpi.priority !== '0'" class="kpi_priority_pill ms-2" title="Priority">
-                                                    <i class="fa fa-star text-warning me-1"/><t t-esc="kpi.priority === '3' ? 'Very High' : kpi.priority === '2' ? 'High' : 'Normal'"/>
-                                                </span>
+                                                <!-- KPI Priority Interactive Stars Widget -->
+                                                <div class="project_priority_stars ms-2 d-inline-flex" t-on-click.stop="" title="Task Priority: Click star to change">
+                                                    <i t-att-class="'priority_star fa ' + (kpi.priority >= '1' ? 'fa-star active_star' : 'fa-star-o inactive_star')"
+                                                       t-on-click="() => this.setKpiPriority(kpi.id, kpi.priority === '1' ? '0' : '1')"
+                                                       title="Priority 1 Star"/>
+                                                    <i t-att-class="'priority_star fa ' + (kpi.priority >= '2' ? 'fa-star active_star' : 'fa-star-o inactive_star')"
+                                                       t-on-click="() => this.setKpiPriority(kpi.id, '2')"
+                                                       title="Priority 2 Stars"/>
+                                                    <i t-att-class="'priority_star fa ' + (kpi.priority >= '3' ? 'fa-star active_star' : 'fa-star-o inactive_star')"
+                                                       t-on-click="() => this.setKpiPriority(kpi.id, '3')"
+                                                       title="Priority 3 Stars"/>
+                                                    <span t-if="kpi.priority and kpi.priority !== '0'" class="priority_num_tag ms-1">
+                                                        <t t-esc="kpi.priority"/>★
+                                                    </span>
+                                                </div>
                                             </span>
 
                                             <!-- Parent KRA & Project -->
                                             <span class="all_kpi_col_parents">
-                                                <div class="small fw-semibold text-truncate" t-on-click.stop="() => this.openKra(kpi.kra_id)" title="Open KRA">
+                                                <div class="small fw-semibold text-truncate" t-on-click.stop="() => this.openKra(kpi.kra_id)" title="Open Scope">
                                                     <i class="fa fa-check-circle text-primary me-1"/><t t-esc="kpi.kra_name"/>
                                                 </div>
                                                 <div class="text-muted extra-small text-truncate" t-on-click.stop="() => this.openProject(kpi.project_id)" title="Open Project">
@@ -1534,7 +1690,7 @@
                                                     type="button"
                                                     class="btn_kpi_open_rec"
                                                     t-on-click="() => this.openKpi(kpi.id)"
-                                                    title="Open full KPI"
+                                                    title="Open full Task"
                                                 >
                                                     <i class="fa fa-external-link"/>
                                                 </button>
@@ -1542,7 +1698,7 @@
                                         </div>
                                     </t>
                                     <div t-if="!allKpis.length" class="text-center py-5 text-muted">
-                                        No KPIs found. Click "Create KPI" to add one.
+                                        No Tasks found. Click "Create Task" to add one.
                                     </div>
                                 </div>
                             </div>
@@ -1633,14 +1789,14 @@
                                         t-att-class="'perf_pill ' + (state.performanceRoleFilter === 'kra' ? 'active' : '')"
                                         t-on-click="() => this.setPerformanceRoleFilter('kra')"
                                     >
-                                        <i class="fa fa-cubes me-1"/> Under KRA (<t t-esc="kraPerformanceSummary.total"/>)
+                                        <i class="fa fa-cubes me-1"/> Under Scope (<t t-esc="kraPerformanceSummary.total"/>)
                                     </button>
                                     <button
                                         type="button"
                                         t-att-class="'perf_pill ' + (state.performanceRoleFilter === 'kpi' ? 'active' : '')"
                                         t-on-click="() => this.setPerformanceRoleFilter('kpi')"
                                     >
-                                        <i class="fa fa-tasks me-1"/> KPI Assignees (<t t-esc="kpiPerformanceSummary.assigneeCount"/>)
+                                        <i class="fa fa-tasks me-1"/> Task Assignees (<t t-esc="kpiPerformanceSummary.assigneeCount"/>)
                                     </button>
                                 </div>
                             </div>
@@ -1712,9 +1868,9 @@
                                         <div class="step_details">
                                             <span class="step_level_tag">Level 3 · Execution Team</span>
                                             <span class="step_role">Team Employees (<t t-esc="currentPerformanceProject.workflow_hierarchy ? currentPerformanceProject.workflow_hierarchy.employee_count : currentPerformanceProject.team_count"/>)</span>
-                                            <strong class="step_name">Under KRA &amp; KPI Assignees</strong>
+                                            <strong class="step_name">Under Scope &amp; Task Assignees</strong>
                                             <span class="step_perf_badge text-info">
-                                                Avg KPI: <strong><t t-esc="currentPerformanceProject.workflow_hierarchy ? currentPerformanceProject.workflow_hierarchy.team_avg_progress : currentPerformanceProject.progress"/>%</strong> (<t t-esc="currentPerformanceProject.workflow_hierarchy ? currentPerformanceProject.workflow_hierarchy.team_kpis_completed : 0"/>/<t t-esc="currentPerformanceProject.workflow_hierarchy ? currentPerformanceProject.workflow_hierarchy.team_kpis_total : 0"/> Completed)
+                                                Avg Task: <strong><t t-esc="currentPerformanceProject.workflow_hierarchy ? currentPerformanceProject.workflow_hierarchy.team_avg_progress : currentPerformanceProject.progress"/>%</strong> (<t t-esc="currentPerformanceProject.workflow_hierarchy ? currentPerformanceProject.workflow_hierarchy.team_kpis_completed : 0"/>/<t t-esc="currentPerformanceProject.workflow_hierarchy ? currentPerformanceProject.workflow_hierarchy.team_kpis_total : 0"/> Completed)
                                             </span>
                                         </div>
                                     </div>
@@ -1759,11 +1915,11 @@
                                         </div>
                                         <div class="stat_tile">
                                             <span class="val text-success"><t t-esc="currentPerformanceProject.kra_count"/></span>
-                                            <span class="lbl">KRAs Overseen</span>
+                                            <span class="lbl">Scopes Overseen</span>
                                         </div>
                                         <div class="stat_tile">
                                             <span class="val text-info"><t t-esc="currentPerformanceProject.kpi_count"/></span>
-                                            <span class="lbl">Total KPIs in Flow</span>
+                                            <span class="lbl">Total Tasks in Flow</span>
                                         </div>
                                     </div>
                                 </div>
@@ -1806,7 +1962,7 @@
                                         </div>
                                         <div class="stat_tile">
                                             <span class="val text-info"><t t-esc="currentPerformanceProject.project_responsible.team_kpi_completed"/>/<t t-esc="currentPerformanceProject.project_responsible.team_kpi_total"/></span>
-                                            <span class="lbl">Employee KPIs Delivered</span>
+                                            <span class="lbl">Employee Tasks Delivered</span>
                                         </div>
                                     </div>
                                 </div>
@@ -1820,16 +1976,16 @@
                                     <div class="d-flex align-items-center gap-2">
                                         <div class="perf_head_icon text-primary"><i class="fa fa-cubes"/></div>
                                         <div>
-                                            <h4 class="perf_head_title">Under KRA Employees &amp; Leadership</h4>
-                                            <span class="perf_head_sub">Key Result Areas under this project, their Lead Managers, and assigned team members</span>
+                                            <h4 class="perf_head_title">Under Scope Employees &amp; Leadership</h4>
+                                            <span class="perf_head_sub">Scopes under this project, their Lead Managers, and assigned team members</span>
                                         </div>
                                     </div>
                                     <div class="d-flex align-items-center gap-2">
                                         <button type="button" class="btn_perf_action" t-on-click="() => this.createKra(currentPerformanceProject.id)">
-                                            <i class="fa fa-plus me-1"/> Add KRA
+                                            <i class="fa fa-plus me-1"/> Add Scope
                                         </button>
                                         <button type="button" class="btn_perf_action" t-on-click="openKraKanban">
-                                            <i class="fa fa-columns me-1"/> KRA Kanban
+                                            <i class="fa fa-columns me-1"/> Scope Kanban
                                         </button>
                                     </div>
                                 </div>
@@ -1840,7 +1996,7 @@
                                             <div class="perf_kra_box_top">
                                                 <div class="d-flex align-items-center gap-2">
                                                     <span class="kra_code_tag"><t t-esc="kra.code"/></span>
-                                                    <strong class="perf_kra_name" t-on-click="() => this.openKra(kra.id)" title="Click to view KRA">
+                                                    <strong class="perf_kra_name" t-on-click="() => this.openKra(kra.id)" title="Click to view Scope">
                                                         <t t-esc="kra.name"/>
                                                     </strong>
                                                 </div>
@@ -1849,7 +2005,7 @@
 
                                             <!-- Lead / Manager -->
                                             <div class="perf_kra_field_row">
-                                                <span class="perf_field_lbl">KRA Lead:</span>
+                                                <span class="perf_field_lbl">Scope Lead:</span>
                                                 <div class="d-flex align-items-center gap-2">
                                                     <div class="mini_avatar_round"><t t-esc="kra.lead ? kra.lead.substring(0,2).toUpperCase() : 'LD'"/></div>
                                                     <span class="perf_lead_text"><t t-esc="kra.lead"/></span>
@@ -1858,7 +2014,7 @@
 
                                             <!-- Under KRA Assigned Employees -->
                                             <div class="perf_kra_field_row">
-                                                <span class="perf_field_lbl">Under KRA Employees:</span>
+                                                <span class="perf_field_lbl">Under Scope Employees:</span>
                                                 <t t-if="kra.employees and kra.employees.length">
                                                     <div class="perf_chips_container">
                                                         <t t-foreach="kra.employees" t-as="kemp" t-key="kemp.id">
@@ -1870,7 +2026,7 @@
                                                     </div>
                                                 </t>
                                                 <div t-else="" class="text-muted small">
-                                                    <i class="fa fa-info-circle me-1"/>No separate employees assigned under KRA.
+                                                    <i class="fa fa-info-circle me-1"/>No separate employees assigned under Scope.
                                                 </div>
                                             </div>
 
@@ -1883,8 +2039,8 @@
                                                     <span class="perf_val"><t t-esc="kra.weekly_progress"/>%</span>
                                                 </div>
                                                 <div class="perf_meta_right">
-                                                    <span class="small text-muted"><t t-esc="kra.kpi_count"/> KPIs (<t t-esc="kra.completed_kpi_count"/> done)</span>
-                                                    <button type="button" class="btn_icon_open" t-on-click="() => this.openKra(kra.id)" title="Open KRA Form">
+                                                    <span class="small text-muted"><t t-esc="kra.kpi_count"/> Tasks (<t t-esc="kra.completed_kpi_count"/> done)</span>
+                                                    <button type="button" class="btn_icon_open" t-on-click="() => this.openKra(kra.id)" title="Open Scope Form">
                                                         <i class="fa fa-external-link"/>
                                                     </button>
                                                 </div>
@@ -1894,9 +2050,9 @@
                                 </div>
                                 <div t-else="" class="perf_empty_state_card">
                                     <i class="fa fa-cubes fa-2x text-muted mb-2"/>
-                                    <p class="text-muted m-0">No Key Result Areas found for this project.</p>
+                                    <p class="text-muted m-0">No Scopes found for this project.</p>
                                     <button class="btn btn-sm btn-primary mt-2" t-on-click="() => this.createKra(currentPerformanceProject.id)">
-                                        <i class="fa fa-plus me-1"/> Create KRA
+                                        <i class="fa fa-plus me-1"/> Create Scope
                                     </button>
                                 </div>
                             </div>
@@ -1909,16 +2065,16 @@
                                     <div class="d-flex align-items-center gap-2">
                                         <div class="perf_head_icon text-success"><i class="fa fa-tasks"/></div>
                                         <div>
-                                            <h4 class="perf_head_title">KPI Assigned Employees &amp; Live Progress</h4>
-                                            <span class="perf_head_sub">Individual employee scorecard, performance progress bar, assigned KPIs, and subtasks</span>
+                                            <h4 class="perf_head_title">Task Assigned Employees &amp; Live Progress</h4>
+                                            <span class="perf_head_sub">Individual employee scorecard, performance progress bar, assigned Tasks, and subtasks</span>
                                         </div>
                                     </div>
                                     <div class="d-flex align-items-center gap-2">
                                         <button type="button" class="btn_perf_action" t-on-click="() => this.createKpi(false, currentPerformanceProject.id)">
-                                            <i class="fa fa-plus me-1"/> Add KPI
+                                            <i class="fa fa-plus me-1"/> Add Task
                                         </button>
                                         <button type="button" class="btn_perf_action" t-on-click="openKpiKanban">
-                                            <i class="fa fa-columns me-1"/> KPI Kanban
+                                            <i class="fa fa-columns me-1"/> Task Kanban
                                         </button>
                                     </div>
                                 </div>
@@ -1956,11 +2112,11 @@
                                                 <div class="emp_card_scores">
                                                     <div class="score_box">
                                                         <span class="score_num text-primary"><t t-esc="emp.avg_progress"/>%</span>
-                                                        <span class="score_lbl">Avg KPI Progress</span>
+                                                        <span class="score_lbl">Avg Task Progress</span>
                                                     </div>
                                                     <div class="score_box">
                                                         <span class="score_num text-success"><t t-esc="emp.completed_kpi_count"/>/<t t-esc="emp.kpi_count"/></span>
-                                                        <span class="score_lbl">KPIs Completed</span>
+                                                        <span class="score_lbl">Tasks Completed</span>
                                                     </div>
                                                     <div class="score_box">
                                                         <span class="score_num text-info"><t t-esc="emp.total_hours"/>h</span>
@@ -1983,7 +2139,7 @@
                                                         Team Performance (<t t-esc="emp.hierarchy_basis"/>)
                                                     </t>
                                                     <t t-else="">
-                                                        Overall KPI Completion
+                                                        Overall Task Completion
                                                     </t>
                                                 </span>
                                             </div>
@@ -1993,7 +2149,7 @@
                                                 <div class="breakdown_header" t-on-click="() => this.toggleEmpCard(emp.id)">
                                                     <div class="d-flex align-items-center gap-2">
                                                         <i t-att-class="'fa ' + (state.expandedEmpCards[emp.id] ? 'fa-chevron-down' : 'fa-chevron-right') + ' arrow_icon'"/>
-                                                        <span class="breakdown_title fw-bold">Assigned KPIs &amp; Subtasks (<t t-esc="emp.kpi_count"/>)</span>
+                                                        <span class="breakdown_title fw-bold">Assigned Tasks &amp; Subtasks (<t t-esc="emp.kpi_count"/>)</span>
                                                     </div>
                                                     <span class="toggle_hint">
                                                         <t t-if="state.expandedEmpCards[emp.id]">Collapse</t>
@@ -2006,8 +2162,8 @@
                                                     <t t-if="emp.kpis and emp.kpis.length">
                                                         <div class="perf_kpis_table">
                                                             <div class="perf_kpis_thead">
-                                                                <span class="th_name">KPI (Task)</span>
-                                                                <span class="th_kra">Under KRA</span>
+                                                                <span class="th_name">Task</span>
+                                                                <span class="th_kra">Under Scope</span>
                                                                 <span class="th_status">Status</span>
                                                                 <span class="th_prog">Progress</span>
                                                                 <span class="th_subtasks">Subtasks</span>
@@ -2016,7 +2172,7 @@
                                                             <t t-foreach="emp.kpis" t-as="kpi" t-key="kpi.id">
                                                                 <div class="perf_kpis_trow">
                                                                     <!-- Name & Code -->
-                                                                    <span class="td_name" t-on-click="() => this.openKpi(kpi.id)" title="Click to view KPI">
+                                                                    <span class="td_name" t-on-click="() => this.openKpi(kpi.id)" title="Click to view Task">
                                                                         <strong><t t-esc="kpi.name"/></strong>
                                                                         <span t-if="kpi.priority and kpi.priority !== '0'" class="kpi_priority_pill ms-2" title="Priority">
                                                                             <i class="fa fa-star text-warning me-1"/><t t-esc="kpi.priority === '3' ? 'Very High' : kpi.priority === '2' ? 'High' : 'Normal'"/>
@@ -2034,7 +2190,7 @@
                                                                             t-att-class="'kpi_stage_select_tag ' + kpi.state"
                                                                             t-att-value="kpi.state"
                                                                             t-on-change="(ev) => this.setKpiStage(kpi.id, ev.target.value)"
-                                                                            title="Change KPI stage"
+                                                                            title="Change Task stage"
                                                                         >
                                                                             <option value="not_started" t-att-selected="kpi.state == 'not_started' ? 'selected' : undefined">Not Started</option>
                                                                             <option value="in_progress" t-att-selected="kpi.state == 'in_progress' ? 'selected' : undefined">In Progress</option>
@@ -2070,7 +2226,7 @@
 
                                                                     <!-- Action -->
                                                                     <span class="td_act text-end" t-on-click.stop="">
-                                                                        <button type="button" class="btn_icon_open" t-on-click="() => this.openKpi(kpi.id)" title="Open KPI">
+                                                                        <button type="button" class="btn_icon_open" t-on-click="() => this.openKpi(kpi.id)" title="Open Task">
                                                                             <i class="fa fa-external-link"/>
                                                                         </button>
                                                                     </span>
@@ -2085,11 +2241,11 @@
                                                                 <strong class="text-white"><t t-esc="emp.hierarchy_title"/> Leadership Accountability</strong>
                                                             </div>
                                                             <p class="m-0 text-muted">
-                                                                Performance score (<strong class="text-success"><t t-esc="emp.avg_progress"/>%</strong>) is calculated from the execution and achievements of <strong class="text-white"><t t-esc="emp.subordinate_count"/></strong> team employees delivering <strong class="text-white"><t t-esc="emp.kpi_count"/></strong> KPIs under this project.
+                                                                Performance score (<strong class="text-success"><t t-esc="emp.avg_progress"/>%</strong>) is calculated from the execution and achievements of <strong class="text-white"><t t-esc="emp.subordinate_count"/></strong> team employees delivering <strong class="text-white"><t t-esc="emp.kpi_count"/></strong> Tasks under this project.
                                                             </p>
                                                         </t>
                                                         <t t-else="">
-                                                            <i class="fa fa-info-circle me-1"/>No KPIs assigned directly to this employee under this project.
+                                                            <i class="fa fa-info-circle me-1"/>No Tasks assigned directly to this employee under this project.
                                                         </t>
                                                     </div>
                                                 </div>
@@ -2180,7 +2336,7 @@
                                                 <span>How Executive Performance is Calculated</span>
                                             </div>
                                             <p class="explanation_text">
-                                                As Project Manager, <strong><t t-esc="currentPerformanceProject.project_manager.name"/></strong> is accountable for the end-to-end outcome. The delivery score of <strong class="text-primary"><t t-esc="currentPerformanceProject.project_manager.performance_score"/>%</strong> is calculated from milestone completion (<strong class="text-white"><t t-esc="currentPerformanceProject.progress"/>%</strong>) and total team execution across <strong class="text-white"><t t-esc="currentPerformanceProject.kra_count"/> KRAs</strong> and <strong class="text-white"><t t-esc="currentPerformanceProject.kpi_count"/> KPIs</strong> managed through Project Responsible <strong><t t-esc="currentPerformanceProject.project_responsible.name"/></strong>.
+                                                As Project Manager, <strong><t t-esc="currentPerformanceProject.project_manager.name"/></strong> is accountable for the end-to-end outcome. The delivery score of <strong class="text-primary"><t t-esc="currentPerformanceProject.project_manager.performance_score"/>%</strong> is calculated from milestone completion (<strong class="text-white"><t t-esc="currentPerformanceProject.progress"/>%</strong>) and total team execution across <strong class="text-white"><t t-esc="currentPerformanceProject.kra_count"/> Scopes</strong> and <strong class="text-white"><t t-esc="currentPerformanceProject.kpi_count"/> Tasks</strong> managed through Project Responsible <strong><t t-esc="currentPerformanceProject.project_responsible.name"/></strong>.
                                             </p>
                                         </div>
                                     </div>
@@ -2207,7 +2363,7 @@
                                             <div class="card_icon"><i class="fa fa-cubes"/></div>
                                             <div class="card_content">
                                                 <span class="card_val text-warning"><t t-esc="currentPerformanceProject.kra_count"/></span>
-                                                <span class="card_title">KRAs Overseen</span>
+                                                <span class="card_title">Scopes Overseen</span>
                                                 <span class="card_sub">Key Result Focus Areas</span>
                                             </div>
                                         </div>
@@ -2215,7 +2371,7 @@
                                             <div class="card_icon"><i class="fa fa-tasks"/></div>
                                             <div class="card_content">
                                                 <span class="card_val text-info"><t t-esc="currentPerformanceProject.kpi_count"/></span>
-                                                <span class="card_title">Total KPIs in Flow</span>
+                                                <span class="card_title">Total Tasks in Flow</span>
                                                 <span class="card_sub">Active Project Objectives</span>
                                             </div>
                                         </div>
@@ -2223,7 +2379,7 @@
                                             <div class="card_icon"><i class="fa fa-check-circle"/></div>
                                             <div class="card_content">
                                                 <span class="card_val text-white"><t t-esc="currentPerformanceProject.workflow_hierarchy ? currentPerformanceProject.workflow_hierarchy.team_kpis_completed : 0"/> / <t t-esc="currentPerformanceProject.workflow_hierarchy ? currentPerformanceProject.workflow_hierarchy.team_kpis_total : currentPerformanceProject.kpi_count"/></span>
-                                                <span class="card_title">Team KPIs Completed</span>
+                                                <span class="card_title">Team Tasks Completed</span>
                                                 <span class="card_sub">Delivered Deliverables</span>
                                             </div>
                                         </div>
@@ -2283,7 +2439,7 @@
                                                 </div>
                                                 <div class="lead_stat_unit">
                                                     <span class="stat_unit_val text-info"><t t-esc="currentPerformanceProject.project_responsible.team_kpi_completed"/> / <t t-esc="currentPerformanceProject.project_responsible.team_kpi_total"/></span>
-                                                    <span class="stat_unit_lbl">KPIs Delivered</span>
+                                                    <span class="stat_unit_lbl">Tasks Delivered</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -2328,7 +2484,7 @@
                                                 <i class="fa fa-user me-1"/> Responsible Profile
                                             </button>
                                             <button type="button" class="btn_hero_btn secondary" t-on-click="() => this.createKpi(false, currentPerformanceProject.id)">
-                                                <i class="fa fa-plus me-1"/> Add KPI Task
+                                                <i class="fa fa-plus me-1"/> Add Task
                                             </button>
                                         </div>
                                     </div>
@@ -2367,7 +2523,7 @@
                                                 <span>How Operational Performance is Cascaded</span>
                                             </div>
                                             <p class="explanation_text">
-                                                Project Responsible <strong><t t-esc="currentPerformanceProject.project_responsible.name"/></strong> is the frontline operational supervisor. Their score (<strong class="text-success"><t t-esc="currentPerformanceProject.project_responsible.performance_score"/>%</strong>) is calculated directly from the achievements of <strong class="text-white"><t t-esc="currentPerformanceProject.project_responsible.subordinate_employees_count"/> assigned employees</strong> delivering on <strong class="text-white"><t t-esc="currentPerformanceProject.project_responsible.team_kpi_total"/> KPIs</strong>.
+                                                Project Responsible <strong><t t-esc="currentPerformanceProject.project_responsible.name"/></strong> is the frontline operational supervisor. Their score (<strong class="text-success"><t t-esc="currentPerformanceProject.project_responsible.performance_score"/>%</strong>) is calculated directly from the achievements of <strong class="text-white"><t t-esc="currentPerformanceProject.project_responsible.subordinate_employees_count"/> assigned employees</strong> delivering on <strong class="text-white"><t t-esc="currentPerformanceProject.project_responsible.team_kpi_total"/> Tasks</strong>.
                                             </p>
                                         </div>
                                     </div>
@@ -2394,7 +2550,7 @@
                                             <div class="card_icon"><i class="fa fa-check-square-o"/></div>
                                             <div class="card_content">
                                                 <span class="card_val text-info"><t t-esc="currentPerformanceProject.project_responsible.team_kpi_completed"/> / <t t-esc="currentPerformanceProject.project_responsible.team_kpi_total"/></span>
-                                                <span class="card_title">Team KPIs Delivered</span>
+                                                <span class="card_title">Team Tasks Delivered</span>
                                                 <span class="card_sub">Completed Deliverables</span>
                                             </div>
                                         </div>
@@ -2410,7 +2566,7 @@
                                             <div class="card_icon"><i class="fa fa-clock-o"/></div>
                                             <div class="card_content">
                                                 <span class="card_val text-white"><t t-esc="Math.max(0, currentPerformanceProject.project_responsible.team_kpi_total - currentPerformanceProject.project_responsible.team_kpi_completed)"/></span>
-                                                <span class="card_title">KPIs Pending Delivery</span>
+                                                <span class="card_title">Tasks Pending Delivery</span>
                                                 <span class="card_sub">Awaiting Completion</span>
                                             </div>
                                         </div>
@@ -2437,28 +2593,28 @@
                                             <div class="stat_icon_circle"><i class="fa fa-cubes"/></div>
                                             <div class="stat_info">
                                                 <span class="stat_num"><t t-esc="kraPerformanceSummary.total"/></span>
-                                                <span class="stat_label">Total Key Result Areas</span>
+                                                <span class="stat_label">Total Scopes</span>
                                             </div>
                                         </div>
                                         <div class="summary_stat_card green_stat">
                                             <div class="stat_icon_circle"><i class="fa fa-check-circle"/></div>
                                             <div class="stat_info">
                                                 <span class="stat_num"><t t-esc="kraPerformanceSummary.completed"/></span>
-                                                <span class="stat_label">Completed KRAs</span>
+                                                <span class="stat_label">Completed Scopes</span>
                                             </div>
                                         </div>
                                         <div class="summary_stat_card orange_stat">
                                             <div class="stat_icon_circle"><i class="fa fa-clock-o"/></div>
                                             <div class="stat_info">
                                                 <span class="stat_num"><t t-esc="kraPerformanceSummary.ongoing"/></span>
-                                                <span class="stat_label">Active / In Progress KRAs</span>
+                                                <span class="stat_label">Active / In Progress Scopes</span>
                                             </div>
                                         </div>
                                         <div class="summary_stat_card purple_stat">
                                             <div class="stat_icon_circle"><i class="fa fa-line-chart"/></div>
                                             <div class="stat_info">
                                                 <span class="stat_num"><t t-esc="kraPerformanceSummary.avgProg"/>%</span>
-                                                <span class="stat_label">Average KRA Progress</span>
+                                                <span class="stat_label">Average Scope Progress</span>
                                             </div>
                                         </div>
                                     </div>
@@ -2469,16 +2625,16 @@
                                             <div class="d-flex align-items-center gap-2">
                                                 <div class="perf_head_icon text-primary"><i class="fa fa-cubes"/></div>
                                                 <div>
-                                                    <h4 class="perf_head_title">Key Result Areas under this Project</h4>
-                                                    <span class="perf_head_sub">Review KRA weekly progress, lead managers, targets, and assigned team members</span>
+                                                    <h4 class="perf_head_title">Scopes under this Project</h4>
+                                                    <span class="perf_head_sub">Review Scope weekly progress, lead managers, targets, and assigned team members</span>
                                                 </div>
                                             </div>
                                             <div class="d-flex align-items-center gap-2">
                                                 <button type="button" class="btn_perf_action" t-on-click="() => this.createKra(currentPerformanceProject.id)">
-                                                    <i class="fa fa-plus me-1"/> Add KRA
+                                                    <i class="fa fa-plus me-1"/> Add Scope
                                                 </button>
                                                 <button type="button" class="btn_perf_action" t-on-click="openKraKanban">
-                                                    <i class="fa fa-columns me-1"/> KRA Kanban
+                                                    <i class="fa fa-columns me-1"/> Scope Kanban
                                                 </button>
                                             </div>
                                         </div>
@@ -2489,7 +2645,7 @@
                                                     <div class="perf_kra_box_top">
                                                         <div class="d-flex align-items-center gap-2">
                                                             <span class="kra_code_tag"><t t-esc="kra.code"/></span>
-                                                            <h5 class="kra_box_title" t-on-click="() => this.openKra(kra.id)" title="Open KRA Form">
+                                                            <h5 class="kra_box_title" t-on-click="() => this.openKra(kra.id)" title="Open Scope Form">
                                                                 <t t-esc="kra.name"/>
                                                             </h5>
                                                         </div>
@@ -2511,7 +2667,7 @@
                                                         </div>
                                                         <div class="meta_item">
                                                             <i class="fa fa-tasks me-1 text-muted"/>
-                                                            <span class="meta_lbl">KPIs:</span>
+                                                            <span class="meta_lbl">Tasks:</span>
                                                             <strong class="text-white ms-1"><t t-esc="kra.kpi_count"/></strong>
                                                         </div>
                                                     </div>
@@ -2544,7 +2700,7 @@
                                         </div>
                                         <div t-else="" class="perf_empty_state_card">
                                             <i class="fa fa-cubes fa-2x text-muted mb-2"/>
-                                            <p class="text-muted m-0">No Key Result Areas match your criteria for this project.</p>
+                                            <p class="text-muted m-0">No Scopes match your criteria for this project.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -2561,14 +2717,14 @@
                                             <div class="stat_icon_circle"><i class="fa fa-tasks"/></div>
                                             <div class="stat_info">
                                                 <span class="stat_num"><t t-esc="kpiPerformanceSummary.total"/></span>
-                                                <span class="stat_label">Total Project KPIs</span>
+                                                <span class="stat_label">Total Project Tasks</span>
                                             </div>
                                         </div>
                                         <div class="summary_stat_card green_stat">
                                             <div class="stat_icon_circle"><i class="fa fa-check-square-o"/></div>
                                             <div class="stat_info">
                                                 <span class="stat_num"><t t-esc="kpiPerformanceSummary.completed"/></span>
-                                                <span class="stat_label">Completed KPIs</span>
+                                                <span class="stat_label">Completed Tasks</span>
                                             </div>
                                         </div>
                                         <div class="summary_stat_card orange_stat">
@@ -2582,7 +2738,7 @@
                                             <div class="stat_icon_circle"><i class="fa fa-line-chart"/></div>
                                             <div class="stat_info">
                                                 <span class="stat_num"><t t-esc="kpiPerformanceSummary.avgProg"/>%</span>
-                                                <span class="stat_label">Average KPI Completion</span>
+                                                <span class="stat_label">Average Task Completion</span>
                                             </div>
                                         </div>
                                     </div>
@@ -2593,16 +2749,16 @@
                                             <div class="d-flex align-items-center gap-2">
                                                 <div class="perf_head_icon text-success"><i class="fa fa-users"/></div>
                                                 <div>
-                                                    <h4 class="perf_head_title">KPI Assigned Frontline Employees</h4>
-                                                    <span class="perf_head_sub">Live KPI delivery scorecard, progress bars, and individual subtasks</span>
+                                                    <h4 class="perf_head_title">Task Assigned Frontline Employees</h4>
+                                                    <span class="perf_head_sub">Live Task delivery scorecard, progress bars, and individual subtasks</span>
                                                 </div>
                                             </div>
                                             <div class="d-flex align-items-center gap-2">
                                                 <button type="button" class="btn_perf_action" t-on-click="() => this.createKpi(false, currentPerformanceProject.id)">
-                                                    <i class="fa fa-plus me-1"/> Add KPI
+                                                    <i class="fa fa-plus me-1"/> Add Task
                                                 </button>
                                                 <button type="button" class="btn_perf_action" t-on-click="openKpiKanban">
-                                                    <i class="fa fa-columns me-1"/> KPI Kanban
+                                                    <i class="fa fa-columns me-1"/> Task Kanban
                                                 </button>
                                             </div>
                                         </div>
@@ -2640,11 +2796,11 @@
                                                         <div class="emp_card_scores">
                                                             <div class="score_box">
                                                                 <span class="score_num text-primary"><t t-esc="emp.avg_progress"/>%</span>
-                                                                <span class="score_lbl">Avg KPI Progress</span>
+                                                                <span class="score_lbl">Avg Task Progress</span>
                                                             </div>
                                                             <div class="score_box">
                                                                 <span class="score_num text-success"><t t-esc="emp.completed_kpi_count"/>/<t t-esc="emp.kpi_count"/></span>
-                                                                <span class="score_lbl">KPIs Completed</span>
+                                                                <span class="score_lbl">Tasks Completed</span>
                                                             </div>
                                                             <div class="score_box">
                                                                 <span class="score_num text-info"><t t-esc="emp.total_hours"/>h</span>
@@ -2662,7 +2818,7 @@
                                                             />
                                                         </div>
                                                         <span class="emp_prog_text">
-                                                            <strong><t t-esc="emp.avg_progress"/>%</strong> Overall KPI Completion
+                                                            <strong><t t-esc="emp.avg_progress"/>%</strong> Overall Task Completion
                                                         </span>
                                                     </div>
 
@@ -2671,7 +2827,7 @@
                                                         <div class="breakdown_header" t-on-click="() => this.toggleEmpCard(emp.id)">
                                                             <div class="d-flex align-items-center gap-2">
                                                                 <i t-att-class="'fa ' + (state.expandedEmpCards[emp.id] ? 'fa-chevron-down' : 'fa-chevron-right') + ' arrow_icon'"/>
-                                                                <span class="breakdown_title fw-bold">Assigned KPIs &amp; Subtasks (<t t-esc="emp.kpi_count"/>)</span>
+                                                                <span class="breakdown_title fw-bold">Assigned Tasks &amp; Subtasks (<t t-esc="emp.kpi_count"/>)</span>
                                                             </div>
                                                             <span class="toggle_hint">
                                                                 <t t-if="state.expandedEmpCards[emp.id]">Collapse</t>
@@ -2684,8 +2840,8 @@
                                                             <t t-if="emp.kpis and emp.kpis.length">
                                                                 <div class="perf_kpis_table">
                                                                     <div class="perf_kpis_thead">
-                                                                        <span class="th_name">KPI (Task)</span>
-                                                                        <span class="th_kra">Under KRA</span>
+                                                                        <span class="th_name">Task</span>
+                                                                        <span class="th_kra">Under Scope</span>
                                                                         <span class="th_status">Status</span>
                                                                         <span class="th_prog">Progress</span>
                                                                         <span class="th_subtasks">Subtasks</span>
@@ -2693,7 +2849,7 @@
                                                                     </div>
                                                                     <t t-foreach="emp.kpis" t-as="kpi" t-key="kpi.id">
                                                                         <div class="perf_kpis_trow">
-                                                                            <span class="td_name" t-on-click="() => this.openKpi(kpi.id)" title="Click to view KPI">
+                                                                            <span class="td_name" t-on-click="() => this.openKpi(kpi.id)" title="Click to view Task">
                                                                                 <strong><t t-esc="kpi.name"/></strong>
                                                                                 <span t-if="kpi.priority and kpi.priority !== '0'" class="kpi_priority_pill ms-2" title="Priority">
                                                                                     <i class="fa fa-star text-warning me-1"/><t t-esc="kpi.priority === '3' ? 'Very High' : kpi.priority === '2' ? 'High' : 'Normal'"/>
@@ -2707,7 +2863,7 @@
                                                                                     t-att-class="'kpi_stage_select_tag ' + kpi.state"
                                                                                     t-att-value="kpi.state"
                                                                                     t-on-change="(ev) => this.setKpiStage(kpi.id, ev.target.value)"
-                                                                                    title="Change KPI stage"
+                                                                                    title="Change Task stage"
                                                                                 >
                                                                                     <option value="not_started" t-att-selected="kpi.state == 'not_started' ? 'selected' : undefined">Not Started</option>
                                                                                     <option value="in_progress" t-att-selected="kpi.state == 'in_progress' ? 'selected' : undefined">In Progress</option>
@@ -2736,7 +2892,7 @@
                                                                                 </t>
                                                                             </span>
                                                                             <span class="td_act text-end" t-on-click.stop="">
-                                                                                <button type="button" class="btn_icon_open" t-on-click="() => this.openKpi(kpi.id)" title="Open KPI">
+                                                                                <button type="button" class="btn_icon_open" t-on-click="() => this.openKpi(kpi.id)" title="Open Task">
                                                                                     <i class="fa fa-external-link"/>
                                                                                 </button>
                                                                             </span>
@@ -2745,7 +2901,7 @@
                                                                 </div>
                                                             </t>
                                                             <div t-else="" class="text-muted small py-3 px-3">
-                                                                <i class="fa fa-info-circle me-1"/>No KPIs assigned directly to this employee under this project.
+                                                                <i class="fa fa-info-circle me-1"/>No Tasks assigned directly to this employee under this project.
                                                             </div>
                                                         </div>
                                                     </div>
@@ -2754,7 +2910,7 @@
                                         </div>
                                         <div t-else="" class="perf_empty_state_card">
                                             <i class="fa fa-tasks fa-2x text-muted mb-2"/>
-                                            <p class="text-muted m-0">No KPI assignees match your search criteria for this project.</p>
+                                            <p class="text-muted m-0">No Task assignees match your search criteria for this project.</p>
                                         </div>
                                     </div>
                                 </div>

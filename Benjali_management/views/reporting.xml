@@ -71,26 +71,26 @@
         sequence="30"
     />
 
-    <!-- KRA Analysis -->
+    <!-- Scope Analysis -->
     <record id="action_business_project_kra_report"
             model="ir.actions.act_window">
-        <field name="name">KRA Analysis</field>
+        <field name="name">Scope Analysis</field>
         <field name="res_model">business.project.kra.entry</field>
         <field name="view_mode">pivot,graph,list,calendar,form</field>
     </record>
 
     <menuitem
         id="menu_business_project_kra_report"
-        name="KRA Analysis"
+        name="Scope Analysis"
         parent="menu_benjali_management_reporting"
         action="action_business_project_kra_report"
         sequence="40"
     />
 
-    <!-- Daily, Weekly, and Monthly KRA & KPI Reports -->
+    <!-- Daily, Weekly, and Monthly Scope & Task Reports -->
     <menuitem
         id="menu_reporting_daily_kra_kpi"
-        name="Daily KRA &amp; KPI Report"
+        name="Daily Scope &amp; Task Report"
         parent="menu_benjali_management_reporting"
         action="business_project_daily_report_action"
         sequence="41"
@@ -98,7 +98,7 @@
 
     <menuitem
         id="menu_reporting_weekly_kra_kpi"
-        name="Weekly KRA &amp; KPI Report"
+        name="Weekly Scope &amp; Task Report"
         parent="menu_benjali_management_reporting"
         action="business_project_weekly_report_action"
         sequence="42"
@@ -106,7 +106,7 @@
 
     <menuitem
         id="menu_reporting_monthly_kra_kpi"
-        name="Monthly KRA &amp; KPI Report"
+        name="Monthly Scope &amp; Task Report"
         parent="menu_benjali_management_reporting"
         action="business_project_monthly_report_action"
         sequence="43"
@@ -126,22 +126,6 @@
         parent="menu_benjali_management_reporting"
         action="action_business_project_activity_report"
         sequence="50"
-    />
-
-    <!-- Data Collection Analysis -->
-    <record id="action_business_project_data_collection_report"
-            model="ir.actions.act_window">
-        <field name="name">Data Collection Analysis</field>
-        <field name="res_model">business.project.data.collection</field>
-        <field name="view_mode">pivot,graph,list</field>
-    </record>
-
-    <menuitem
-        id="menu_business_project_data_collection_report"
-        name="Data Collection Analysis"
-        parent="menu_benjali_management_reporting"
-        action="action_business_project_data_collection_report"
-        sequence="60"
     />
 
     <menuitem id="menu_project_xlsx" name="PDF/EXCEL Report"

@@ -172,7 +172,7 @@
                                 icon="fa-tasks">
                             <field name="kra_count"
                                    widget="statinfo"
-                                   string="KRAs"/>
+                                   string="Scopes"/>
                         </button>
                         <button name="action_view_project_kpis"
                                 type="object"
@@ -180,7 +180,7 @@
                                 icon="fa-check-square-o">
                             <field name="kpi_count"
                                    widget="statinfo"
-                                   string="KPIs"/>
+                                   string="Tasks"/>
                         </button>
                         <button name="action_view_meetings"
                                 type="object"
@@ -189,12 +189,6 @@
                             <field name="meeting_count"
                                    widget="statinfo"
                                    string="Meetings"/>
-                        </button>
-                        <button name="action_view_activity_calendar"
-                                type="object"
-                                class="oe_stat_button"
-                                icon="fa-calendar-check-o">
-                            <span class="o_stat_text">Activities</span>
                         </button>
                     </div>
                     <!-- Title -->
@@ -221,9 +215,8 @@
                         </group>
                         <group>
                             <field name="start_date"/>
-                            <field name="expected_end_date"/>
-                            <field name="actual_end_date"
-                                   readonly="1"/>
+                            <field name="deadline"/>
+                            <field name="completed_date"/>
                             <field name="active"/>
                             <field name="company_id"/>
                         </group>
@@ -232,8 +225,8 @@
 
                     <notebook>
 
-                        <!-- ================= KRA & KPI MANAGEMENT ================= -->
-                        <page string="KRAs &amp; KPIs" name="kra_kpi_page">
+                        <!-- ================= SCOPE & TASK MANAGEMENT ================= -->
+                        <page string="Scopes &amp; Tasks" name="kra_kpi_page">
                             <div class="d-flex justify-content-between align-items-center mb-3 p-2 bg-light rounded border">
                                 <div>
                                     <button name="action_generate_today_kpis"
@@ -250,13 +243,13 @@
                                 </div>
                             </div>
 
-                            <group string="Key Result Areas (KRAs) - Main Tasks">
+                            <group string="Scopes">
                                 <field name="kra_ids" nolabel="1" context="{'default_project_id': id, 'default_department_id': department_id}">
                                     <list editable="bottom">
                                         <field name="sequence" widget="handle"/>
                                         <field name="reference" readonly="1"/>
-                                        <field name="name" string="KRA Name"/>
-                                        <field name="manager_id" string="KRA Manager"/>
+                                        <field name="name" string="Scope Name"/>
+                                        <field name="responsible_user_id" string="Project Responsible" widget="many2one_avatar_user" optional="show"/>
                                         <field name="priority" widget="priority"/>
                                         <field name="stage_id" string="Stage" optional="show"/>
                                         <field name="state" widget="badge"
@@ -264,7 +257,7 @@
                                                decoration-warning="state == 'ongoing'"
                                                decoration-success="state == 'completed'"
                                                decoration-danger="state == 'on_hold'"/>
-                                        <field name="kpi_count" string="KPIs Count"/>
+                                        <field name="kpi_count" string="Tasks Count"/>
                                         <field name="weekly_progress" widget="progressbar" string="Progress (%)"/>
                                         <button name="action_generate_daily_repeating_kpis"
                                                 type="object"
@@ -275,12 +268,12 @@
                                 </field>
                             </group>
 
-                            <group string="Key Performance Indicators (KPIs)">
+                            <group string="Tasks">
                                 <field name="kpi_ids" nolabel="1" context="{'default_project_id': id, 'default_department_id': department_id}">
                                     <list editable="bottom">
                                         <field name="date"/>
-                                        <field name="kra_id" domain="parent.id and [('project_id', '=', parent.id)] or []" string="KRA"/>
-                                        <field name="name" string="KPI Name"/>
+                                        <field name="kra_id" domain="parent.id and [('project_id', '=', parent.id)] or []" string="Scope"/>
+                                        <field name="name" string="Task Name"/>
                                         <field name="priority" widget="priority" optional="show"/>
                                         <field name="employee_ids" widget="many2many_tags_avatar" string="Assigned Employees"/>
                                         <field name="is_daily_repeating" string="Repeating?" widget="boolean_toggle"/>
@@ -310,23 +303,6 @@
                                     </list>
                                 </field>
                             </group>
-                        </page>
-
-                        <page string="Notes">
-                            <field name="description" placeholder="Enter project description..."/>
-                        </page>
-
-                        <page string="Activity Plan">
-                            <field name="activity_plan_ids">
-                                <list editable="bottom">
-                                    <field name="name"/>
-                                    <field name="responsible_user_id"/>
-                                    <field name="planned_start"/>
-                                    <field name="planned_end"/>
-                                    <field name="priority"/>
-                                    <field name="state"/>
-                                </list>
-                            </field>
                         </page>
 
                         <page string="Approvals">
@@ -387,15 +363,6 @@
 
                         </page>
 
-                        <page string="Tasks">
-                            <field name="task_ids" context="{'default_business_project_id': id, 'default_project_id': project_id}">
-                                <list editable="bottom">
-                                    <field name="name" string="Task"/>
-                                    <field name="user_ids" string="Assignees" widget="many2many_tags"/>
-<!--                                    <field name="completed" string="completed"/>-->
-                                </list>
-                            </field>
-                        </page>
 
                         <page string="Communication" invisible="not is_communication_stage">
                             <group string="Project Communication">
@@ -410,20 +377,6 @@
                                         icon="fa-envelope"
                                         invisible="communication_channel != 'email'"/>
                             </group>
-                        </page>
-
-                        <page string="Data Collection">
-                            <field name="data_collection_ids">
-                                <list editable="bottom">
-                                    <field name="name"/>
-                                    <field name="data_type"/>
-                                    <field name="responsible_user_id"/>
-                                    <field name="collection_date"/>
-                                    <field name="source"/>
-                                    <field name="state"/>
-                                    <field name="notes"/>
-                                </list>
-                            </field>
                         </page>
 
                     </notebook>
@@ -464,8 +417,8 @@
                 <field name="responsible_user_id"/>
                 <field name="client_implementation_coordinator_id"/>
                 <field name="start_date"/>
-                <field name="expected_end_date"/>
-                <field name="actual_end_date"/>
+                <field name="deadline" optional="show"/>
+                <field name="completed_date" optional="show"/>
                 <field name="active"/>
             </list>
         </field>
@@ -517,6 +470,9 @@
                 <field name="partner_id"/>
                 <field name="department_id"/>
                 <field name="active"/>
+                <field name="start_date"/>
+                <field name="deadline"/>
+                <field name="completed_date"/>
                 <filter name="stage_id" string="filter by stage"/>
                 <filter name="Active" string="archived" domain="[('active', '=', False)]"/>
                 <filter name="actual_end_date" string="filter by End date" context="{'group_by':'actual_end_date'}"/>

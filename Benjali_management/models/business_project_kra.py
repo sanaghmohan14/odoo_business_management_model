@@ -1,14 +1,14 @@
 from datetime import timedelta
 import calendar
 
-from odoo import api, fields, models
-from odoo.exceptions import ValidationError,UserError
+from odoo import api, fields, models, tools, _
+from odoo.exceptions import ValidationError, UserError
 
 
 
 class BusinessProjectKRAStage(models.Model):
     _name = 'business.project.kra.stage'
-    _description = 'KRA Stage'
+    _description = 'Scope Stage'
     _order = 'sequence, id'
 
     name = fields.Char(string='Stage Name', required=True, translate=True)
@@ -18,6 +18,7 @@ class BusinessProjectKRAStage(models.Model):
         ('ongoing', 'Ongoing'),
         ('completed', 'Completed'),
         ('on_hold', 'On Hold'),
+        ('cancelled', 'Cancelled'),
     ], string='Stage Code', required=True)
     folded = fields.Boolean(string='Folded in Kanban', default=False)
     active = fields.Boolean(default=True)
@@ -26,7 +27,7 @@ class BusinessProjectKRAStage(models.Model):
 
 class BusinessProjectKPIStage(models.Model):
     _name = 'business.project.kpi.stage'
-    _description = 'KPI Stage'
+    _description = 'Task Stage'
     _order = 'sequence, id'
 
     name = fields.Char(string='Stage Name', required=True, translate=True)
@@ -45,22 +46,22 @@ class BusinessProjectKPIStage(models.Model):
 
 class BusinessProjectKRA(models.Model):
     _name = 'business.project.kra'
-    _description = 'Business Project & Department KRA (Main Task)'
+    _description = 'Project Scope'
     _inherit = ['mail.thread', 'mail.activity.mixin']
-    _order = 'sequence, id desc'
+    _order = 'priority desc, sequence, id desc'
 
-    name = fields.Char(string='KRA Name (Main Task)', required=True, tracking=True)
-    reference = fields.Char(string='KRA Code', required=True, copy=False,
+    name = fields.Char(string='Scope Name', required=True, tracking=True)
+    reference = fields.Char(string='Scope Code', required=True, copy=False,
                             default='New', index=True)
 
     project_id = fields.Many2one(
         'business.project', string='Project', required=True,
         ondelete='cascade', index=True, tracking=True,
-        help='Project this KRA belongs to.')
+        help='Project this Scope belongs to.')
     department_id = fields.Many2one(
         'hr.department', string='Department', required=False, index=True,
         compute='_compute_department_id', store=True, readonly=False,
-        help='Department responsible for this Key Result Area.')
+        help='Department responsible for this Scope.')
     company_id = fields.Many2one(
         'res.company', string='Company', related='project_id.company_id',
         store=True, readonly=True)
@@ -74,13 +75,10 @@ class BusinessProjectKRA(models.Model):
         for rec in self:
             rec.approval_status = 'Approval Pending' if rec.approval_pending else False
 
-    manager_id = fields.Many2one(
-        'res.users', string='KRA Manager', index=True,
-        default=lambda self: self.env.user, tracking=True)
     responsible_user_id = fields.Many2one(
-        'res.users', string='Project Responsible', index=True,
+        'res.users', string='Responsible User', index=True,
         compute='_compute_responsible_user_id', store=True, readonly=False, tracking=True,
-        help='Project Responsible person (Team Lead) for this project and KRA.')
+        help='Project Responsible person (Team Lead) for this project and Scope.')
     project_responsible_id = fields.Many2one(
         'res.users', string='Project Responsible',
         related='responsible_user_id', readonly=False)
@@ -123,6 +121,7 @@ class BusinessProjectKRA(models.Model):
         ('ongoing', 'Ongoing'),
         ('completed', 'Completed'),
         ('on_hold', 'On Hold'),
+        ('cancelled', 'Cancelled'),
     ], string='Status', default='new', required=True, index=True, tracking=True)
 
     def _default_stage_id(self):
@@ -138,7 +137,8 @@ class BusinessProjectKRA(models.Model):
             ('new', ['new', 'draft'], 'New', 10, False, 'Newly created KRA'),
             ('ongoing', ['ongoing', 'in_progress', 'active'], 'Ongoing', 20, False, 'KRA is currently in progress'),
             ('completed', ['completed', 'done', 'closed'], 'Completed', 30, False, 'KRA has been completed'),
-            ('on_hold', ['on_hold', 'hold', 'paused', 'cancelled', 'postponed'], 'On Hold', 40, False, 'KRA is temporarily paused'),
+            ('on_hold', ['on_hold', 'hold', 'paused', 'postponed'], 'On Hold', 40, False, 'KRA is temporarily paused'),
+            ('cancelled', ['cancelled', 'cancel'], 'Cancelled', 50, True, 'KRA is cancelled'),
         ]
         Stage = self.env['business.project.kra.stage']
         kept_ids = []
@@ -236,7 +236,7 @@ class BusinessProjectKRA(models.Model):
     def _read_group_stage_ids(self, stages, domain):
         self._normalize_stages()
         return self.env['business.project.kra.stage'].search(
-            [('active', '=', True), ('code', 'in', ['new', 'ongoing', 'completed', 'on_hold'])],
+            [('active', '=', True), ('code', 'in', ['new', 'ongoing', 'completed', 'on_hold', 'cancelled'])],
             order='sequence asc, id asc'
         )
     priority = fields.Selection([
@@ -244,16 +244,75 @@ class BusinessProjectKRA(models.Model):
     ], string='Priority', default='0', index=True)
     active = fields.Boolean(string='Active', default=True)
 
-    start_date = fields.Date(string='Start Date', default=fields.Date.context_today)
-    end_date = fields.Date(string='End Date')
+    start_date = fields.Date(
+        string='Start Date', default=fields.Date.context_today, index=True, tracking=True)
+    completed_date = fields.Date(
+        string='Completed Date', index=True, tracking=True)
+    end_date = fields.Date(
+        string='End Date', related='completed_date', readonly=False, store=True)
+    deadline = fields.Date(
+        string='Deadline', index=True, tracking=True)
     is_today = fields.Boolean(
-        string="Today's KRA", compute='_compute_period_flags', search='_search_is_today')
+        string="Today's Scope", compute='_compute_period_flags', search='_search_is_today')
     is_tomorrow = fields.Boolean(
-        string="Tomorrow's KRA", compute='_compute_period_flags', search='_search_is_tomorrow')
+        string="Tomorrow's Scope", compute='_compute_period_flags', search='_search_is_tomorrow')
     is_this_week = fields.Boolean(
-        string="This Week's KRA", compute='_compute_period_flags', search='_search_is_this_week')
+        string="This Week's Scope", compute='_compute_period_flags', search='_search_is_this_week')
     is_overdue = fields.Boolean(
-        string="Overdue KRA", compute='_compute_period_flags', search='_search_is_overdue')
+        string="Overdue Scope", compute='_compute_period_flags', search='_search_is_overdue')
+
+    @api.onchange('start_date')
+    def _onchange_start_date(self):
+        today = fields.Date.context_today(self)
+        if self.start_date:
+            if self.start_date < today:
+                self.start_date = today
+                return {
+                    'warning': {
+                        'title': _("Invalid Start Date"),
+                        'message': _("Start Date cannot be a previous date. Only today's date or future dates are allowed."),
+                    }
+                }
+        if self.completed_date and self.start_date and self.completed_date < self.start_date:
+            self.completed_date = self.start_date
+
+    @api.onchange('completed_date')
+    def _onchange_completed_date(self):
+        if self.completed_date and self.start_date and self.completed_date < self.start_date:
+            self.completed_date = self.start_date
+            return {
+                'warning': {
+                    'title': _("Invalid Completed Date"),
+                    'message': _("Completed Date must be greater than or equal to Start Date."),
+                }
+            }
+
+    def init(self):
+        super().init()
+        cr = self.env.cr
+        if tools.sql.column_exists(cr, 'business_project_kra', 'completed_date') and \
+                tools.sql.column_exists(cr, 'business_project_kra', 'start_date'):
+            cr.execute("""
+                UPDATE business_project_kra
+                SET completed_date = start_date
+                WHERE completed_date IS NOT NULL AND start_date IS NOT NULL AND completed_date < start_date;
+            """)
+        if tools.sql.column_exists(cr, 'business_project_kra', 'end_date') and \
+                tools.sql.column_exists(cr, 'business_project_kra', 'start_date'):
+            cr.execute("""
+                UPDATE business_project_kra
+                SET end_date = start_date
+                WHERE end_date IS NOT NULL AND start_date IS NOT NULL AND end_date < start_date;
+            """)
+
+    @api.constrains('start_date', 'completed_date')
+    def _check_dates_consistency(self):
+        if not self.env.registry.ready or self.env.context.get('install_mode') or self.env.context.get('upgrade_mode'):
+            return
+        for kra in self:
+            if kra.start_date:
+                if kra.completed_date and kra.completed_date < kra.start_date:
+                    raise ValidationError(_("Completed Date (%s) must be greater than or equal to Start Date (%s).") % (kra.completed_date, kra.start_date))
 
     def _compute_period_flags(self):
         today = fields.Date.context_today(self)
@@ -262,11 +321,11 @@ class BusinessProjectKRA(models.Model):
         sun = mon + timedelta(days=6)
         for kra in self:
             s_date = kra.start_date or (kra.create_date.date() if kra.create_date else today)
-            e_date = kra.end_date or s_date
+            e_date = kra.deadline or kra.completed_date or kra.end_date or s_date
             kra.is_today = bool(s_date and e_date and s_date <= today <= e_date)
             kra.is_tomorrow = bool(s_date and e_date and s_date <= tomorrow <= e_date)
             kra.is_this_week = bool(s_date and e_date and s_date <= sun and e_date >= mon)
-            kra.is_overdue = bool(kra.end_date and kra.end_date < today and kra.state not in ('completed',))
+            kra.is_overdue = bool((kra.deadline or kra.completed_date or kra.end_date) and (kra.deadline or kra.completed_date or kra.end_date) < today and kra.state not in ('completed', 'cancelled'))
 
     def _search_is_today(self, operator, value):
         today = fields.Date.context_today(self)
@@ -302,9 +361,9 @@ class BusinessProjectKRA(models.Model):
         'res.company', string='Company', default=lambda self: self.env.company,
         index=True)
 
-    # KPIs
+    # Tasks
     kpi_ids = fields.One2many(
-        'business.project.kpi', 'kra_id', string='KPIs', copy=True)
+        'business.project.kpi', 'kra_id', string='Tasks', copy=True)
     entry_ids = fields.One2many(
         'business.project.kra.entry', 'kra_id', string='Performance Entries', copy=False)
     task_ids = fields.One2many('project.task', 'kra_id', string='Project Tasks')
@@ -313,8 +372,8 @@ class BusinessProjectKRA(models.Model):
         string='Assigned Employees', compute='_compute_assigned_employees', store=True)
 
     # Metrics
-    kpi_count = fields.Integer(compute='_compute_kpi_metrics', string='Total KPIs', store=True)
-    completed_kpi_count = fields.Integer(compute='_compute_kpi_metrics', string='Completed KPIs', store=True)
+    kpi_count = fields.Integer(compute='_compute_kpi_metrics', string='Total Tasks', store=True)
+    completed_kpi_count = fields.Integer(compute='_compute_kpi_metrics', string='Completed Tasks', store=True)
 
     daily_kpi_total = fields.Integer(compute='_compute_daily_metrics', string="Today's Tasks")
     daily_kpi_completed = fields.Integer(compute='_compute_daily_metrics', string="Today's Completed")
@@ -341,8 +400,8 @@ class BusinessProjectKRA(models.Model):
         ('daily', 'Daily'), ('weekly', 'Weekly'), ('monthly', 'Monthly'),
     ], string='Frequency', default='weekly')
     entry_count = fields.Integer(compute='_compute_entry_count', string='Entries')
-    task_count = fields.Integer(compute='_compute_task_metrics', string='Tasks')
-    completed_task_count = fields.Integer(compute='_compute_task_metrics', string='Completed Tasks')
+    task_count = fields.Integer(compute='_compute_task_metrics', string='Task Count')
+    completed_task_count = fields.Integer(compute='_compute_task_metrics', string='Completed Task Count')
     pending_task_count = fields.Integer(compute='_compute_task_metrics', string='Pending Tasks')
     on_hold_task_count = fields.Integer(compute='_compute_task_metrics', string='On Hold Tasks')
     task_completion_percentage = fields.Float(compute='_compute_task_metrics', string='Task Completion (%)')
@@ -447,9 +506,14 @@ class BusinessProjectKRA(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         Stage = self.env['business.project.kra.stage']
+        today = fields.Date.context_today(self)
         for vals in vals_list:
             if not vals.get('reference') or vals.get('reference') == 'New':
                 vals['reference'] = self.env['ir.sequence'].next_by_code('business.project.kra') or 'KRA'
+            if not vals.get('start_date'):
+                vals['start_date'] = today
+            elif fields.Date.to_date(vals['start_date']) < today:
+                raise ValidationError(_("Start Date cannot be a previous date. Only today's date or future dates are allowed."))
             if vals.get('stage_id') and not vals.get('state'):
                 st = Stage.browse(vals['stage_id'])
                 if st.code:
@@ -463,33 +527,12 @@ class BusinessProjectKRA(models.Model):
                 if def_st:
                     vals['stage_id'] = def_st.id
                     vals['state'] = def_st.code or 'new'
+            if vals.get('state') == 'completed' and not vals.get('completed_date'):
+                vals['completed_date'] = today
         records = super().create(vals_list)
         for kra in records:
             kra.action_generate_daily_repeating_kpis()
         return records
-
-    def write(self, vals):
-        is_pm = (
-            self.env.user.has_group('Benjali_management.group_project_manager') or
-            self.env.user.has_group('Benjali_management.group_gvp') or
-            self.env.user.has_group('Benjali_management.group_ceo') or
-            self.env.is_admin() or
-            self.env.su
-        )
-        if 'state' in vals and vals['state'] == 'completed':
-            if not is_pm:
-                raise UserError("Completing a KRA requires approval from the Project Manager. Please click 'Mark Completed' to submit an approval request.")
-
-        Stage = self.env['business.project.kra.stage']
-        if 'stage_id' in vals and 'state' not in vals:
-            st = Stage.browse(vals['stage_id'])
-            if st and st.code:
-                vals['state'] = st.code
-        elif 'state' in vals and 'stage_id' not in vals:
-            st = Stage.search([('code', '=', vals['state'])], limit=1)
-            if st:
-                vals['stage_id'] = st.id
-        return super().write(vals)
 
     def init(self):
         super().init()
@@ -501,11 +544,12 @@ class BusinessProjectKRA(models.Model):
                     SET state = CASE 
                         WHEN state IN ('not_started', 'draft') THEN 'new'
                         WHEN state IN ('active', 'in_progress') THEN 'ongoing'
-                        WHEN state IN ('postponed', 'cancelled') THEN 'on_hold'
+                        WHEN state = 'cancelled' THEN 'cancelled'
+                        WHEN state IN ('postponed', 'on_hold') THEN 'on_hold'
                         WHEN state = 'completed' THEN 'completed'
                         ELSE 'new'
                     END
-                    WHERE state NOT IN ('new', 'ongoing', 'completed', 'on_hold') OR state IS NULL;
+                    WHERE state NOT IN ('new', 'ongoing', 'completed', 'on_hold', 'cancelled') OR state IS NULL;
                 """)
                 self.env.cr.execute("""
                     UPDATE business_project_kra kra
@@ -532,6 +576,12 @@ class BusinessProjectKRA(models.Model):
             self.env.is_admin() or
             self.env.su
         )
+        today = fields.Date.context_today(self)
+        if 'start_date' in vals and vals.get('start_date'):
+            start_date_val = fields.Date.to_date(vals['start_date'])
+            if start_date_val < today:
+                raise ValidationError(_("Start Date cannot be a previous date. Only today's date or future dates are allowed."))
+
         Stage = self.env['business.project.kra.stage']
         if 'stage_id' in vals and 'state' not in vals:
             st = Stage.browse(vals['stage_id'])
@@ -542,11 +592,17 @@ class BusinessProjectKRA(models.Model):
             if st:
                 vals['stage_id'] = st.id
 
-        if 'state' in vals and vals['state'] == 'completed':
-            if not is_tl:
-                raise UserError("Only the Team Lead / Project Responsible can complete or submit KRA completion.")
-            if not is_pm:
-                raise UserError("Completing a KRA requires approval from the Project Manager. Please click 'Mark Completed' to submit an approval request.")
+        if 'state' in vals:
+            if vals['state'] == 'completed':
+                if not is_tl:
+                    raise UserError("Only the Team Lead / Project Responsible can complete or submit Scope completion.")
+                if not is_pm:
+                    raise UserError("Completing a Scope requires approval from the Project Manager. Please click 'Mark Completed' to submit an approval request.")
+                if not vals.get('completed_date'):
+                    vals['completed_date'] = today
+            elif vals['state'] == 'new':
+                if 'completed_date' not in vals:
+                    vals['completed_date'] = False
 
         return super().write(vals)
 
@@ -574,7 +630,7 @@ class BusinessProjectKRA(models.Model):
             self.env.is_admin()
         )
         if not is_tl:
-            raise UserError("Only the Team Lead / Project Responsible can complete or submit KRA completion.")
+            raise UserError("Only the Team Lead / Project Responsible can complete or submit Scope completion.")
 
         is_pm = (
             self.env.user.has_group('Benjali_management.group_project_manager') or
@@ -614,7 +670,7 @@ class BusinessProjectKRA(models.Model):
             kra.write({'approval_pending': True})
             kra.message_post(
                 body=(
-                    f'KRA completion approval request <b>{approval.name}</b> sent to '
+                    f'Scope completion approval request <b>{approval.name}</b> sent to '
                     f'Project Manager <b>{approver.name}</b> by {self.env.user.name}.'
                 )
             )
@@ -624,15 +680,20 @@ class BusinessProjectKRA(models.Model):
             'tag': 'display_notification',
             'params': {
                 'title': 'Approval Requested',
-                'message': 'KRA completion approval request has been sent to the Project Manager.',
+                'message': 'Scope completion approval request has been sent to the Project Manager.',
                 'type': 'success',
                 'sticky': False,
             }
         }
 
     def _do_mark_completed(self):
+        today = fields.Date.context_today(self)
         st = self.env['business.project.kra.stage'].search([('code', '=', 'completed')], limit=1)
-        vals = {'state': 'completed', 'approval_pending': False}
+        vals = {
+            'state': 'completed',
+            'approval_pending': False,
+            'completed_date': today,
+        }
         if st:
             vals['stage_id'] = st.id
         self.sudo().write(vals)
@@ -651,6 +712,13 @@ class BusinessProjectKRA(models.Model):
     def action_set_on_hold(self):
         st = self.env['business.project.kra.stage'].search([('code', '=', 'on_hold')], limit=1)
         vals = {'state': 'on_hold'}
+        if st:
+            vals['stage_id'] = st.id
+        self.write(vals)
+
+    def action_set_cancelled(self):
+        st = self.env['business.project.kra.stage'].search([('code', '=', 'cancelled')], limit=1)
+        vals = {'state': 'cancelled'}
         if st:
             vals['stage_id'] = st.id
         self.write(vals)
@@ -761,7 +829,6 @@ class BusinessProjectKRA(models.Model):
             'context': {
                 'default_kra_id': self.id,
                 'default_project_id': self.project_id.id if self.project_id else False,
-                'default_manager_id': self.manager_id.id if self.manager_id else False,
                 'default_department_id': self.department_id.id if self.department_id else False,
                 'search_default_kra_id': self.id,
                 'search_default_group_stage_id': 1,
@@ -786,12 +853,12 @@ class BusinessProjectKRA(models.Model):
 
 class BusinessProjectKPI(models.Model):
     _name = 'business.project.kpi'
-    _description = 'Business Project & Department KPI'
+    _description = 'Project Task'
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _order = 'priority desc, date desc, sequence, id desc'
 
-    name = fields.Char(string='KPI Name', required=True, tracking=True)
-    code = fields.Char(string='KPI Code', copy=False, default='New')
+    name = fields.Char(string='Task Name', required=True, tracking=True)
+    code = fields.Char(string='Task Code', copy=False, default='New')
     priority = fields.Selection([
         ('0', 'Low'),
         ('1', 'Normal'),
@@ -799,29 +866,23 @@ class BusinessProjectKPI(models.Model):
         ('3', 'Very High'),
     ], string='Priority', default='0', index=True, tracking=True)
     kra_id = fields.Many2one(
-        'business.project.kra', string='KRA', required=True,
+        'business.project.kra', string='Scope', required=True,
         ondelete='cascade', index=True, tracking=True)
 
     project_id = fields.Many2one(
         'business.project', string='Project',
         compute='_compute_kra_details', store=True, readonly=False, index=True, tracking=True,
-        help='Project automatically filled when KRA is chosen.')
-    manager_id = fields.Many2one(
-        'res.users', string='KRA Manager',
-        compute='_compute_kra_details', store=True, readonly=False, index=True, tracking=True,
-        help='KRA Manager automatically filled when KRA is chosen.')
+        help='Project automatically filled when Scope is chosen.')
     responsible_user_id = fields.Many2one(
-        'res.users', string='Project Responsible',
+        'res.users', string='Responsible User',
         compute='_compute_kra_details', store=True, readonly=False, index=True, tracking=True,
-        help='Project Responsible person (Team Lead) for this KPI.')
+        help='Project Responsible person (Team Lead) for this Task.')
     project_responsible_id = fields.Many2one(
         'res.users', string='Project Responsible',
         related='responsible_user_id', readonly=False)
     project_manager_id = fields.Many2one(
         'res.users', string='Project Manager',
         related='project_id.project_manager_id', store=True, readonly=True)
-    kra_manager_id = fields.Many2one(
-        'res.users', string='KRA Manager Reference', related='manager_id', readonly=True)
     department_id = fields.Many2one(
         'hr.department', string='Department',
         compute='_compute_kra_details', store=True, readonly=False, index=True)
@@ -1015,6 +1076,18 @@ class BusinessProjectKPI(models.Model):
     # Date & Period
     date = fields.Date(
         string='Date', default=fields.Date.context_today, required=True, index=True)
+    start_date = fields.Date(
+        string='Start Date', default=fields.Date.context_today, index=True, tracking=True)
+    completed_date = fields.Date(
+        string='Completed Date', index=True, tracking=True)
+    end_date = fields.Date(
+        string='End Date', related='completed_date', readonly=False, store=True)
+    date_completed = fields.Date(
+        string='Completed Date Reference', related='completed_date', readonly=False)
+    deadline = fields.Date(
+        string='Deadline', index=True, tracking=True)
+    date_deadline = fields.Date(
+        string='Deadline Reference', related='deadline', readonly=False)
     day_name = fields.Selection([
         ('0', 'Monday'), ('1', 'Tuesday'), ('2', 'Wednesday'),
         ('3', 'Thursday'), ('4', 'Friday'), ('5', 'Saturday'), ('6', 'Sunday'),
@@ -1094,19 +1167,16 @@ class BusinessProjectKPI(models.Model):
     sequence = fields.Integer(default=10)
     active = fields.Boolean(default=True)
 
-    @api.depends('kra_id', 'kra_id.project_id', 'kra_id.manager_id', 'kra_id.responsible_user_id', 'kra_id.department_id')
+    @api.depends('kra_id', 'kra_id.project_id', 'kra_id.responsible_user_id', 'kra_id.department_id')
     def _compute_kra_details(self):
         for kpi in self:
             if kpi.kra_id:
                 kpi.project_id = kpi.kra_id.project_id
-                kpi.manager_id = kpi.kra_id.manager_id or kpi.kra_id.responsible_user_id
                 kpi.responsible_user_id = kpi.kra_id.responsible_user_id or (kpi.kra_id.project_id and kpi.kra_id.project_id.responsible_user_id)
                 kpi.department_id = kpi.kra_id.department_id
             else:
                 if not kpi.project_id:
                     kpi.project_id = False
-                if not kpi.manager_id:
-                    kpi.manager_id = False
                 if not kpi.responsible_user_id:
                     kpi.responsible_user_id = False
                 if not kpi.department_id:
@@ -1116,7 +1186,6 @@ class BusinessProjectKPI(models.Model):
     def _onchange_kra_id(self):
         if self.kra_id:
             self.project_id = self.kra_id.project_id
-            self.manager_id = self.kra_id.manager_id or self.kra_id.responsible_user_id
             self.responsible_user_id = self.kra_id.responsible_user_id or (self.kra_id.project_id and self.kra_id.project_id.responsible_user_id)
             if self.kra_id.department_id:
                 self.department_id = self.kra_id.department_id
@@ -1171,12 +1240,84 @@ class BusinessProjectKPI(models.Model):
             self.state = 'not_started'
             self.progress = 0.0
 
+    @api.onchange('start_date')
+    def _onchange_start_date(self):
+        today = fields.Date.context_today(self)
+        if self.start_date:
+            if self.start_date < today:
+                self.start_date = today
+                self.date = today
+                return {
+                    'warning': {
+                        'title': _("Invalid Start Date"),
+                        'message': _("Start Date cannot be a previous date. Only today's date or future dates are allowed."),
+                    }
+                }
+            self.date = self.start_date
+        if self.completed_date and self.start_date and self.completed_date < self.start_date:
+            self.completed_date = self.start_date
+
+    @api.onchange('completed_date')
+    def _onchange_completed_date(self):
+        if self.completed_date and self.start_date and self.completed_date < self.start_date:
+            self.completed_date = self.start_date
+            return {
+                'warning': {
+                    'title': _("Invalid Completed Date"),
+                    'message': _("Completed Date must be greater than or equal to Start Date."),
+                }
+            }
+
+    def init(self):
+        super().init()
+        cr = self.env.cr
+        if tools.sql.column_exists(cr, 'business_project_kpi', 'completed_date') and \
+                tools.sql.column_exists(cr, 'business_project_kpi', 'start_date'):
+            cr.execute("""
+                UPDATE business_project_kpi
+                SET completed_date = start_date
+                WHERE completed_date IS NOT NULL AND start_date IS NOT NULL AND completed_date < start_date;
+            """)
+        if tools.sql.column_exists(cr, 'business_project_kpi', 'end_date') and \
+                tools.sql.column_exists(cr, 'business_project_kpi', 'start_date'):
+            cr.execute("""
+                UPDATE business_project_kpi
+                SET end_date = start_date
+                WHERE end_date IS NOT NULL AND start_date IS NOT NULL AND end_date < start_date;
+            """)
+
+    @api.constrains('start_date', 'completed_date')
+    def _check_dates_consistency(self):
+        if not self.env.registry.ready or self.env.context.get('install_mode') or self.env.context.get('upgrade_mode'):
+            return
+        for kpi in self:
+            if kpi.start_date:
+                if kpi.completed_date and kpi.completed_date < kpi.start_date:
+                    raise ValidationError(_("Completed Date (%s) must be greater than or equal to Start Date (%s).") % (kpi.completed_date, kpi.start_date))
+
+    @api.onchange('stage_id')
+    def _onchange_stage_id(self):
+        if self.stage_id and self.stage_id.code:
+            self.state = self.stage_id.code
+            if self.stage_id.code == 'completed':
+                if self.progress < 100.0:
+                    self.progress = 100.0
+                if not self.completed_date:
+                    self.completed_date = fields.Date.context_today(self)
+            elif self.stage_id.code == 'not_started':
+                self.completed_date = False
+
     @api.onchange('state')
     def _onchange_state(self):
-        if self.state == 'completed' and self.progress < 100.0:
-            self.progress = 100.0
-        elif self.state == 'not_started' and self.progress > 0.0:
-            self.progress = 0.0
+        if self.state == 'completed':
+            if self.progress < 100.0:
+                self.progress = 100.0
+            if not self.completed_date:
+                self.completed_date = fields.Date.context_today(self)
+        elif self.state == 'not_started':
+            if self.progress > 0.0:
+                self.progress = 0.0
+            self.completed_date = False
 
     @api.depends('date')
     def _compute_period_dates(self):
@@ -1325,9 +1466,19 @@ class BusinessProjectKPI(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         Stage = self.env['business.project.kpi.stage']
+        today = fields.Date.context_today(self)
         for vals in vals_list:
             if not vals.get('code') or vals.get('code') == 'New':
                 vals['code'] = self.env['ir.sequence'].next_by_code('business.project.kpi') or 'KPI'
+            if not vals.get('start_date'):
+                vals['start_date'] = today
+            elif fields.Date.to_date(vals['start_date']) < today:
+                raise ValidationError(_("Start Date cannot be a previous date. Only today's date or future dates are allowed."))
+            if not vals.get('date'):
+                vals['date'] = vals['start_date']
+            elif not vals.get('start_date'):
+                vals['start_date'] = vals['date']
+
             if vals.get('stage_id') and not vals.get('state'):
                 st = Stage.browse(vals['stage_id'])
                 if st.code:
@@ -1343,6 +1494,8 @@ class BusinessProjectKPI(models.Model):
                     vals['state'] = def_st.code or 'not_started'
 
             if vals.get('state') == 'completed':
+                if not vals.get('completed_date'):
+                    vals['completed_date'] = today
                 if 'daily_achievement' not in vals:
                     vals['daily_achievement'] = vals.get('daily_target', 1.0)
                 if 'progress' not in vals:
@@ -1377,18 +1530,33 @@ class BusinessProjectKPI(models.Model):
             if st:
                 vals['stage_id'] = st.id
 
+        if 'start_date' in vals:
+            if vals.get('start_date') and vals['start_date'] < fields.Date.context_today(self):
+                raise ValidationError(_("Start Date cannot be a previous date. Only today's date or future dates are allowed."))
+            if 'date' not in vals:
+                vals['date'] = vals['start_date']
+        elif 'date' in vals and 'start_date' not in vals:
+            vals['start_date'] = vals['date']
+
         if 'state' in vals:
             if vals['state'] == 'completed':
                 if not is_manager:
                     raise UserError("Completing a KPI requires approval from the Team Lead. Please click 'Mark Completed' to submit an approval request.")
+                if not vals.get('completed_date'):
+                    vals['completed_date'] = fields.Date.context_today(self)
                 if 'daily_achievement' not in vals:
                     vals['daily_achievement'] = 1.0
                 if 'progress' not in vals:
                     vals['progress'] = 100.0
-            elif vals['state'] in ('not_started', 'on_hold', 'cancelled', 'postponed') and 'daily_achievement' not in vals:
-                vals['daily_achievement'] = 0.0
-                if vals['state'] == 'not_started' and 'progress' not in vals:
+            elif vals['state'] == 'not_started':
+                if 'completed_date' not in vals:
+                    vals['completed_date'] = False
+                if 'daily_achievement' not in vals:
+                    vals['daily_achievement'] = 0.0
+                if 'progress' not in vals:
                     vals['progress'] = 0.0
+            elif vals['state'] in ('on_hold', 'cancelled', 'postponed') and 'daily_achievement' not in vals:
+                vals['daily_achievement'] = 0.0
             elif vals['state'] == 'in_progress':
                 if 'progress' not in vals and not any(self.mapped('progress')):
                     vals['progress'] = 25.0
@@ -1398,11 +1566,15 @@ class BusinessProjectKPI(models.Model):
                 if not is_manager:
                     raise UserError("Completing a KPI requires approval from the Team Lead. Please click 'Mark Completed' to submit an approval request.")
                 vals['state'] = 'completed'
+                if not vals.get('completed_date'):
+                    vals['completed_date'] = fields.Date.context_today(self)
                 st = Stage.search([('code', '=', 'completed')], limit=1)
                 if st:
                     vals['stage_id'] = st.id
             elif vals['progress'] <= 0.0 and vals.get('state') == 'completed':
                 vals['state'] = 'not_started'
+                if 'completed_date' not in vals:
+                    vals['completed_date'] = False
                 st = Stage.search([('code', '=', 'not_started')], limit=1)
                 if st:
                     vals['stage_id'] = st.id
@@ -1509,7 +1681,7 @@ class BusinessProjectKPI(models.Model):
                 kpi.responsible_user_id or
                 (kpi.kra_id and kpi.kra_id.responsible_user_id) or
                 (kpi.project_id and kpi.project_id.responsible_user_id) or
-                kpi.manager_id
+                kpi.project_manager_id
             )
             if not approver or approver == self.env.user:
                 tl_users = self.env['res.users'].search([('share', '=', False)]).filtered(
@@ -1553,10 +1725,18 @@ class BusinessProjectKPI(models.Model):
 
     def _do_mark_completed(self):
         st = self.env['business.project.kpi.stage'].search([('code', '=', 'completed')], limit=1)
-        vals = {'state': 'completed', 'daily_achievement': 1.0, 'progress': 100.0, 'approval_pending': False}
+        today = fields.Date.context_today(self)
+        vals = {
+            'state': 'completed',
+            'daily_achievement': 1.0,
+            'progress': 100.0,
+            'approval_pending': False,
+            'completed_date': today,
+        }
         if st:
             vals['stage_id'] = st.id
-        self.sudo().write(vals)
+        for kpi in self:
+            kpi.sudo().write(vals)
         for kpi in self:
             kpi.subtask_ids.filtered(lambda s: s.state != 'completed').sudo().write({
                 'state': 'completed',
@@ -1764,17 +1944,17 @@ class BusinessProjectKRAEntry(models.Model):
 
 class BusinessProjectKPISubtask(models.Model):
     _name = 'business.project.kpi.subtask'
-    _description = 'KPI Subtask'
+    _description = 'Task Subtask'
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _order = 'sequence, id desc'
 
     name = fields.Char(string='Subtask Name', required=True, tracking=True)
     sequence = fields.Integer(string='Sequence', default=10)
     kpi_id = fields.Many2one(
-        'business.project.kpi', string='KPI', required=True,
+        'business.project.kpi', string='Task', required=True,
         ondelete='cascade', index=True, tracking=True)
     kra_id = fields.Many2one(
-        'business.project.kra', string='KRA', related='kpi_id.kra_id',
+        'business.project.kra', string='Scope', related='kpi_id.kra_id',
         store=True, readonly=True)
     project_id = fields.Many2one(
         'business.project', string='Project', related='kpi_id.project_id',
@@ -1799,7 +1979,10 @@ class BusinessProjectKPISubtask(models.Model):
         index=True, tracking=True)
     start_date = fields.Date(
         string='Start Date', default=fields.Date.context_today, tracking=True)
-    end_date = fields.Date(string='End Date', tracking=True)
+    completed_date = fields.Date(string='Completed Date', tracking=True)
+    end_date = fields.Date(
+        string='End Date', related='completed_date', readonly=False, store=True)
+    deadline = fields.Date(string='Deadline', tracking=True)
     is_today = fields.Boolean(
         string="Today's Subtask", compute='_compute_period_flags', search='_search_is_today')
     is_tomorrow = fields.Boolean(
@@ -1870,20 +2053,88 @@ class BusinessProjectKPISubtask(models.Model):
             self.state = 'not_started'
             self.progress = 0.0
 
+    @api.onchange('start_date')
+    def _onchange_start_date(self):
+        today = fields.Date.context_today(self)
+        if self.start_date:
+            if self.start_date < today:
+                self.start_date = today
+                return {
+                    'warning': {
+                        'title': _("Invalid Start Date"),
+                        'message': _("Start Date cannot be a previous date. Only today's date or future dates are allowed."),
+                    }
+                }
+        if self.completed_date and self.start_date and self.completed_date < self.start_date:
+            self.completed_date = self.start_date
+
+    @api.onchange('completed_date')
+    def _onchange_completed_date(self):
+        if self.completed_date and self.start_date and self.completed_date < self.start_date:
+            self.completed_date = self.start_date
+            return {
+                'warning': {
+                    'title': _("Invalid Completed Date"),
+                    'message': _("Completed Date must be greater than or equal to Start Date."),
+                }
+            }
+
+    def init(self):
+        super().init()
+        cr = self.env.cr
+        if tools.sql.column_exists(cr, 'business_project_subtask', 'completed_date') and \
+                tools.sql.column_exists(cr, 'business_project_subtask', 'start_date'):
+            cr.execute("""
+                UPDATE business_project_subtask
+                SET completed_date = start_date
+                WHERE completed_date IS NOT NULL AND start_date IS NOT NULL AND completed_date < start_date;
+            """)
+        if tools.sql.column_exists(cr, 'business_project_subtask', 'end_date') and \
+                tools.sql.column_exists(cr, 'business_project_subtask', 'start_date'):
+            cr.execute("""
+                UPDATE business_project_subtask
+                SET end_date = start_date
+                WHERE end_date IS NOT NULL AND start_date IS NOT NULL AND end_date < start_date;
+            """)
+
+    @api.constrains('start_date', 'completed_date')
+    def _check_dates_consistency(self):
+        if not self.env.registry.ready or self.env.context.get('install_mode') or self.env.context.get('upgrade_mode'):
+            return
+        for sub in self:
+            if sub.start_date:
+                if sub.completed_date and sub.completed_date < sub.start_date:
+                    raise ValidationError(_("Completed Date (%s) must be greater than or equal to Start Date (%s).") % (sub.completed_date, sub.start_date))
+
     @api.onchange('state')
     def _onchange_state(self):
-        if self.state == 'completed' and self.progress < 100.0:
-            self.progress = 100.0
-        elif self.state == 'not_started' and self.progress > 0.0:
-            self.progress = 0.0
+        if self.state == 'completed':
+            if self.progress < 100.0:
+                self.progress = 100.0
+            if not self.completed_date:
+                self.completed_date = fields.Date.context_today(self)
+        elif self.state == 'not_started':
+            if self.progress > 0.0:
+                self.progress = 0.0
+            self.completed_date = False
 
     @api.model_create_multi
     def create(self, vals_list):
+        today = fields.Date.context_today(self)
         for vals in vals_list:
+            if not vals.get('start_date'):
+                vals['start_date'] = today
+            elif fields.Date.to_date(vals['start_date']) < today:
+                raise ValidationError(_("Start Date cannot be a previous date. Only today's date or future dates are allowed."))
             if vals.get('progress', 0.0) >= 100.0 and vals.get('state') != 'completed':
                 vals['state'] = 'completed'
             elif vals.get('state') == 'completed' and vals.get('progress', 0.0) < 100.0:
                 vals['progress'] = 100.0
+            if vals.get('state') == 'completed':
+                if not vals.get('completed_date'):
+                    vals['completed_date'] = today
+                if 'progress' not in vals:
+                    vals['progress'] = 100.0
         return super().create(vals_list)
 
     def write(self, vals):
@@ -1896,10 +2147,21 @@ class BusinessProjectKPISubtask(models.Model):
             self.env.is_admin() or
             self.env.su
         )
+        if 'start_date' in vals_dict and vals_dict.get('start_date'):
+            if vals_dict['start_date'] < fields.Date.context_today(self):
+                raise ValidationError(_("Start Date cannot be a previous date. Only today's date or future dates are allowed."))
+
         if not is_manager:
             for subtask in self:
                 if subtask.user_id and subtask.user_id != self.env.user:
                     raise UserError(f'You cannot modify subtask "{subtask.name}" because it is assigned to {subtask.user_id.name}. You can only update your own assigned tasks.')
+
+        if vals_dict.get('state') == 'completed':
+            if not vals_dict.get('completed_date'):
+                vals_dict['completed_date'] = fields.Date.context_today(self)
+        elif vals_dict.get('state') == 'not_started':
+            if 'completed_date' not in vals_dict:
+                vals_dict['completed_date'] = False
 
         if ('state' in vals_dict and vals_dict['state'] == 'completed') or vals_dict.get('progress', 0.0) >= 100.0:
             if not is_manager:
@@ -1939,7 +2201,7 @@ class BusinessProjectKPISubtask(models.Model):
                 (subtask.kpi_id and subtask.kpi_id.responsible_user_id) or
                 (subtask.kra_id and subtask.kra_id.responsible_user_id) or
                 (subtask.project_id and subtask.project_id.responsible_user_id) or
-                (subtask.kpi_id and subtask.kpi_id.manager_id)
+                (subtask.kpi_id and subtask.kpi_id.project_manager_id)
             )
             if not approver or approver == self.env.user:
                 tl_users = self.env['res.users'].search([('share', '=', False)]).filtered(
@@ -1983,11 +2245,15 @@ class BusinessProjectKPISubtask(models.Model):
         }
 
     def _do_mark_completed(self):
-        self.sudo().write({
-            'state': 'completed',
-            'progress': 100.0,
-            'approval_pending': False,
-        })
+        today = fields.Date.context_today(self)
+        for subtask in self:
+            s_vals = {
+                'state': 'completed',
+                'progress': 100.0,
+                'approval_pending': False,
+                'completed_date': today,
+            }
+            subtask.sudo().write(s_vals)
         for subtask in self:
             pending_approvals = self.env['business.project.approval'].search([
                 ('subtask_id', '=', subtask.id),

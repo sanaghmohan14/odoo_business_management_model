@@ -298,7 +298,13 @@
         <field name="sequence">40</field>
         <field name="code">on_hold</field>
         <field name="folded">False</field>
-<!--        <field name="description">KRA is temporarily paused</field>-->
+    </record>
+
+    <record id="kra_stage_cancelled" model="business.project.kra.stage">
+        <field name="name">Cancelled</field>
+        <field name="sequence">50</field>
+        <field name="code">cancelled</field>
+        <field name="folded">True</field>
     </record>
 
     <!-- ========================================================

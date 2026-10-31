@@ -110,15 +110,15 @@
     </record>
 
     <!-- ==========================================
-         KRA STAGES VIEWS & ACTION
+         SCOPE STAGES VIEWS & ACTION
     ========================================== -->
     <record id="action_business_project_kra_stage" model="ir.actions.act_window">
-        <field name="name">KRA Stages</field>
+        <field name="name">Scope Stages</field>
         <field name="res_model">business.project.kra.stage</field>
         <field name="view_mode">list,form</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
-                Manage stages for Key Result Areas (KRAs).
+                Manage stages for Project Scopes.
             </p>
         </field>
     </record>
@@ -127,7 +127,7 @@
         <field name="name">business.project.kra.stage.list</field>
         <field name="model">business.project.kra.stage</field>
         <field name="arch" type="xml">
-            <list string="KRA Stages" editable="bottom">
+            <list string="Scope Stages" editable="bottom">
                 <field name="sequence" widget="handle"/>
                 <field name="name"/>
                 <field name="code"/>
@@ -142,7 +142,7 @@
         <field name="name">business.project.kra.stage.form</field>
         <field name="model">business.project.kra.stage</field>
         <field name="arch" type="xml">
-            <form string="KRA Stage">
+            <form string="Scope Stage">
                 <sheet>
                     <div class="oe_title">
                         <label for="name"/>
@@ -167,15 +167,15 @@
     </record>
 
     <!-- ==========================================
-         KPI STAGES VIEWS & ACTION
+         TASK STAGES VIEWS & ACTION
     ========================================== -->
     <record id="action_business_project_kpi_stage" model="ir.actions.act_window">
-        <field name="name">KPI Stages</field>
+        <field name="name">Task Stages</field>
         <field name="res_model">business.project.kpi.stage</field>
         <field name="view_mode">list,form</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
-                Manage stages for Key Performance Indicators (KPIs).
+                Manage stages for Project Tasks.
             </p>
         </field>
     </record>
@@ -184,7 +184,7 @@
         <field name="name">business.project.kpi.stage.list</field>
         <field name="model">business.project.kpi.stage</field>
         <field name="arch" type="xml">
-            <list string="KPI Stages" editable="bottom">
+            <list string="Task Stages" editable="bottom">
                 <field name="sequence" widget="handle"/>
                 <field name="name"/>
                 <field name="code"/>
@@ -199,7 +199,7 @@
         <field name="name">business.project.kpi.stage.form</field>
         <field name="model">business.project.kpi.stage</field>
         <field name="arch" type="xml">
-            <form string="KPI Stage">
+            <form string="Task Stage">
                 <sheet>
                     <div class="oe_title">
                         <label for="name"/>

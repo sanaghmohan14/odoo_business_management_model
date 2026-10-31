@@ -6,7 +6,6 @@ from . import business_project_team
 from . import business_project_kra
 from . import business_project_sop
 from . import business_project_activity
-from . import business_project_data_collection
 from . import project_project
 from . import project_task
 from . import account_analytic_line

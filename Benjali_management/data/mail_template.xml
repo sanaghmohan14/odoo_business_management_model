@@ -114,28 +114,6 @@
                     </ul>
                 </t>
 
-                <t t-if="object.activity_plan_ids">
-                    <h3 style="color: #17365d;">Activity Plan</h3>
-                    <ul>
-                        <li t-foreach="object.activity_plan_ids" t-as="activity">
-                            <strong><t t-out="activity.name"/></strong>
-                            — <t t-out="dict(activity._fields['state'].selection).get(activity.state, activity.state)"/>
-                            <t t-if="activity.planned_start"> (<t t-out="format_date(activity.planned_start)"/><t t-if="activity.planned_end"> to <t t-out="format_date(activity.planned_end)"/></t>)</t>
-                        </li>
-                    </ul>
-                </t>
-
-                <t t-if="object.data_collection_ids">
-                    <h3 style="color: #17365d;">Data Collection</h3>
-                    <ul>
-                        <li t-foreach="object.data_collection_ids" t-as="item">
-                            <strong><t t-out="item.name"/></strong>
-                            — <t t-out="dict(item._fields['state'].selection).get(item.state, item.state)"/>
-                            <t t-if="item.source"> (Source: <t t-out="item.source"/>)</t>
-                        </li>
-                    </ul>
-                </t>
-
                 <t t-if="object.communication_notes">
                     <h3 style="color: #17365d;">Communication Notes</h3>
                     <p style="white-space: pre-line;"><t t-out="object.communication_notes"/></p>

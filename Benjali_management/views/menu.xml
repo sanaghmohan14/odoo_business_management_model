@@ -22,19 +22,19 @@
               action="action_benjali_management_dashboard" sequence="5"
               groups="Benjali_management.group_Team_lead"/>
 
-    <!-- ================= KRA MENU ================= -->
-    <menuitem id="menu_business_project_kra_root" name="KRAs" parent="benjali_project_root"
+    <!-- ================= SCOPE MENU ================= -->
+    <menuitem id="menu_business_project_kra_root" name="Scopes" parent="benjali_project_root"
               action="business_project_kra_action" sequence="6"/>
 
-    <menuitem id="menu_business_project_kra_stages" name="KRA Stages" parent="benjali_project_root"
+    <menuitem id="menu_business_project_kra_stages" name="Scope Stages" parent="benjali_project_root"
               action="action_business_project_kra_stage" sequence="65"
               groups="Benjali_management.group_Team_lead"/>
 
-    <!-- ================= KPI MENU (SEPARATE DEDICATED MENU) ================= -->
-    <menuitem id="menu_business_project_kpi_root" name="KPIs" parent="benjali_project_root"
+    <!-- ================= TASK MENU (SEPARATE DEDICATED MENU) ================= -->
+    <menuitem id="menu_business_project_kpi_root" name="Tasks" parent="benjali_project_root"
               sequence="7"/>
 
-    <menuitem id="menu_business_project_kpis" name="All KPIs"
+    <menuitem id="menu_business_project_kpis" name="All Tasks"
               parent="menu_business_project_kpi_root" action="business_project_kpi_action" sequence="1"/>
 
     <menuitem id="menu_business_project_kpi_subtasks" name="Subtasks"
@@ -56,7 +56,7 @@
               parent="menu_business_project_kpi_root" action="business_project_kra_entry_action" sequence="10"
               groups="Benjali_management.group_Team_lead"/>
 
-    <menuitem id="menu_business_project_kpi_stages" name="KPI Stages"
+    <menuitem id="menu_business_project_kpi_stages" name="Task Stages"
               parent="menu_business_project_kpi_root" action="action_business_project_kpi_stage" sequence="20"
               groups="Benjali_management.group_Team_lead"/>
 

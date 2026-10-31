@@ -175,10 +175,10 @@ class BenjaliManagementDashboard(models.AbstractModel):
                     subtask_completed = len(kpi.subtask_ids.filtered(lambda s: s.state in ('completed', 'done')))
                     kpis_list.append({
                         'id': kpi.id,
-                        'name': kpi.name or 'KPI',
-                        'code': kpi.code or 'KPI',
+                        'name': kpi.name or 'Task',
+                        'code': kpi.code or 'Task',
                         'kra_id': kra.id,
-                        'kra_name': kra.name or 'KRA',
+                        'kra_name': kra.name or 'Scope',
                         'project_id': p.id,
                         'project_name': p.name,
                         'employee': assigned_str,
@@ -197,7 +197,7 @@ class BenjaliManagementDashboard(models.AbstractModel):
                         'is_repeating': bool(kpi.is_repeating or kpi.is_daily_repeating),
                     })
 
-                lead_name = kra.manager_id.name or (kra.responsible_user_id.name if kra.responsible_user_id else 'Unassigned')
+                lead_name = kra.responsible_user_id.name if kra.responsible_user_id else 'Unassigned'
                 kra_emp_list = []
                 seen_k_emp = set()
                 for emp in kra.employee_ids:
@@ -212,12 +212,12 @@ class BenjaliManagementDashboard(models.AbstractModel):
 
                 kras_list.append({
                     'id': kra.id,
-                    'name': kra.name or 'KRA',
-                    'code': kra.reference or 'KRA',
+                    'name': kra.name or 'Scope',
+                    'code': kra.reference or 'Scope',
                     'project_id': p.id,
                     'project_name': p.name,
                     'lead': lead_name,
-                    'manager_id': kra.manager_id.id if kra.manager_id else False,
+                    'manager_id': kra.responsible_user_id.id if kra.responsible_user_id else False,
                     'employees': kra_emp_list,
                     'employee_names_str': ', '.join([e['name'] for e in kra_emp_list]) if kra_emp_list else 'None',
                     'weekly_progress': int(kra.weekly_progress or kra.progress_percentage or 0),
@@ -297,14 +297,14 @@ class BenjaliManagementDashboard(models.AbstractModel):
                                 'name': mgr_record.name,
                                 'email': mgr_record.email or '',
                                 'initials': ''.join([part[0].upper() for part in mgr_record.name.split()[:2]]) if mgr_record.name else 'KM',
-                                'roles': ['KRA Lead'],
+                                'roles': ['Scope Lead'],
                                 'is_pm': False,
                                 'is_responsible': False,
                                 'kras': [],
                                 'kpis': [],
                             }
-                        elif 'KRA Lead' not in emp_perf_dict[kra_lead_id]['roles']:
-                            emp_perf_dict[kra_lead_id]['roles'].append('KRA Lead')
+                        elif 'Scope Lead' not in emp_perf_dict[kra_lead_id]['roles']:
+                            emp_perf_dict[kra_lead_id]['roles'].append('Scope Lead')
 
                         if not any(k['id'] == kra_id for k in emp_perf_dict[kra_lead_id]['kras']):
                             emp_perf_dict[kra_lead_id]['kras'].append({
@@ -325,14 +325,14 @@ class BenjaliManagementDashboard(models.AbstractModel):
                             'name': emp_info['name'],
                             'email': emp_info['email'],
                             'initials': emp_info['initials'],
-                            'roles': ['KRA Member'],
+                            'roles': ['Scope Member'],
                             'is_pm': False,
                             'is_responsible': False,
                             'kras': [],
                             'kpis': [],
                         }
-                    elif 'KRA Member' not in emp_perf_dict[eid]['roles'] and 'KRA Lead' not in emp_perf_dict[eid]['roles']:
-                        emp_perf_dict[eid]['roles'].append('KRA Member')
+                    elif 'Scope Member' not in emp_perf_dict[eid]['roles'] and 'Scope Lead' not in emp_perf_dict[eid]['roles']:
+                        emp_perf_dict[eid]['roles'].append('Scope Member')
 
                     if not any(k['id'] == kra_id for k in emp_perf_dict[eid]['kras']):
                         emp_perf_dict[eid]['kras'].append({
@@ -529,7 +529,7 @@ class BenjaliManagementDashboard(models.AbstractModel):
             employee_performance_list = list(emp_perf_dict.values())
             # Sort leadership first (PM, then PR), then frontline employees by avg progress, KPI count
             employee_performance_list.sort(key=lambda x: (
-                0 if x.get('is_pm') else (1 if x.get('is_responsible') else (2 if 'KRA Lead' in x['roles'] else 3)),
+                0 if x.get('is_pm') else (1 if x.get('is_responsible') else (2 if 'Scope Lead' in x['roles'] else 3)),
                 -x['avg_progress'],
                 -x['kpi_count']
             ))
@@ -592,6 +592,7 @@ class BenjaliManagementDashboard(models.AbstractModel):
                 'department_id': p.department_id.id if p.department_id else False,
                 'department_name': p.department_id.name if p.department_id else 'General',
                 'department_color': dep_color,
+                'priority': p.priority or '0',
                 'owner': owner,
                 'project_manager': {
                     'id': pm_obj.id if pm_obj else False,
@@ -804,7 +805,7 @@ class BenjaliManagementDashboard(models.AbstractModel):
         # Build comprehensive flat list of all KRAs
         all_kras_flat = []
         for kra in all_kras:
-            lead_name = kra.manager_id.name or (kra.responsible_user_id.name if kra.responsible_user_id else 'Unassigned')
+            lead_name = kra.responsible_user_id.name if kra.responsible_user_id else 'Unassigned'
             kra_emp_names = [u.name for u in kra.employee_ids]
             kra_employees_str = ', '.join(kra_emp_names) if kra_emp_names else 'None'
             kra_date = kra.end_date or kra.start_date
@@ -818,13 +819,13 @@ class BenjaliManagementDashboard(models.AbstractModel):
 
             all_kras_flat.append({
                 'id': kra.id,
-                'name': kra.name or 'KRA',
-                'code': kra.reference or 'KRA',
+                'name': kra.name or 'Scope',
+                'code': kra.reference or 'Scope',
                 'project_id': kra.project_id.id if kra.project_id else False,
                 'project_name': kra.project_id.name if kra.project_id else 'General',
                 'department_name': kra.department_id.name if kra.department_id else (kra.project_id.department_id.name if kra.project_id and kra.project_id.department_id else 'General'),
                 'lead': lead_name,
-                'manager_id': kra.manager_id.id if kra.manager_id else False,
+                'manager_id': kra.responsible_user_id.id if kra.responsible_user_id else False,
                 'employees': kra_employees_str,
                 'weekly_progress': int(kra.weekly_progress or kra.progress_percentage or 0),
                 'monthly_achievement': int(kra.monthly_achievement or 0),
@@ -864,13 +865,13 @@ class BenjaliManagementDashboard(models.AbstractModel):
 
             all_kpis_flat.append({
                 'id': kpi.id,
-                'name': kpi.name or 'KPI',
-                'code': kpi.code or 'KPI',
+                'name': kpi.name or 'Task',
+                'code': kpi.code or 'Task',
                 'kra_id': kpi.kra_id.id if kpi.kra_id else False,
                 'kra_name': kpi.kra_id.name if kpi.kra_id else '-',
                 'project_id': kpi.project_id.id if kpi.project_id else (kpi.kra_id.project_id.id if kpi.kra_id and kpi.kra_id.project_id else False),
                 'project_name': kpi.project_id.name if kpi.project_id else (kpi.kra_id.project_id.name if kpi.kra_id and kpi.kra_id.project_id else '-'),
-                'manager_name': kpi.manager_id.name if kpi.manager_id else (kpi.kra_id.manager_id.name if kpi.kra_id and kpi.kra_id.manager_id else 'Unassigned'),
+                'manager_name': kpi.project_manager_id.name if kpi.project_manager_id else (kpi.responsible_user_id.name if kpi.responsible_user_id else 'Unassigned'),
                 'employee': assigned_str,
                 'target': kpi.weekly_target or '-',
                 'progress': int(kpi.progress or 0),
@@ -902,7 +903,7 @@ class BenjaliManagementDashboard(models.AbstractModel):
             task_obj = {
                 'id': item['id'],
                 'type': 'kpi',
-                'type_label': 'KPI',
+                'type_label': 'Task',
                 'name': item['name'],
                 'code': item['code'],
                 'date': item['date'],
@@ -945,7 +946,7 @@ class BenjaliManagementDashboard(models.AbstractModel):
             kra_obj = {
                 'id': k_item['id'],
                 'type': 'kra',
-                'type_label': 'KRA',
+                'type_label': 'Scope',
                 'name': k_item['name'],
                 'code': k_item['code'],
                 'date': k_item['date'],
@@ -1148,5 +1149,32 @@ class BenjaliManagementDashboard(models.AbstractModel):
         kra = self.env['business.project.kra'].browse(int(kra_id))
         if kra.exists():
             kra.write({'state': state})
+            return True
+        return False
+
+    @api.model
+    def set_project_priority(self, project_id, priority):
+        """Allows direct inline priority update for a project from the dashboard."""
+        project = self.env['business.project'].browse(int(project_id))
+        if project.exists():
+            project.write({'priority': str(priority)})
+            return True
+        return False
+
+    @api.model
+    def set_kra_priority(self, kra_id, priority):
+        """Allows direct inline priority update for a KRA from the dashboard."""
+        kra = self.env['business.project.kra'].browse(int(kra_id))
+        if kra.exists():
+            kra.write({'priority': str(priority)})
+            return True
+        return False
+
+    @api.model
+    def set_kpi_priority(self, kpi_id, priority):
+        """Allows direct inline priority update for a KPI from the dashboard."""
+        kpi = self.env['business.project.kpi'].browse(int(kpi_id))
+        if kpi.exists():
+            kpi.write({'priority': str(priority)})
             return True
         return False

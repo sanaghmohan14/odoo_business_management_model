@@ -5,15 +5,15 @@ class ProjectTask(models.Model):
     _inherit = 'project.task'
 
     kra_id = fields.Many2one(
-        'business.project.kra', string='KRA', ondelete='set null', index=True)
+        'business.project.kra', string='Scope', ondelete='set null', index=True)
     assigned_employee_id = fields.Many2one(
-        'res.users', string='KRA Employee', index=True,
-        help='Employee whose task performance is measured in KRA entries.')
+        'res.users', string='Scope Employee', index=True,
+        help='Employee whose task performance is measured in Scope entries.')
     performance_status = fields.Selection([
         ('pending', 'Pending'), ('in_progress', 'In Progress'),
         ('completed', 'Completed'), ('on_hold', 'On Hold'),
         ('blocked', 'Blocked'), ('cancelled', 'Cancelled'),
-    ], string='KRA Task Status', default='pending', index=True)
+    ], string='Scope Task Status', default='pending', index=True)
     kra_entry_ids = fields.One2many(
         'business.project.kra.entry', 'task_id', string='Performance Entries')
 

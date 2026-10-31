@@ -29,6 +29,9 @@ export class BenjaliDashboard extends Component {
             activeTab: "kpi", // 'kpi' | 'portfolio' | 'performance' | 'stages' | 'sops' | 'approvals'
             departmentId: false, // false = All departments
             statusFilter: "all", // all | on_track | at_risk | delayed | done
+            projectPriorityFilter: "all", // 'all' | '3' | '2' | '1' | '0'
+            kraPriorityFilter: "all", // 'all' | '3' | '2' | '1' | '0'
+            kpiPriorityFilter: "all", // 'all' | '3' | '2' | '1' | '0'
             searchQuery: "",
             expandedProjects: {}, // { [projectId]: boolean }
             expandedProjectDetails: {}, // { [projectId]: boolean } for inline card details
@@ -595,6 +598,10 @@ export class BenjaliDashboard extends Component {
             list = list.filter((p) => p.status === this.state.statusFilter);
         }
 
+        if (this.state.projectPriorityFilter !== "all") {
+            list = list.filter((p) => String(p.priority || "0") === this.state.projectPriorityFilter);
+        }
+
         if (this.state.searchQuery) {
             const query = this.state.searchQuery;
             list = list.filter(
@@ -896,6 +903,9 @@ export class BenjaliDashboard extends Component {
         if (this.state.kraStageFilter !== "all") {
             list = list.filter((k) => k.state === this.state.kraStageFilter);
         }
+        if (this.state.kraPriorityFilter !== "all") {
+            list = list.filter((k) => String(k.priority || "0") === this.state.kraPriorityFilter);
+        }
         if (this.state.searchQuery) {
             const q = this.state.searchQuery;
             list = list.filter(
@@ -914,6 +924,9 @@ export class BenjaliDashboard extends Component {
         let list = Array.isArray(this.state.data.all_kpis) ? this.state.data.all_kpis : [];
         if (this.state.kpiStageFilter !== "all") {
             list = list.filter((k) => k.state === this.state.kpiStageFilter);
+        }
+        if (this.state.kpiPriorityFilter !== "all") {
+            list = list.filter((k) => String(k.priority || "0") === this.state.kpiPriorityFilter);
         }
         if (this.state.searchQuery) {
             const q = this.state.searchQuery;
@@ -940,6 +953,114 @@ export class BenjaliDashboard extends Component {
 
     setKpiStageFilter(filter) {
         this.state.kpiStageFilter = filter;
+    }
+
+    setProjectPriorityFilter(filter) {
+        this.state.projectPriorityFilter = filter;
+    }
+
+    setKraPriorityFilter(filter) {
+        this.state.kraPriorityFilter = filter;
+    }
+
+    setKpiPriorityFilter(filter) {
+        this.state.kpiPriorityFilter = filter;
+    }
+
+    get kraPriorityCounts() {
+        const counts = { all: 0, "3": 0, "2": 0, "1": 0, "0": 0 };
+        if (!this.state.data || !Array.isArray(this.state.data.all_kras)) return counts;
+        const all = this.state.data.all_kras;
+        counts.all = all.length;
+        for (const k of all) {
+            const prio = String(k.priority || "0");
+            if (counts[prio] !== undefined) {
+                counts[prio]++;
+            } else {
+                counts["0"]++;
+            }
+        }
+        return counts;
+    }
+
+    get kpiPriorityCounts() {
+        const counts = { all: 0, "3": 0, "2": 0, "1": 0, "0": 0 };
+        if (!this.state.data || !Array.isArray(this.state.data.all_kpis)) return counts;
+        const all = this.state.data.all_kpis;
+        counts.all = all.length;
+        for (const k of all) {
+            const prio = String(k.priority || "0");
+            if (counts[prio] !== undefined) {
+                counts[prio]++;
+            } else {
+                counts["0"]++;
+            }
+        }
+        return counts;
+    }
+
+    async setKraPriority(kraId, priority) {
+        try {
+            await this.orm.call("benjali.management.dashboard", "set_kra_priority", [kraId, String(priority)]);
+            if (this.state.data && Array.isArray(this.state.data.all_kras)) {
+                const k = this.state.data.all_kras.find((item) => item.id === kraId);
+                if (k) {
+                    k.priority = String(priority);
+                }
+            }
+            this.notification.add("KRA priority updated.", { type: "success" });
+            await this.loadDashboardData();
+        } catch (error) {
+            this.notification.add(error.message || "Failed to update KRA priority.", { type: "danger" });
+        }
+    }
+
+    async setKpiPriority(kpiId, priority) {
+        try {
+            await this.orm.call("benjali.management.dashboard", "set_kpi_priority", [kpiId, String(priority)]);
+            if (this.state.data && Array.isArray(this.state.data.all_kpis)) {
+                const k = this.state.data.all_kpis.find((item) => item.id === kpiId);
+                if (k) {
+                    k.priority = String(priority);
+                }
+            }
+            this.notification.add("KPI priority updated.", { type: "success" });
+            await this.loadDashboardData();
+        } catch (error) {
+            this.notification.add(error.message || "Failed to update KPI priority.", { type: "danger" });
+        }
+    }
+
+    get projectPriorityCounts() {
+        const counts = { all: 0, "3": 0, "2": 0, "1": 0, "0": 0 };
+        if (!this.state.data || !Array.isArray(this.state.data.projects)) return counts;
+        const allProj = this.state.data.projects;
+        counts.all = allProj.length;
+        for (const p of allProj) {
+            const prio = String(p.priority || "0");
+            if (counts[prio] !== undefined) {
+                counts[prio]++;
+            } else {
+                counts["0"]++;
+            }
+        }
+        return counts;
+    }
+
+    async setProjectPriority(projectId, priority) {
+        try {
+            await this.orm.call("benjali.management.dashboard", "set_project_priority", [projectId, String(priority)]);
+            if (this.state.data && Array.isArray(this.state.data.projects)) {
+                const proj = this.state.data.projects.find((p) => p.id === projectId);
+                if (proj) {
+                    proj.priority = String(priority);
+                }
+            }
+            this.notification.add("Project priority updated.", { type: "success" });
+            await this.loadDashboardData();
+        } catch (error) {
+            this.notification.add(error.message || "Failed to update project priority.", { type: "danger" });
+        }
     }
 
     toggleKra(kraId) {

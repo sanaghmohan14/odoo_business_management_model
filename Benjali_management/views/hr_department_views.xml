@@ -42,15 +42,15 @@
 
                             <div class="my-2 p-2 bg-light rounded">
                                 <div class="d-flex justify-content-between text-muted small mb-1">
-                                    <span>KRA Progress</span>
+                                    <span>Scope Progress</span>
                                     <strong class="text-dark"><field name="avg_kra_progress"/>%</strong>
                                 </div>
                                 <field name="avg_kra_progress" widget="progressbar"/>
                             </div>
 
                             <div class="d-flex justify-content-between text-muted small my-2">
-                                <span><i class="fa fa-bullseye me-1 text-info" title="KRAs"/><strong><field name="kra_count"/></strong> KRAs</span>
-                                <span><i class="fa fa-tachometer me-1 text-warning" title="KPIs"/><strong><field name="kpi_count"/></strong> KPIs</span>
+                                <span><i class="fa fa-bullseye me-1 text-info" title="Scopes"/><strong><field name="kra_count"/></strong> Scopes</span>
+                                <span><i class="fa fa-tachometer me-1 text-warning" title="Tasks"/><strong><field name="kpi_count"/></strong> Tasks</span>
                             </div>
 
                             <div class="d-flex gap-2 mt-3 pt-2 border-top">
@@ -60,11 +60,11 @@
                                 </button>
                                 <button name="action_open_department_kras" type="object"
                                         class="btn btn-sm btn-outline-info flex-fill">
-                                    <i class="fa fa-bullseye me-1"/>KRAs
+                                    <i class="fa fa-bullseye me-1"/>Scopes
                                 </button>
                                 <button name="action_open_department_kpis" type="object"
                                         class="btn btn-sm btn-outline-secondary flex-fill">
-                                    <i class="fa fa-tasks me-1"/>KPIs
+                                    <i class="fa fa-tasks me-1"/>Tasks
                                 </button>
                             </div>
                         </div>
@@ -86,9 +86,9 @@
                 <field name="company_id" groups="base.group_multi_company"/>
                 <field name="manager_id"/>
                 <field name="project_count" string="Projects"/>
-                <field name="kra_count" string="KRAs"/>
-                <field name="kpi_count" string="KPIs"/>
-                <field name="avg_kra_progress" widget="progressbar" string="Avg KRA Score"/>
+                <field name="kra_count" string="Scopes"/>
+                <field name="kpi_count" string="Tasks"/>
+                <field name="avg_kra_progress" widget="progressbar" string="Avg Scope Score"/>
                 <field name="requires_sop" widget="boolean_toggle" optional="show"/>
                 <field name="sop_count" string="SOPs" optional="hide"/>
             </list>
@@ -105,9 +105,9 @@
             <xpath expr="//sheet" position="before">
                 <header>
                     <button name="action_open_department_kras" type="object"
-                            string="Department KRAs" class="btn-primary"/>
+                            string="Department Scopes" class="btn-primary"/>
                     <button name="action_open_department_kpis" type="object"
-                            string="Department KPIs" class="btn-secondary"/>
+                            string="Department Tasks" class="btn-secondary"/>
                 </header>
             </xpath>
             <xpath expr="//field[@name='manager_id']" position="after">
@@ -125,16 +125,16 @@
                 </button>
                 <button name="action_open_department_kras" type="object"
                         class="oe_stat_button" icon="fa-bullseye">
-                    <field name="kra_count" widget="statinfo" string="KRAs"/>
+                    <field name="kra_count" widget="statinfo" string="Scopes"/>
                 </button>
                 <button name="action_open_department_kpis" type="object"
                         class="oe_stat_button" icon="fa-tachometer">
-                    <field name="kpi_count" widget="statinfo" string="KPIs"/>
+                    <field name="kpi_count" widget="statinfo" string="Tasks"/>
                 </button>
             </xpath>
             <xpath expr="//sheet" position="inside">
                 <notebook>
-                    <page string="Department KRAs" name="page_department_kras">
+                    <page string="Department Scopes" name="page_department_kras">
                         <field name="kra_ids">
                             <list editable="bottom">
                                 <field name="reference"/>
@@ -143,13 +143,13 @@
                                 <field name="target"/>
                                 <field name="unit"/>
                                 <field name="frequency"/>
-                                <field name="kpi_count" string="KPIs"/>
+                                <field name="kpi_count" string="Tasks"/>
                                 <field name="progress_percentage" widget="progressbar"/>
                                 <field name="state"/>
                             </list>
                         </field>
                     </page>
-                    <page string="Department KPIs" name="page_department_kpis">
+                    <page string="Department Tasks" name="page_department_kpis">
                         <field name="kpi_ids">
                             <list editable="bottom">
                                 <field name="code"/>

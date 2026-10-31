@@ -141,7 +141,7 @@
                 No approval requests found!
             </p>
             <p>
-                Approval requests for Project stages, KRA completion, KPI completion, and Subtasks will appear here.
+                Approval requests for Project stages, Scope completion, Task completion, and Subtasks will appear here.
             </p>
         </field>
     </record>

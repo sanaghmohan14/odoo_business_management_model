@@ -1,5 +1,5 @@
-from odoo import models, fields, api
-from odoo.exceptions import UserError
+from odoo import models, fields, api, tools, _
+from odoo.exceptions import UserError, ValidationError
 
 
 class BusinessProject(models.Model):
@@ -211,18 +211,106 @@ class BusinessProject(models.Model):
 
     start_date = fields.Date(
         string='Start Date',
-        tracking=True
+        default=fields.Date.context_today,
+        tracking=True,
+        index=True
     )
 
-    expected_end_date = fields.Date(
-        string='Expected End Date',
-        tracking=True
+    completed_date = fields.Date(
+        string='Completed Date',
+        tracking=True,
+        index=True
+    )
+
+    end_date = fields.Date(
+        string='End Date',
+        related='completed_date',
+        readonly=False,
+        store=True
     )
 
     actual_end_date = fields.Date(
         string='Actual End Date',
-        tracking=True
+        related='completed_date',
+        readonly=False,
+        store=True
     )
+
+    deadline = fields.Date(
+        string='Deadline',
+        tracking=True,
+        index=True
+    )
+
+    expected_end_date = fields.Date(
+        string='Expected End Date',
+        related='deadline',
+        readonly=False,
+        store=True
+    )
+
+    @api.onchange('start_date')
+    def _onchange_start_date(self):
+        today = fields.Date.context_today(self)
+        if self.start_date:
+            if self.start_date < today:
+                self.start_date = today
+                return {
+                    'warning': {
+                        'title': _("Invalid Start Date"),
+                        'message': _("Start Date cannot be a previous date. Only today's date or future dates are allowed."),
+                    }
+                }
+        if self.completed_date and self.start_date and self.completed_date < self.start_date:
+            self.completed_date = self.start_date
+
+    @api.onchange('completed_date', 'end_date', 'actual_end_date')
+    def _onchange_completed_date(self):
+        target = self.completed_date or self.end_date or self.actual_end_date
+        if target and self.start_date and target < self.start_date:
+            self.completed_date = self.start_date
+            return {
+                'warning': {
+                    'title': _("Invalid Completed Date"),
+                    'message': _("End and Completed Date must be greater than or equal to Start Date."),
+                }
+            }
+
+    def init(self):
+        super().init()
+        cr = self.env.cr
+        # Repair pre-existing inconsistent completed dates — only if columns already exist
+        if tools.sql.column_exists(cr, 'business_project', 'completed_date') and \
+                tools.sql.column_exists(cr, 'business_project', 'start_date'):
+            cr.execute("""
+                UPDATE business_project
+                SET completed_date = start_date
+                WHERE completed_date IS NOT NULL AND start_date IS NOT NULL AND completed_date < start_date;
+            """)
+        if tools.sql.column_exists(cr, 'business_project', 'end_date') and \
+                tools.sql.column_exists(cr, 'business_project', 'start_date'):
+            cr.execute("""
+                UPDATE business_project
+                SET end_date = start_date
+                WHERE end_date IS NOT NULL AND start_date IS NOT NULL AND end_date < start_date;
+            """)
+        if tools.sql.column_exists(cr, 'business_project', 'actual_end_date') and \
+                tools.sql.column_exists(cr, 'business_project', 'start_date'):
+            cr.execute("""
+                UPDATE business_project
+                SET actual_end_date = start_date
+                WHERE actual_end_date IS NOT NULL AND start_date IS NOT NULL AND actual_end_date < start_date;
+            """)
+
+    @api.constrains('start_date', 'completed_date', 'end_date', 'actual_end_date')
+    def _check_dates_consistency(self):
+        if not self.env.registry.ready or self.env.context.get('install_mode') or self.env.context.get('upgrade_mode'):
+            return
+        for project in self:
+            if project.start_date:
+                check_completed = project.completed_date or project.end_date or project.actual_end_date
+                if check_completed and check_completed < project.start_date:
+                    raise ValidationError(_("End and Completed Date (%s) must be greater than or equal to Start Date (%s).") % (check_completed, project.start_date))
 
     #client kickoff
 
@@ -256,31 +344,31 @@ class BusinessProject(models.Model):
         string='Internal Notes'
     )
 
-    #kra connection
+    # Scope & Task connection
     kra_ids = fields.One2many(
         'business.project.kra',
         'project_id',
-        string='KRAs (Main Tasks)'
+        string='Scopes'
     )
     kpi_ids = fields.One2many(
         'business.project.kpi',
         'project_id',
-        string='KPIs'
+        string='Tasks'
     )
     kra_count = fields.Integer(
-        string='KRAs Count',
+        string='Scopes Count',
         compute='_compute_kra_kpi_metrics'
     )
     kpi_count = fields.Integer(
-        string='KPIs Count',
+        string='Tasks Count',
         compute='_compute_kra_kpi_metrics'
     )
     kra_weekly_progress = fields.Float(
-        string='Weekly KRA Progress (%)',
+        string='Weekly Scope Progress (%)',
         compute='_compute_kra_kpi_metrics'
     )
     kra_monthly_progress = fields.Float(
-        string='Monthly KRA Score (/100)',
+        string='Monthly Scope Score (/100)',
         compute='_compute_kra_kpi_metrics'
     )
 
@@ -348,14 +436,6 @@ class BusinessProject(models.Model):
         'business.project.activity',
         'project_id',
         string='Activity Plan'
-    )
-
-    #data collection
-
-    data_collection_ids = fields.One2many(
-        'business.project.data.collection',
-        'project_id',
-        string='Data Collection'
     )
 
     consulting_deliverable_ids = fields.One2many(
@@ -623,6 +703,7 @@ class BusinessProject(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        today = fields.Date.context_today(self)
         for vals in vals_list:
             if not vals.get('reference'):
                 vals['reference'] = self.env['ir.sequence'].next_by_code(
@@ -631,6 +712,11 @@ class BusinessProject(models.Model):
 
             if not vals.get('stage_id'):
                 vals['stage_id'] = self._default_stage()
+
+            if not vals.get('start_date'):
+                vals['start_date'] = today
+            elif fields.Date.to_date(vals['start_date']) < today:
+                raise ValidationError(_("Start Date cannot be a previous date. Only today's date or future dates are allowed."))
 
         projects = super().create(vals_list)
 
@@ -950,6 +1036,11 @@ class BusinessProject(models.Model):
                 )
 
     def write(self, vals):
+        today = fields.Date.context_today(self)
+        if 'start_date' in vals and vals.get('start_date'):
+            start_date_val = fields.Date.to_date(vals['start_date'])
+            if start_date_val < today:
+                raise ValidationError(_("Start Date cannot be a previous date. Only today's date or future dates are allowed."))
         if 'stage_id' in vals and not self.env.context.get(
                 'skip_stage_requirements'):
             for record in self:

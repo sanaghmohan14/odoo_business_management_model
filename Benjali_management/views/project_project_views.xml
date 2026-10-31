@@ -10,9 +10,4 @@
             </xpath>
         </field>
     </record>
-    <menuitem id="project_dashboard_one" name="Dashboard"
-             parent="project.menu_main_pm" sequence="11" action="Benjali_management.action_benjali_management_dashboard"/>
-
-    <menuitem id="project_approval_menu_one" name="Project Approval"
-             parent="project.menu_main_pm" sequence="12" action="Benjali_management.business_project_approval_action"/>
 </odoo>

@@ -12,12 +12,12 @@ class HrDepartment(models.Model):
     kra_ids = fields.One2many(
         'business.project.kra',
         'department_id',
-        string='Department KRAs'
+        string='Department Scopes'
     )
     kpi_ids = fields.One2many(
         'business.project.kpi',
         'department_id',
-        string='Department KPIs'
+        string='Department Tasks'
     )
 
     requires_sop = fields.Boolean(
@@ -35,15 +35,15 @@ class HrDepartment(models.Model):
         compute='_compute_department_performance'
     )
     kra_count = fields.Integer(
-        string='KRAs',
+        string='Scopes',
         compute='_compute_department_performance'
     )
     kpi_count = fields.Integer(
-        string='KPIs',
+        string='Tasks',
         compute='_compute_department_performance'
     )
     avg_kra_progress = fields.Float(
-        string='Avg KRA Progress (%)',
+        string='Avg Scope Progress (%)',
         compute='_compute_department_performance'
     )
 
@@ -111,7 +111,7 @@ class HrDepartment(models.Model):
         self.ensure_one()
         return {
             'type': 'ir.actions.act_window',
-            'name': f'{self.name} - KRAs',
+            'name': f'{self.name} - Scopes',
             'res_model': 'business.project.kra',
             'view_mode': 'list,kanban,form',
             'domain': [
@@ -127,7 +127,7 @@ class HrDepartment(models.Model):
         self.ensure_one()
         return {
             'type': 'ir.actions.act_window',
-            'name': f'{self.name} - KPIs',
+            'name': f'{self.name} - Tasks',
             'res_model': 'business.project.kpi',
             'view_mode': 'list,form',
             'domain': [

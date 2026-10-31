@@ -126,7 +126,7 @@ class BusinessProjectApproval(models.Model):
                         kpi.responsible_user_id or
                         (kpi.kra_id and kpi.kra_id.responsible_user_id) or
                         (kpi.project_id and kpi.project_id.responsible_user_id) or
-                        kpi.manager_id
+                        kpi.project_manager_id
                     )
                     if not approver:
                         tl_users = self.env['res.users'].search([('share', '=', False)]).filtered(
@@ -143,7 +143,7 @@ class BusinessProjectApproval(models.Model):
                         (sub.kpi_id and sub.kpi_id.responsible_user_id) or
                         (sub.kra_id and sub.kra_id.responsible_user_id) or
                         (sub.project_id and sub.project_id.responsible_user_id) or
-                        (sub.kpi_id and sub.kpi_id.manager_id)
+                        (sub.kpi_id and sub.kpi_id.project_manager_id)
                     )
                     if not approver:
                         tl_users = self.env['res.users'].search([('share', '=', False)]).filtered(
