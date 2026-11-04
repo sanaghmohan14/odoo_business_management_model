@@ -96,7 +96,7 @@
                 </t>
 
                 <t t-if="object.kra_ids">
-                    <h3 style="color: #17365d;">Key Result Areas</h3>
+                    <h3 style="color: #17365d;">Scopes</h3>
                     <ul>
                         <li t-foreach="object.kra_ids" t-as="kra">
                             <strong><t t-out="kra.name"/></strong>

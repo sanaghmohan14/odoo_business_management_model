@@ -305,13 +305,13 @@ class BusinessProjectKRA(models.Model):
                 WHERE end_date IS NOT NULL AND start_date IS NOT NULL AND end_date < start_date;
             """)
 
-    @api.constrains('start_date', 'completed_date')
+    @api.constrains('start_date', 'completed_date', 'state')
     def _check_dates_consistency(self):
         if not self.env.registry.ready or self.env.context.get('install_mode') or self.env.context.get('upgrade_mode'):
             return
         for kra in self:
-            if kra.start_date:
-                if kra.completed_date and kra.completed_date < kra.start_date:
+            if kra.state == 'completed' and kra.start_date and kra.completed_date:
+                if kra.completed_date < kra.start_date:
                     raise ValidationError(_("Completed Date (%s) must be greater than or equal to Start Date (%s).") % (kra.completed_date, kra.start_date))
 
     def _compute_period_flags(self):
@@ -392,7 +392,7 @@ class BusinessProjectKRA(models.Model):
     achievement = fields.Float(compute='_compute_overall_progress', string='Actual Achievement', store=True)
 
     # Legacy fields
-    kpi = fields.Char(string='KPI Summary')
+    kpi = fields.Char(string='Task Summary')
     measurement = fields.Char(string='Measurement Method')
     target = fields.Float(string='Target (Legacy)', default=0.0)
     unit = fields.Char(string='Unit', default='units')
@@ -405,8 +405,8 @@ class BusinessProjectKRA(models.Model):
     pending_task_count = fields.Integer(compute='_compute_task_metrics', string='Pending Tasks')
     on_hold_task_count = fields.Integer(compute='_compute_task_metrics', string='On Hold Tasks')
     task_completion_percentage = fields.Float(compute='_compute_task_metrics', string='Task Completion (%)')
-    kpi_weight_total = fields.Float(compute='_compute_weekly_metrics', string='Total KPI Weight (%)', store=True)
-    weighted_kpi_score = fields.Float(compute='_compute_weekly_metrics', string='Weighted KPI Score (%)', store=True)
+    kpi_weight_total = fields.Float(compute='_compute_weekly_metrics', string='Total Task Weight (%)', store=True)
+    weighted_kpi_score = fields.Float(compute='_compute_weekly_metrics', string='Weighted Task Score (%)', store=True)
 
     @api.depends('project_id', 'project_id.department_id')
     def _compute_department_id(self):
@@ -799,8 +799,8 @@ class BusinessProjectKRA(models.Model):
             'type': 'ir.actions.client',
             'tag': 'display_notification',
             'params': {
-                'title': 'Repeating KPIs Generated',
-                'message': f"{created_count} daily repeating task(s) added under KRA '{self.name}' for {target_date}.",
+                'title': 'Repeating Tasks Generated',
+                'message': f"{created_count} daily repeating task(s) added under Scope '{self.name}' for {target_date}.",
                 'type': 'success',
                 'sticky': False,
             }
@@ -822,7 +822,7 @@ class BusinessProjectKRA(models.Model):
         self.ensure_one()
         return {
             'type': 'ir.actions.act_window',
-            'name': f'{self.name} - KPIs',
+            'name': f'{self.name} - Tasks',
             'res_model': 'business.project.kpi',
             'view_mode': 'kanban,list,form,pivot,graph',
             'domain': [('kra_id', '=', self.id)],
@@ -1124,7 +1124,7 @@ class BusinessProjectKPI(models.Model):
         help='Assigned weekly target (e.g. 5 completions, 1 deliverable). Daily tasks achieve this target.')
     weekly_weightage = fields.Float(
         string='Weekly Weightage (%)', default=100.0, required=True,
-        help='Assigned weekly weightage percentage of this KPI.')
+        help='Assigned weekly weightage percentage of this Task.')
     unit = fields.Char(string='Unit', default='units')
 
     weekly_achievement = fields.Float(
@@ -1286,13 +1286,13 @@ class BusinessProjectKPI(models.Model):
                 WHERE end_date IS NOT NULL AND start_date IS NOT NULL AND end_date < start_date;
             """)
 
-    @api.constrains('start_date', 'completed_date')
+    @api.constrains('start_date', 'completed_date', 'state')
     def _check_dates_consistency(self):
         if not self.env.registry.ready or self.env.context.get('install_mode') or self.env.context.get('upgrade_mode'):
             return
         for kpi in self:
-            if kpi.start_date:
-                if kpi.completed_date and kpi.completed_date < kpi.start_date:
+            if kpi.state == 'completed' and kpi.start_date and kpi.completed_date:
+                if kpi.completed_date < kpi.start_date:
                     raise ValidationError(_("Completed Date (%s) must be greater than or equal to Start Date (%s).") % (kpi.completed_date, kpi.start_date))
 
     @api.onchange('stage_id')
@@ -1717,7 +1717,7 @@ class BusinessProjectKPI(models.Model):
             'tag': 'display_notification',
             'params': {
                 'title': 'Approval Requested',
-                'message': 'KPI completion approval request has been sent to the Project Responsible.',
+                'message': 'Task completion approval request has been sent to the Project Responsible.',
                 'type': 'success',
                 'sticky': False,
             }
@@ -1846,10 +1846,10 @@ class BusinessProjectKRAEntry(models.Model):
 
     name = fields.Char(string='Work / Achievement Summary', required=True)
     kra_id = fields.Many2one(
-        'business.project.kra', string='KRA', required=True,
+        'business.project.kra', string='Scope', required=True,
         ondelete='cascade', index=True)
     kpi_id = fields.Many2one(
-        'business.project.kpi', string='KPI (Optional)',
+        'business.project.kpi', string='Task (Optional)',
         ondelete='cascade', index=True, domain="[('kra_id', '=', kra_id)]")
     task_id = fields.Many2one(
         'project.task', string='Project Task',
@@ -2097,13 +2097,13 @@ class BusinessProjectKPISubtask(models.Model):
                 WHERE end_date IS NOT NULL AND start_date IS NOT NULL AND end_date < start_date;
             """)
 
-    @api.constrains('start_date', 'completed_date')
+    @api.constrains('start_date', 'completed_date', 'state')
     def _check_dates_consistency(self):
         if not self.env.registry.ready or self.env.context.get('install_mode') or self.env.context.get('upgrade_mode'):
             return
         for sub in self:
-            if sub.start_date:
-                if sub.completed_date and sub.completed_date < sub.start_date:
+            if sub.state == 'completed' and sub.start_date and sub.completed_date:
+                if sub.completed_date < sub.start_date:
                     raise ValidationError(_("Completed Date (%s) must be greater than or equal to Start Date (%s).") % (sub.completed_date, sub.start_date))
 
     @api.onchange('state')

@@ -1,0 +1,1756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Dashboard - Benac Business Solutions</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <style>
+        :root {
+            --bg-color: #f4f6fa;
+            --card-bg: #ffffff;
+            --border-color: #eef2f6;
+            --border-subtle: #f1f5f9;
+            --text-title: #0f172a;
+            --text-body: #334155;
+            --text-muted: #64748b;
+            --text-sub: #94a3b8;
+            --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+            --plan-line: #000000;
+            --bar-track: #e2e8f0;
+            --table-hover: #f8fafc;
+            --badge-running-bg: #e0f2fe;
+            --badge-running-text: #0369a1;
+            --badge-completed-bg: #dcfce7;
+            --badge-completed-text: #15803d;
+            --badge-onhold-bg: #fef3c7;
+            --badge-onhold-text: #b45309;
+            --badge-notstarted-bg: #f1f5f9;
+            --badge-notstarted-text: #64748b;
+            --brand-badge-bg: #0f172a;
+            --brand-badge-text: #ffffff;
+        }
+
+        body.dark-mode {
+            --bg-color: #0b0f19;
+            --card-bg: #121826;
+            --border-color: #1a2233;
+            --border-subtle: rgba(255, 255, 255, 0.05);
+            --text-title: #ffffff;
+            --text-body: #cbd5e1;
+            --text-muted: #94a3b8;
+            --text-sub: #64748b;
+            --card-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+            --plan-line: #ffffff;
+            --bar-track: #1e293b;
+            --table-hover: rgba(255, 255, 255, 0.03);
+            --badge-running-bg: rgba(59, 130, 246, 0.18);
+            --badge-running-text: #93c5fd;
+            --badge-completed-bg: rgba(16, 185, 129, 0.18);
+            --badge-completed-text: #6ee7b7;
+            --badge-onhold-bg: rgba(245, 158, 11, 0.18);
+            --badge-onhold-text: #fcd34d;
+            --badge-notstarted-bg: rgba(148, 163, 184, 0.15);
+            --badge-notstarted-text: #94a3b8;
+            --brand-badge-bg: #1e293b;
+            --brand-badge-text: #60a5fa;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-body);
+            transition: background-color 0.25s ease, color 0.25s ease;
+            padding: 24px 32px 48px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .dashboard-container {
+            max-width: 1360px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        /* HEADER */
+        .dash-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+            padding: 4px 0 10px;
+        }
+
+        .brand-wrap {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-logo {
+            width: 38px;
+            height: 38px;
+            background: var(--brand-badge-bg);
+            color: var(--brand-badge-text);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 800;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        body.dark-mode .brand-logo {
+            border: 1px solid #3b82f6;
+        }
+
+        .brand-text h1 {
+            font-size: 19px;
+            font-weight: 700;
+            color: var(--text-title);
+            line-height: 1.2;
+            letter-spacing: -0.3px;
+        }
+
+        .brand-text p {
+            font-size: 12.5px;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        .header-meta {
+            display: flex;
+            align-items: center;
+            gap: 22px;
+            flex-wrap: wrap;
+        }
+
+        .team-legend {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .team-dot-item {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 12.5px;
+            font-weight: 500;
+            color: var(--text-title);
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: background 0.15s ease;
+        }
+
+        .team-dot-item:hover {
+            background: var(--border-subtle);
+        }
+
+        .dot-marker {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+        }
+
+        .dot-t1 { background-color: #2563eb; }
+        .dot-t2 { background-color: #7c3aed; }
+        .dot-t3 { background-color: #0d9488; }
+
+        .date-label {
+            font-size: 12.5px;
+            color: var(--text-muted);
+        }
+
+        .theme-toggle-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-title);
+            padding: 6px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12.5px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: var(--card-shadow);
+            transition: all 0.2s ease;
+        }
+
+        .theme-toggle-btn:hover {
+            transform: scale(1.03);
+            border-color: #3b82f6;
+        }
+
+        /* ROW 1: 5 SUMMARY KPI CARDS */
+        .kpi-row {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 14px;
+        }
+
+        @media (max-width: 1100px) {
+            .kpi-row { grid-template-columns: repeat(3, 1fr); }
+        }
+        @media (max-width: 768px) {
+            .kpi-row { grid-template-columns: 1fr; }
+        }
+
+        .kpi-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px 18px;
+            box-shadow: var(--card-shadow);
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .kpi-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .kpi-card-top {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .kpi-card-top i {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .kpi-title {
+            font-size: 12.5px;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        .kpi-val {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-title);
+            line-height: 1.1;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+        }
+
+        .val-sub {
+            font-size: 13px;
+            font-weight: 400;
+            color: var(--text-muted);
+        }
+
+        .val-status {
+            font-size: 12.5px;
+            font-weight: 600;
+        }
+
+        .text-good { color: #10b981; }
+        .text-danger { color: #dc2626; }
+
+        .segmented-bar {
+            display: flex;
+            gap: 2px;
+            height: 4px;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 9px;
+        }
+
+        .seg {
+            height: 100%;
+        }
+
+        .bar-track {
+            width: 100%;
+            height: 4px;
+            background: var(--border-color);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 9px;
+        }
+
+        .bar-fill {
+            height: 100%;
+            border-radius: 2px;
+        }
+
+        .kpi-subtext {
+            font-size: 11px;
+            color: var(--text-muted);
+            line-height: 1.2;
+        }
+
+        /* ROW 2: 4 ANALYTICS WIDGETS */
+        .analytics-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+        }
+
+        @media (max-width: 1100px) {
+            .analytics-row { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 768px) {
+            .analytics-row { grid-template-columns: 1fr; }
+        }
+
+        .widget-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 18px 20px;
+            box-shadow: var(--card-shadow);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .widget-header {
+            margin-bottom: 16px;
+        }
+
+        .widget-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-title);
+            letter-spacing: -0.2px;
+        }
+
+        .widget-subtitle {
+            font-size: 11.5px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* Donut Widget */
+        .health-chart-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            gap: 12px;
+            padding: 4px 0;
+        }
+
+        .donut-wrap {
+            position: relative;
+            width: 110px;
+            height: 110px;
+        }
+
+        .donut-svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .donut-bg {
+            stroke: var(--border-color);
+        }
+
+        .donut-center {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .donut-score {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-title);
+            line-height: 1;
+        }
+
+        .donut-lbl {
+            font-size: 9.5px;
+            color: var(--text-muted);
+            margin-top: 3px;
+        }
+
+        .health-legend {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .hl-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12.5px;
+        }
+
+        .hl-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .hl-lbl {
+            color: var(--text-body);
+            font-weight: 500;
+            min-width: 36px;
+        }
+
+        .hl-num {
+            font-weight: 700;
+            color: var(--text-title);
+            margin-left: 10px;
+        }
+
+        /* Running status pills */
+        .status-segmented-bar {
+            display: flex;
+            gap: 2px;
+            height: 4px;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 18px;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .status-pill {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            transition: transform 0.15s ease;
+        }
+
+        .status-pill:hover {
+            transform: translateY(-1px);
+        }
+
+        .status-pill i {
+            font-size: 11px;
+            width: 14px;
+            text-align: center;
+        }
+
+        .status-pill .num {
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .status-pill .lbl {
+            font-size: 11.5px;
+            font-weight: 500;
+        }
+
+        .sp-running { background: #0f172a; color: #ffffff; }
+        body.dark-mode .sp-running { background: #1e293b; color: #93c5fd; border: 1px solid #3b82f6; }
+
+        .sp-completed { background: #dcfce7; color: #15803d; }
+        body.dark-mode .sp-completed { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+
+        .sp-onhold { background: #fef3c7; color: #b45309; }
+        body.dark-mode .sp-onhold { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+
+        .sp-notstarted { background: #f1f5f9; color: #64748b; }
+        body.dark-mode .sp-notstarted { background: rgba(148, 163, 184, 0.12); color: #cbd5e1; border: 1px solid rgba(148, 163, 184, 0.2); }
+
+        /* Speedometer Widget */
+        .gauge-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding-bottom: 6px;
+        }
+
+        .gauge-svg {
+            width: 150px;
+            height: 90px;
+        }
+
+        .gauge-bg { stroke: var(--border-color); }
+        .gauge-needle { stroke: var(--text-title); }
+        .gauge-hub { fill: var(--text-title); }
+
+        .risk-label {
+            font-size: 13.5px;
+            font-weight: 700;
+            color: #10b981;
+            margin-top: 4px;
+            text-align: center;
+        }
+
+        .risk-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .risk-box {
+            padding: 8px 4px;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .risk-box .num {
+            font-size: 16px;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .risk-box .lbl {
+            font-size: 11px;
+            font-weight: 500;
+            margin-top: 4px;
+        }
+
+        .rb-low { background: #ecfdf5; color: #047857; }
+        body.dark-mode .rb-low { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+
+        .rb-med { background: #fffbeb; color: #b45309; }
+        body.dark-mode .rb-med { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+
+        .rb-high { background: #dc2626; color: #ffffff; }
+
+        /* Project Condition Bar Chart */
+        .cond-bars-wrap {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            height: 135px;
+            padding-top: 10px;
+        }
+
+        .cond-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            width: 44px;
+        }
+
+        .cond-num {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-title);
+        }
+
+        .cond-track {
+            width: 32px;
+            height: 80px;
+            display: flex;
+            align-items: flex-end;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .cond-fill {
+            width: 100%;
+            border-radius: 3px;
+        }
+
+        .cond-lbl {
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        /* ROW 3: TEAMS & TEAM COMPARISON */
+        .teams-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+        }
+
+        @media (max-width: 1100px) {
+            .teams-row { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 768px) {
+            .teams-row { grid-template-columns: 1fr; }
+        }
+
+        .team-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 18px 20px;
+            box-shadow: var(--card-shadow);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 14px;
+        }
+
+        .team-card-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .team-name {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-title);
+        }
+
+        .team-lead {
+            font-size: 11.5px;
+            color: var(--text-muted);
+            margin-top: 1px;
+        }
+
+        .team-badge {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 12px;
+        }
+
+        .badge-excellent { background: #dcfce7; color: #15803d; }
+        .badge-support { background: #fef3c7; color: #b45309; }
+        .badge-good { background: #e0f2fe; color: #0369a1; }
+
+        .team-metrics-row {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .team-donut-wrap {
+            position: relative;
+            width: 72px;
+            height: 72px;
+            flex-shrink: 0;
+        }
+
+        .td-svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .td-center {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .td-pct {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-title);
+            line-height: 1;
+        }
+
+        .td-lbl {
+            font-size: 8px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .team-bars-col {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .metric-line {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+        }
+
+        .ml-lbl {
+            min-width: 58px;
+            color: var(--text-muted);
+        }
+
+        .ml-bar {
+            flex: 1;
+            height: 5px;
+            background: var(--border-color);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .ml-fill {
+            height: 100%;
+            background-color: #2563eb;
+            border-radius: 3px;
+        }
+
+        .ml-val {
+            font-weight: 600;
+            color: var(--text-title);
+            min-width: 28px;
+            text-align: right;
+        }
+
+        .team-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-top: 1px solid var(--border-subtle);
+            padding-top: 10px;
+        }
+
+        .tf-summary {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .tf-txt {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .tf-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .square-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 2px;
+        }
+
+        .tf-spark {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 2px;
+        }
+
+        .spark-svg {
+            width: 70px;
+            height: 18px;
+        }
+
+        .spark-txt {
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        /* Comparison Card */
+        .comp-legend {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .c-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 10.5px;
+            color: var(--text-muted);
+        }
+
+        .c-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+
+        .comp-chart-area {
+            display: flex;
+            gap: 10px;
+            height: 120px;
+            padding-top: 8px;
+        }
+
+        .comp-y-axis {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            font-size: 9.5px;
+            color: var(--text-muted);
+            text-align: right;
+            padding-bottom: 20px;
+            width: 20px;
+        }
+
+        .comp-bars-content {
+            flex: 1;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .comp-grid-lines {
+            position: absolute;
+            inset: 0 0 20px 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            pointer-events: none;
+        }
+
+        .grid-line {
+            width: 100%;
+            border-top: 1px dashed var(--border-color);
+        }
+
+        .comp-team-groups {
+            position: relative;
+            height: 100%;
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-end;
+            z-index: 1;
+        }
+
+        .comp-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .group-bars {
+            display: flex;
+            align-items: flex-end;
+            gap: 3px;
+            height: 90px;
+        }
+
+        .c-bar {
+            width: 12px;
+            border-radius: 2px 2px 0 0;
+        }
+
+        .c-bar-navy { background-color: #0f172a; }
+        body.dark-mode .c-bar-navy { background-color: #f8fafc; }
+
+        .c-bar-blue { background-color: #2563eb; }
+        .c-bar-lightblue { background-color: #93c5fd; }
+
+        .c-group-name {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        /* ROW 4: PROJECTS TABLE */
+        .table-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px 24px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .table-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .table-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--text-title);
+        }
+
+        .plan-legend {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .plan-legend .pipe {
+            font-weight: 800;
+            color: var(--plan-line);
+            font-size: 14px;
+        }
+
+        .table-scroll {
+            overflow-x: auto;
+        }
+
+        .projects-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12.5px;
+        }
+
+        .projects-table thead th {
+            padding: 10px 12px;
+            font-size: 11.5px;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        .projects-table thead th.th-prog {
+            min-width: 180px;
+        }
+
+        .projects-table tbody tr {
+            border-bottom: 1px solid var(--border-subtle);
+            transition: background 0.15s ease;
+        }
+
+        .projects-table tbody tr:hover {
+            background: var(--table-hover);
+        }
+
+        .projects-table td {
+            padding: 12px 12px;
+            vertical-align: middle;
+        }
+
+        .p-title {
+            font-weight: 600;
+            color: var(--text-title);
+            font-size: 13px;
+        }
+
+        .p-sub {
+            font-size: 11.5px;
+            color: var(--text-muted);
+            margin-top: 1px;
+        }
+
+        .t-dot-wrap {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-title);
+        }
+
+        .t-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+        }
+
+        .status-badge {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 12px;
+        }
+
+        .sb-running { background: var(--badge-running-bg); color: var(--badge-running-text); }
+        .sb-completed { background: var(--badge-completed-bg); color: var(--badge-completed-text); }
+        .sb-onhold { background: var(--badge-onhold-bg); color: var(--badge-onhold-text); }
+        .sb-notstarted { background: var(--badge-notstarted-bg); color: var(--badge-notstarted-text); }
+
+        .health-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 500;
+            color: var(--text-title);
+        }
+
+        .health-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .risk-pill {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        .rp-high { background: #dc2626; color: #ffffff; }
+        .rp-med { background: #fef3c7; color: #b45309; }
+        .rp-low { background: #ecfdf5; color: #047857; }
+        body.dark-mode .rp-med { background: rgba(245, 158, 11, 0.2); color: #fcd34d; }
+        body.dark-mode .rp-low { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; }
+
+        .progress-plan-cell {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .dual-track {
+            position: relative;
+            flex: 1;
+            height: 6px;
+            background: var(--bar-track);
+            border-radius: 3px;
+        }
+
+        .dual-fill {
+            height: 100%;
+            border-radius: 3px;
+        }
+
+        .plan-marker {
+            position: absolute;
+            top: -3px;
+            width: 2px;
+            height: 12px;
+            background: var(--plan-line);
+            border-radius: 1px;
+            z-index: 2;
+        }
+
+        .prog-pct {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-title);
+            min-width: 34px;
+            text-align: right;
+        }
+
+        .due-wrap {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
+        .due-pts {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            min-width: 44px;
+        }
+
+        .due-date {
+            font-size: 12px;
+            color: var(--text-body);
+        }
+
+        .cond-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11.5px;
+            font-weight: 600;
+        }
+
+        .cond-overdue { color: #991b1b; }
+        .cond-behind { color: #d97706; }
+        .cond-ahead { color: #10b981; }
+        .cond-onplan { color: var(--text-muted); }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard-container">
+        <!-- HEADER -->
+        <header class="dash-header">
+            <div class="brand-wrap">
+                <div class="brand-logo">B</div>
+                <div class="brand-text">
+                    <h1>Project Dashboard</h1>
+                    <p>Benac Business Solutions</p>
+                </div>
+            </div>
+
+            <div class="header-meta">
+                <div class="team-legend">
+                    <div class="team-dot-item"><span class="dot-marker dot-t1"></span><span>Team 1 · Anand Nair</span></div>
+                    <div class="team-dot-item"><span class="dot-marker dot-t2"></span><span>Team 2 · Fathima Zahra</span></div>
+                    <div class="team-dot-item"><span class="dot-marker dot-t3"></span><span>Team 3 · Jacob Mathew</span></div>
+                </div>
+                <span class="date-label">31 October 2026 · sample data</span>
+                <button class="theme-toggle-btn" id="themeBtn" onclick="toggleTheme()">
+                    <i class="fa fa-moon-o" id="themeIcon"></i>
+                    <span id="themeText">Dark Mode</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- ROW 1: 5 SUMMARY KPI CARDS -->
+        <section class="kpi-row">
+            <!-- Card 1 -->
+            <div class="kpi-card">
+                <div class="kpi-card-top">
+                    <i class="fa fa-th-large"></i>
+                    <span class="kpi-title">Total projects</span>
+                </div>
+                <div class="kpi-val">12</div>
+                <div class="segmented-bar">
+                    <div class="seg" style="width: 33%; background-color: #2563eb;"></div>
+                    <div class="seg" style="width: 42%; background-color: #0f172a;"></div>
+                    <div class="seg" style="width: 25%; background-color: #f59e0b;"></div>
+                </div>
+                <div class="kpi-subtext">3 teams · 12 consultants</div>
+            </div>
+
+            <!-- Card 2 -->
+            <div class="kpi-card">
+                <div class="kpi-card-top">
+                    <i class="fa fa-play-circle" style="color:#2563eb;"></i>
+                    <span class="kpi-title">Running now</span>
+                </div>
+                <div class="kpi-val">
+                    9 <span class="val-sub">of 12</span>
+                </div>
+                <div class="bar-track">
+                    <div class="bar-fill" style="width: 75%; background-color: #0f172a;"></div>
+                </div>
+                <div class="kpi-subtext">1 completed · 1 on hold · 1 not started</div>
+            </div>
+
+            <!-- Card 3 -->
+            <div class="kpi-card">
+                <div class="kpi-card-top">
+                    <i class="fa fa-heart-o" style="color:#10b981;"></i>
+                    <span class="kpi-title">Overall health</span>
+                </div>
+                <div class="kpi-val">
+                    77% <span class="val-status text-good">Good</span>
+                </div>
+                <div class="segmented-bar">
+                    <div class="seg" style="width: 58%; background-color: #10b981;"></div>
+                    <div class="seg" style="width: 25%; background-color: #f59e0b;"></div>
+                    <div class="seg" style="width: 17%; background-color: #ef4444;"></div>
+                </div>
+                <div class="kpi-subtext">7 good · 3 fair · 2 poor</div>
+            </div>
+
+            <!-- Card 4 -->
+            <div class="kpi-card">
+                <div class="kpi-card-top">
+                    <i class="fa fa-exclamation-triangle" style="color:#ef4444;"></i>
+                    <span class="kpi-title">High-risk projects</span>
+                </div>
+                <div class="kpi-val">
+                    <span class="text-danger">2</span> <span class="val-status text-danger">need action</span>
+                </div>
+                <div class="segmented-bar">
+                    <div class="seg" style="width: 58%; background-color: #10b981;"></div>
+                    <div class="seg" style="width: 17%; background-color: #ef4444;"></div>
+                </div>
+                <div class="kpi-subtext">7 low · 3 medium · 2 high</div>
+            </div>
+
+            <!-- Card 5 -->
+            <div class="kpi-card">
+                <div class="kpi-card-top">
+                    <i class="fa fa-clock-o" style="color:#2563eb;"></i>
+                    <span class="kpi-title">On-time delivery</span>
+                </div>
+                <div class="kpi-val">
+                    80% <span class="val-sub">on time</span>
+                </div>
+                <div class="bar-track">
+                    <div class="bar-fill" style="width: 80%; background-color: #2563eb;"></div>
+                </div>
+                <div class="kpi-subtext">Average progress 58% across projects</div>
+            </div>
+        </section>
+
+        <!-- ROW 2: 4 ANALYTICS WIDGETS -->
+        <section class="analytics-row">
+            <!-- Widget 1: Health Donut -->
+            <div class="widget-card">
+                <div class="widget-header">
+                    <h3 class="widget-title">Project health</h3>
+                    <p class="widget-subtitle">How healthy each project is</p>
+                </div>
+                <div class="health-chart-wrap">
+                    <div class="donut-wrap">
+                        <svg class="donut-svg" viewBox="0 0 120 120">
+                            <circle cx="60" cy="60" r="48" fill="none" stroke-width="14" class="donut-bg"/>
+                            <!-- Good 58.3% -->
+                            <circle cx="60" cy="60" r="48" fill="none" stroke="#10b981" stroke-width="14"
+                                    stroke-dasharray="176 302" stroke-dashoffset="0"/>
+                            <!-- Fair 25% -->
+                            <circle cx="60" cy="60" r="48" fill="none" stroke="#f59e0b" stroke-width="14"
+                                    stroke-dasharray="75.5 302" stroke-dashoffset="-176"/>
+                            <!-- Poor 16.7% -->
+                            <circle cx="60" cy="60" r="48" fill="none" stroke="#ef4444" stroke-width="14"
+                                    stroke-dasharray="50.5 302" stroke-dashoffset="-251.5"/>
+                        </svg>
+                        <div class="donut-center">
+                            <span class="donut-score">77%</span>
+                            <span class="donut-lbl">health score</span>
+                        </div>
+                    </div>
+                    <div class="health-legend">
+                        <div class="hl-item">
+                            <span class="hl-dot" style="background:#10b981;"></span>
+                            <span class="hl-lbl">Good</span>
+                            <span class="hl-num">7</span>
+                        </div>
+                        <div class="hl-item">
+                            <span class="hl-dot" style="background:#f59e0b;"></span>
+                            <span class="hl-lbl">Fair</span>
+                            <span class="hl-num">3</span>
+                        </div>
+                        <div class="hl-item">
+                            <span class="hl-dot" style="background:#ef4444;"></span>
+                            <span class="hl-lbl">Poor</span>
+                            <span class="hl-num">2</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Widget 2: Running Status -->
+            <div class="widget-card">
+                <div class="widget-header">
+                    <h3 class="widget-title">Running status</h3>
+                    <p class="widget-subtitle">Where each project stands today</p>
+                </div>
+                <div class="status-segmented-bar">
+                    <div class="seg" style="width: 75%; background:#0f172a;"></div>
+                    <div class="seg" style="width: 8.3%; background:#10b981;"></div>
+                    <div class="seg" style="width: 8.3%; background:#f59e0b;"></div>
+                    <div class="seg" style="width: 8.3%; background:#94a3b8;"></div>
+                </div>
+                <div class="status-grid">
+                    <div class="status-pill sp-running">
+                        <i class="fa fa-play"></i>
+                        <span class="num">9</span>
+                        <span class="lbl">Running</span>
+                    </div>
+                    <div class="status-pill sp-completed">
+                        <i class="fa fa-check"></i>
+                        <span class="num">1</span>
+                        <span class="lbl">Completed</span>
+                    </div>
+                    <div class="status-pill sp-onhold">
+                        <i class="fa fa-pause"></i>
+                        <span class="num">1</span>
+                        <span class="lbl">On hold</span>
+                    </div>
+                    <div class="status-pill sp-notstarted">
+                        <i class="fa fa-minus"></i>
+                        <span class="num">1</span>
+                        <span class="lbl">Not started</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Widget 3: Risk Level Speedometer -->
+            <div class="widget-card">
+                <div class="widget-header">
+                    <h3 class="widget-title">Risk level</h3>
+                    <p class="widget-subtitle">Overall portfolio risk</p>
+                </div>
+                <div class="gauge-wrap">
+                    <svg class="gauge-svg" viewBox="0 0 160 95">
+                        <path d="M 20 85 A 60 60 0 0 1 140 85" fill="none" stroke-width="13" class="gauge-bg"/>
+                        <path d="M 20 85 A 60 60 0 0 1 80 25" fill="none" stroke="#10b981" stroke-width="13" stroke-linecap="round"/>
+                        <path d="M 80 25 A 60 60 0 0 1 125 43" fill="none" stroke="#f59e0b" stroke-width="13"/>
+                        <path d="M 125 43 A 60 60 0 0 1 140 85" fill="none" stroke="#ef4444" stroke-width="13" stroke-linecap="round"/>
+                        <g transform="rotate(-32 80 85)">
+                            <line x1="80" y1="85" x2="80" y2="35" stroke-width="3" stroke-linecap="round" class="gauge-needle"/>
+                            <circle cx="80" cy="85" r="6" class="gauge-hub"/>
+                            <circle cx="80" cy="85" r="2.5" fill="#ffffff"/>
+                        </g>
+                    </svg>
+                    <div class="risk-label">Low to medium risk</div>
+                </div>
+                <div class="risk-grid">
+                    <div class="risk-box rb-low">
+                        <div class="num">7</div>
+                        <div class="lbl">Low</div>
+                    </div>
+                    <div class="risk-box rb-med">
+                        <div class="num">3</div>
+                        <div class="lbl">Medium</div>
+                    </div>
+                    <div class="risk-box rb-high">
+                        <div class="num">2</div>
+                        <div class="lbl">High</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Widget 4: Project Condition -->
+            <div class="widget-card">
+                <div class="widget-header">
+                    <h3 class="widget-title">Project condition</h3>
+                    <p class="widget-subtitle">Progress compared with plan</p>
+                </div>
+                <div class="cond-bars-wrap">
+                    <div class="cond-col">
+                        <span class="cond-num">2</span>
+                        <div class="cond-track">
+                            <div class="cond-fill" style="height: 40%; background:#10b981;"></div>
+                        </div>
+                        <span class="cond-lbl">Ahead</span>
+                    </div>
+                    <div class="cond-col">
+                        <span class="cond-num">5</span>
+                        <div class="cond-track">
+                            <div class="cond-fill c-bar-navy" style="height: 100%;"></div>
+                        </div>
+                        <span class="cond-lbl">On plan</span>
+                    </div>
+                    <div class="cond-col">
+                        <span class="cond-num">4</span>
+                        <div class="cond-track">
+                            <div class="cond-fill" style="height: 80%; background:#d97706;"></div>
+                        </div>
+                        <span class="cond-lbl">Behind</span>
+                    </div>
+                    <div class="cond-col">
+                        <span class="cond-num">1</span>
+                        <div class="cond-track">
+                            <div class="cond-fill" style="height: 20%; background:#881337;"></div>
+                        </div>
+                        <span class="cond-lbl">Overdue</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ROW 3: TEAMS & TEAM COMPARISON -->
+        <section class="teams-row">
+            <!-- Team 1 -->
+            <div class="team-card">
+                <div class="team-card-header">
+                    <div>
+                        <h4 class="team-name">Team 1</h4>
+                        <p class="team-lead">Lead Anand Nair</p>
+                    </div>
+                    <span class="team-badge badge-excellent">Excellent</span>
+                </div>
+                <div class="team-metrics-row">
+                    <div class="team-donut-wrap">
+                        <svg class="td-svg" viewBox="0 0 80 80">
+                            <circle cx="40" cy="40" r="30" fill="none" stroke-width="8" class="donut-bg"/>
+                            <circle cx="40" cy="40" r="30" fill="none" stroke="#2563eb" stroke-width="8"
+                                    stroke-dasharray="188.5" stroke-dashoffset="22.6" transform="rotate(-90 40 40)"/>
+                        </svg>
+                        <div class="td-center">
+                            <span class="td-pct">88%</span>
+                            <span class="td-lbl">productivity</span>
+                        </div>
+                    </div>
+                    <div class="team-bars-col">
+                        <div class="metric-line">
+                            <span class="ml-lbl">Quality</span>
+                            <div class="ml-bar"><div class="ml-fill" style="width:91%;"></div></div>
+                            <span class="ml-val">91%</span>
+                        </div>
+                        <div class="metric-line">
+                            <span class="ml-lbl">On-time</span>
+                            <div class="ml-bar"><div class="ml-fill" style="width:92%;"></div></div>
+                            <span class="ml-val">92%</span>
+                        </div>
+                        <div class="metric-line">
+                            <span class="ml-lbl">Utilisation</span>
+                            <div class="ml-bar"><div class="ml-fill" style="width:84%;"></div></div>
+                            <span class="ml-val">84%</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="team-footer">
+                    <div class="tf-summary">
+                        <span class="tf-txt">4 projects · 3 healthy</span>
+                        <div class="tf-dots">
+                            <span class="square-dot" style="background:#10b981;"></span>
+                            <span class="square-dot" style="background:#10b981;"></span>
+                            <span class="square-dot" style="background:#10b981;"></span>
+                            <span class="square-dot" style="background:#f59e0b;"></span>
+                        </div>
+                    </div>
+                    <div class="tf-spark">
+                        <svg class="spark-svg" viewBox="0 0 100 24">
+                            <path d="M 0 16 Q 25 18 50 10 T 100 2" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round"/>
+                        </svg>
+                        <span class="spark-txt" style="color:#10b981;">+8 pts in 8 weeks</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Team 2 -->
+            <div class="team-card">
+                <div class="team-card-header">
+                    <div>
+                        <h4 class="team-name">Team 2</h4>
+                        <p class="team-lead">Lead Fathima Zahra</p>
+                    </div>
+                    <span class="team-badge badge-support">Needs support</span>
+                </div>
+                <div class="team-metrics-row">
+                    <div class="team-donut-wrap">
+                        <svg class="td-svg" viewBox="0 0 80 80">
+                            <circle cx="40" cy="40" r="30" fill="none" stroke-width="8" class="donut-bg"/>
+                            <circle cx="40" cy="40" r="30" fill="none" stroke="#7c3aed" stroke-width="8"
+                                    stroke-dasharray="188.5" stroke-dashoffset="49" transform="rotate(-90 40 40)"/>
+                        </svg>
+                        <div class="td-center">
+                            <span class="td-pct">74%</span>
+                            <span class="td-lbl">productivity</span>
+                        </div>
+                    </div>
+                    <div class="team-bars-col">
+                        <div class="metric-line">
+                            <span class="ml-lbl">Quality</span>
+                            <div class="ml-bar"><div class="ml-fill" style="width:78%;"></div></div>
+                            <span class="ml-val">78%</span>
+                        </div>
+                        <div class="metric-line">
+                            <span class="ml-lbl">On-time</span>
+                            <div class="ml-bar"><div class="ml-fill" style="width:70%;"></div></div>
+                            <span class="ml-val">70%</span>
+                        </div>
+                        <div class="metric-line">
+                            <span class="ml-lbl">Utilisation</span>
+                            <div class="ml-bar"><div class="ml-fill" style="width:81%;"></div></div>
+                            <span class="ml-val">81%</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="team-footer">
+                    <div class="tf-summary">
+                        <span class="tf-txt">4 projects · 2 healthy</span>
+                        <div class="tf-dots">
+                            <span class="square-dot" style="background:#10b981;"></span>
+                            <span class="square-dot" style="background:#10b981;"></span>
+                            <span class="square-dot" style="background:#f97316;"></span>
+                            <span class="square-dot" style="background:#ef4444;"></span>
+                        </div>
+                    </div>
+                    <div class="tf-spark">
+                        <svg class="spark-svg" viewBox="0 0 100 24">
+                            <path d="M 0 4 Q 30 2 60 14 T 100 18" fill="none" stroke="#7c3aed" stroke-width="2.5" stroke-linecap="round"/>
+                        </svg>
+                        <span class="spark-txt" style="color:#7c3aed;">-5 pts in 8 weeks</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Team 3 -->
+            <div class="team-card">
+                <div class="team-card-header">
+                    <div>
+                        <h4 class="team-name">Team 3</h4>
+                        <p class="team-lead">Lead Jacob Mathew</p>
+                    </div>
+                    <span class="team-badge badge-good">Good</span>
+                </div>
+                <div class="team-metrics-row">
+                    <div class="team-donut-wrap">
+                        <svg class="td-svg" viewBox="0 0 80 80">
+                            <circle cx="40" cy="40" r="30" fill="none" stroke-width="8" class="donut-bg"/>
+                            <circle cx="40" cy="40" r="30" fill="none" stroke="#0d9488" stroke-width="8"
+                                    stroke-dasharray="188.5" stroke-dashoffset="35.8" transform="rotate(-90 40 40)"/>
+                        </svg>
+                        <div class="td-center">
+                            <span class="td-pct">81%</span>
+                            <span class="td-lbl">productivity</span>
+                        </div>
+                    </div>
+                    <div class="team-bars-col">
+                        <div class="metric-line">
+                            <span class="ml-lbl">Quality</span>
+                            <div class="ml-bar"><div class="ml-fill" style="width:84%;"></div></div>
+                            <span class="ml-val">84%</span>
+                        </div>
+                        <div class="metric-line">
+                            <span class="ml-lbl">On-time</span>
+                            <div class="ml-bar"><div class="ml-fill" style="width:78%;"></div></div>
+                            <span class="ml-val">78%</span>
+                        </div>
+                        <div class="metric-line">
+                            <span class="ml-lbl">Utilisation</span>
+                            <div class="ml-bar"><div class="ml-fill" style="width:86%;"></div></div>
+                            <span class="ml-val">86%</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="team-footer">
+                    <div class="tf-summary">
+                        <span class="tf-txt">4 projects · 2 healthy</span>
+                        <div class="tf-dots">
+                            <span class="square-dot" style="background:#10b981;"></span>
+                            <span class="square-dot" style="background:#10b981;"></span>
+                            <span class="square-dot" style="background:#f97316;"></span>
+                            <span class="square-dot" style="background:#ef4444;"></span>
+                        </div>
+                    </div>
+                    <div class="tf-spark">
+                        <svg class="spark-svg" viewBox="0 0 100 24">
+                            <path d="M 0 18 Q 30 16 60 10 T 100 4" fill="none" stroke="#0d9488" stroke-width="2.5" stroke-linecap="round"/>
+                        </svg>
+                        <span class="spark-txt" style="color:#0d9488;">+6 pts in 8 weeks</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Team Comparison -->
+            <div class="team-card">
+                <div class="team-card-header">
+                    <div>
+                        <h4 class="team-name">Team comparison</h4>
+                        <p class="team-lead">Higher is better</p>
+                    </div>
+                    <div class="comp-legend">
+                        <div class="c-item"><span class="c-dot" style="background:#0f172a;"></span><span>Productivity</span></div>
+                        <div class="c-item"><span class="c-dot" style="background:#2563eb;"></span><span>Quality</span></div>
+                        <div class="c-item"><span class="c-dot" style="background:#93c5fd;"></span><span>On-time</span></div>
+                    </div>
+                </div>
+                <div class="comp-chart-area">
+                    <div class="comp-y-axis">
+                        <span>100</span>
+                        <span>75</span>
+                        <span>50</span>
+                    </div>
+                    <div class="comp-bars-content">
+                        <div class="comp-grid-lines">
+                            <div class="grid-line"></div>
+                            <div class="grid-line"></div>
+                            <div class="grid-line"></div>
+                        </div>
+                        <div class="comp-team-groups">
+                            <div class="comp-group">
+                                <div class="group-bars">
+                                    <div class="c-bar c-bar-navy" style="height:88%;"></div>
+                                    <div class="c-bar c-bar-blue" style="height:91%;"></div>
+                                    <div class="c-bar c-bar-lightblue" style="height:92%;"></div>
+                                </div>
+                                <span class="c-group-name">Team 1</span>
+                            </div>
+                            <div class="comp-group">
+                                <div class="group-bars">
+                                    <div class="c-bar c-bar-navy" style="height:74%;"></div>
+                                    <div class="c-bar c-bar-blue" style="height:78%;"></div>
+                                    <div class="c-bar c-bar-lightblue" style="height:70%;"></div>
+                                </div>
+                                <span class="c-group-name">Team 2</span>
+                            </div>
+                            <div class="comp-group">
+                                <div class="group-bars">
+                                    <div class="c-bar c-bar-navy" style="height:81%;"></div>
+                                    <div class="c-bar c-bar-blue" style="height:84%;"></div>
+                                    <div class="c-bar c-bar-lightblue" style="height:78%;"></div>
+                                </div>
+                                <span class="c-group-name">Team 3</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ROW 4: PROJECTS TABLE -->
+        <section class="table-card">
+            <div class="table-header">
+                <h3 class="table-title">Projects</h3>
+                <div class="plan-legend">
+                    <span class="pipe">|</span>
+                    <span>Black line – where the plan says it should be today</span>
+                </div>
+            </div>
+            <div class="table-scroll">
+                <table class="projects-table">
+                    <thead>
+                        <tr>
+                            <th>Project</th>
+                            <th>Team</th>
+                            <th>Running status</th>
+                            <th>Health</th>
+                            <th>Risk level</th>
+                            <th class="th-prog">Progress vs plan</th>
+                            <th>Due date</th>
+                            <th>Condition</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- 1 -->
+                        <tr>
+                            <td><div class="p-title">Odoo ERP rollout</div><div class="p-sub">Furniture maker · Coimbatore</div></td>
+                            <td><div class="t-dot-wrap"><span class="t-dot dot-t3"></span><span>Team 3</span></div></td>
+                            <td><span class="status-badge sb-running">Running</span></td>
+                            <td><div class="health-tag"><span class="health-dot" style="background:#ef4444;"></span><span>Poor</span></div></td>
+                            <td><span class="risk-pill rp-high">High</span></td>
+                            <td><div class="progress-plan-cell"><div class="dual-track"><div class="dual-fill" style="width:81%; background:#dc2626;"></div><div class="plan-marker" style="left:70%;"></div></div><span class="prog-pct">81%</span></div></td>
+                            <td><div class="due-wrap"><span class="due-pts">-19 pts</span><span class="due-date">25 Oct · 6d late</span></div></td>
+                            <td><span class="cond-tag cond-overdue"><i class="fa fa-clock-o"></i> Overdue</span></td>
+                        </tr>
+                        <!-- 2 -->
+                        <tr>
+                            <td><div class="p-title">Org restructuring & KRAs</div><div class="p-sub">Hospital group · Calicut</div></td>
+                            <td><div class="t-dot-wrap"><span class="t-dot dot-t2"></span><span>Team 2</span></div></td>
+                            <td><span class="status-badge sb-running">Running</span></td>
+                            <td><div class="health-tag"><span class="health-dot" style="background:#ef4444;"></span><span>Poor</span></div></td>
+                            <td><span class="risk-pill rp-high">High</span></td>
+                            <td><div class="progress-plan-cell"><div class="dual-track"><div class="dual-fill" style="width:45%; background:#dc2626;"></div><div class="plan-marker" style="left:66%;"></div></div><span class="prog-pct">45%</span></div></td>
+                            <td><div class="due-wrap"><span class="due-pts">-24 pts</span><span class="due-date">31 Dec</span></div></td>
+                            <td><span class="cond-tag cond-behind"><i class="fa fa-arrow-down"></i> Behind</span></td>
+                        </tr>
+                        <!-- 3 -->
+                        <tr>
+                            <td><div class="p-title">SOP & process manual</div><div class="p-sub">Logistics firm · Dubai</div></td>
+                            <td><div class="t-dot-wrap"><span class="t-dot dot-t1"></span><span>Team 1</span></div></td>
+                            <td><span class="status-badge sb-running">Running</span></td>
+                            <td><div class="health-tag"><span class="health-dot" style="background:#f59e0b;"></span><span>Fair</span></div></td>
+                            <td><span class="risk-pill rp-med">Medium</span></td>
+                            <td><div class="progress-plan-cell"><div class="dual-track"><div class="dual-fill" style="width:58%; background:#d97706;"></div><div class="plan-marker" style="left:65%;"></div></div><span class="prog-pct">58%</span></div></td>
+                            <td><div class="due-wrap"><span class="due-pts">-8 pts</span><span class="due-date">15 Jan</span></div></td>
+                            <td><span class="cond-tag cond-behind"><i class="fa fa-arrow-down"></i> Behind</span></td>
+                        </tr>
+                        <!-- 4 -->
+                        <tr>
+                            <td><div class="p-title">Cost turnaround</div><div class="p-sub">Textile mill · Tiruppur</div></td>
+                            <td><div class="t-dot-wrap"><span class="t-dot dot-t2"></span><span>Team 2</span></div></td>
+                            <td><span class="status-badge sb-running">Running</span></td>
+                            <td><div class="health-tag"><span class="health-dot" style="background:#f59e0b;"></span><span>Fair</span></div></td>
+                            <td><span class="risk-pill rp-med">Medium</span></td>
+                            <td><div class="progress-plan-cell"><div class="dual-track"><div class="dual-fill" style="width:54%; background:#d97706;"></div><div class="plan-marker" style="left:62%;"></div></div><span class="prog-pct">54%</span></div></td>
+                            <td><div class="due-wrap"><span class="due-pts">-9 pts</span><span class="due-date">15 Dec</span></div></td>
+                            <td><span class="cond-tag cond-behind"><i class="fa fa-arrow-down"></i> Behind</span></td>
+                        </tr>
+                        <!-- 5 -->
+                        <tr>
+                            <td><div class="p-title">Budgeting & MIS</div><div class="p-sub">Hotel group · Munnar</div></td>
+                            <td><div class="t-dot-wrap"><span class="t-dot dot-t3"></span><span>Team 3</span></div></td>
+                            <td><span class="status-badge sb-onhold">On hold</span></td>
+                            <td><div class="health-tag"><span class="health-dot" style="background:#f59e0b;"></span><span>Fair</span></div></td>
+                            <td><span class="risk-pill rp-med">Medium</span></td>
+                            <td><div class="progress-plan-cell"><div class="dual-track"><div class="dual-fill" style="width:40%; background:#d97706;"></div><div class="plan-marker" style="left:50%;"></div></div><span class="prog-pct">40%</span></div></td>
+                            <td><div class="due-wrap"><span class="due-pts">-12 pts</span><span class="due-date">4 Jan</span></div></td>
+                            <td><span class="cond-tag cond-behind"><i class="fa fa-arrow-down"></i> Behind</span></td>
+                        </tr>
+                        <!-- 6 -->
+                        <tr>
+                            <td><div class="p-title">Growth strategy</div><div class="p-sub">Retail chain · Kochi</div></td>
+                            <td><div class="t-dot-wrap"><span class="t-dot dot-t1"></span><span>Team 1</span></div></td>
+                            <td><span class="status-badge sb-running">Running</span></td>
+                            <td><div class="health-tag"><span class="health-dot" style="background:#10b981;"></span><span>Good</span></div></td>
+                            <td><span class="risk-pill rp-low">Low</span></td>
+                            <td><div class="progress-plan-cell"><div class="dual-track"><div class="dual-fill" style="width:62%; background:#10b981;"></div><div class="plan-marker" style="left:60%;"></div></div><span class="prog-pct">62%</span></div></td>
+                            <td><div class="due-wrap"><span class="due-pts">+2 pts</span><span class="due-date">15 Feb</span></div></td>
+                            <td><span class="cond-tag cond-ahead"><i class="fa fa-arrow-up"></i> Ahead</span></td>
+                        </tr>
+                        <!-- 7 -->
+                        <tr>
+                            <td><div class="p-title">Sales process redesign</div><div class="p-sub">Auto dealership · Kannur</div></td>
+                            <td><div class="t-dot-wrap"><span class="t-dot dot-t3"></span><span>Team 3</span></div></td>
+                            <td><span class="status-badge sb-running">Running</span></td>
+                            <td><div class="health-tag"><span class="health-dot" style="background:#10b981;"></span><span>Good</span></div></td>
+                            <td><span class="risk-pill rp-low">Low</span></td>
+                            <td><div class="progress-plan-cell"><div class="dual-track"><div class="dual-fill" style="width:72%; background:#10b981;"></div><div class="plan-marker" style="left:70%;"></div></div><span class="prog-pct">72%</span></div></td>
+                            <td><div class="due-wrap"><span class="due-pts">+2 pts</span><span class="due-date">22 Dec</span></div></td>
+                            <td><span class="cond-tag cond-ahead"><i class="fa fa-arrow-up"></i> Ahead</span></td>
+                        </tr>
+                        <!-- 8 -->
+                        <tr>
+                            <td><div class="p-title">ISO 9001 readiness</div><div class="p-sub">Food processor · Alappuzha</div></td>
+                            <td><div class="t-dot-wrap"><span class="t-dot dot-t2"></span><span>Team 2</span></div></td>
+                            <td><span class="status-badge sb-running">Running</span></td>
+                            <td><div class="health-tag"><span class="health-dot" style="background:#10b981;"></span><span>Good</span></div></td>
+                            <td><span class="risk-pill rp-low">Low</span></td>
+                            <td><div class="progress-plan-cell"><div class="dual-track"><div class="dual-fill" style="width:66%; background:#10b981;"></div><div class="plan-marker" style="left:65%;"></div></div><span class="prog-pct">66%</span></div></td>
+                            <td><div class="due-wrap"><span class="due-pts">+1 pts</span><span class="due-date">22 Jan</span></div></td>
+                            <td><span class="cond-tag cond-onplan"><i class="fa fa-arrow-right"></i> On plan</span></td>
+                        </tr>
+                        <!-- 9 -->
+                        <tr>
+                            <td><div class="p-title">Pricing strategy</div><div class="p-sub">Packaging maker · Chennai</div></td>
+                            <td><div class="t-dot-wrap"><span class="t-dot dot-t1"></span><span>Team 1</span></div></td>
+                            <td><span class="status-badge sb-running">Running</span></td>
+                            <td><div class="health-tag"><span class="health-dot" style="background:#10b981;"></span><span>Good</span></div></td>
+                            <td><span class="risk-pill rp-low">Low</span></td>
+                            <td><div class="progress-plan-cell"><div class="dual-track"><div class="dual-fill" style="width:35%; background:#10b981;"></div><div class="plan-marker" style="left:34%;"></div></div><span class="prog-pct">35%</span></div></td>
+                            <td><div class="due-wrap"><span class="due-pts">+1 pts</span><span class="due-date">12 Feb</span></div></td>
+                            <td><span class="cond-tag cond-onplan"><i class="fa fa-arrow-right"></i> On plan</span></td>
+                        </tr>
+                        <!-- 10 -->
+                        <tr>
+                            <td><div class="p-title">GCC market entry</div><div class="p-sub">Spice exporter · Kochi</div></td>
+                            <td><div class="t-dot-wrap"><span class="t-dot dot-t3"></span><span>Team 3</span></div></td>
+                            <td><span class="status-badge sb-running">Running</span></td>
+                            <td><div class="health-tag"><span class="health-dot" style="background:#10b981;"></span><span>Good</span></div></td>
+                            <td><span class="risk-pill rp-low">Low</span></td>
+                            <td><div class="progress-plan-cell"><div class="dual-track"><div class="dual-fill" style="width:30%; background:#10b981;"></div><div class="plan-marker" style="left:30%;"></div></div><span class="prog-pct">30%</span></div></td>
+                            <td><div class="due-wrap"><span class="due-pts">on plan</span><span class="due-date">5 Mar</span></div></td>
+                            <td><span class="cond-tag cond-onplan"><i class="fa fa-arrow-right"></i> On plan</span></td>
+                        </tr>
+                        <!-- 11 -->
+                        <tr>
+                            <td><div class="p-title">HR policy system</div><div class="p-sub">Edtech company · Bengaluru</div></td>
+                            <td><div class="t-dot-wrap"><span class="t-dot dot-t1"></span><span>Team 1</span></div></td>
+                            <td><span class="status-badge sb-completed">Completed</span></td>
+                            <td><div class="health-tag"><span class="health-dot" style="background:#10b981;"></span><span>Good</span></div></td>
+                            <td><span class="risk-pill rp-low">Low</span></td>
+                            <td><div class="progress-plan-cell"><div class="dual-track"><div class="dual-fill" style="width:100%; background:#10b981;"></div><div class="plan-marker" style="left:100%;"></div></div><span class="prog-pct">100%</span></div></td>
+                            <td><div class="due-wrap"><span class="due-pts"></span><span class="due-date">13 Nov</span></div></td>
+                            <td><span class="cond-tag cond-onplan"><i class="fa fa-arrow-right"></i> On plan</span></td>
+                        </tr>
+                        <!-- 12 -->
+                        <tr>
+                            <td><div class="p-title">Digital roadmap</div><div class="p-sub">Logistics company · Sharjah</div></td>
+                            <td><div class="t-dot-wrap"><span class="t-dot dot-t2"></span><span>Team 2</span></div></td>
+                            <td><span class="status-badge sb-notstarted">Not started</span></td>
+                            <td><div class="health-tag"><span class="health-dot" style="background:#10b981;"></span><span>Good</span></div></td>
+                            <td><span class="risk-pill rp-low">Low</span></td>
+                            <td><div class="progress-plan-cell"><div class="dual-track"><div class="dual-fill" style="width:0%; background:#94a3b8;"></div><div class="plan-marker" style="left:0%;"></div></div><span class="prog-pct">0%</span></div></td>
+                            <td><div class="due-wrap"><span class="due-pts"></span><span class="due-date">26 Mar</span></div></td>
+                            <td><span class="cond-tag cond-onplan"><i class="fa fa-arrow-right"></i> On plan</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        function toggleTheme() {
+            const body = document.body;
+            body.classList.toggle('dark-mode');
+            const isDark = body.classList.contains('dark-mode');
+            const themeText = document.getElementById('themeText');
+            const themeIcon = document.getElementById('themeIcon');
+            
+            if (isDark) {
+                themeText.textContent = 'Light Mode';
+                themeIcon.className = 'fa fa-sun-o';
+            } else {
+                themeText.textContent = 'Dark Mode';
+                themeIcon.className = 'fa fa-moon-o';
+            }
+        }
+    </script>
+</body>
+</html>

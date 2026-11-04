@@ -12,7 +12,7 @@ class AccountAnalyticLine(models.Model):
     )
     kpi_id = fields.Many2one(
         'business.project.kpi',
-        string='KPI',
+        string='Task',
         ondelete='cascade',
         index=True
     )
@@ -63,7 +63,7 @@ class AccountAnalyticLine(models.Model):
                 return acc
 
             # 5. Otherwise create a dedicated analytic account in the Project plan
-            account_name = bp.name if bp and bp.name else 'KPI Timesheets'
+            account_name = bp.name if bp and bp.name else 'Task Timesheets'
             try:
                 return Account.create({
                     'name': account_name,

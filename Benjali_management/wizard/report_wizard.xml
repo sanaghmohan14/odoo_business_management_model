@@ -4,11 +4,11 @@
         <field name="name">reporting.wizard.form</field>
         <field name="model">business.reporting.wizard</field>
         <field name="arch" type="xml">
-            <form string="KRA &amp; KPI Performance Reporting Wizard">
+            <form string="Scope &amp; Task Performance Reporting Wizard">
                 <sheet>
                     <div class="oe_title mb-3">
-                        <h2>KRA &amp; KPI Performance Report</h2>
-                        <span class="text-muted">Generate Daily, Weekly, or Monthly performance reports for Projects and KRAs.</span>
+                        <h2>Scope &amp; Task Performance Report</h2>
+                        <span class="text-muted">Generate Daily, Weekly, or Monthly performance reports for Projects and Scopes.</span>
                     </div>
                     <group>
                         <group string="Report Scope &amp; Period">
@@ -35,7 +35,7 @@
     </record>
 
     <record id="create_reporting_wizard_business" model="ir.actions.act_window">
-        <field name="name">KRA &amp; KPI Report Wizard</field>
+        <field name="name">Scope &amp; Task Report Wizard</field>
         <field name="type">ir.actions.act_window</field>
         <field name="res_model">business.reporting.wizard</field>
         <field name="view_mode">form</field>

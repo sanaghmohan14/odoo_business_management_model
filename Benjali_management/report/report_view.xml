@@ -50,14 +50,14 @@
                             </tbody>
                         </table>
 
-                        <h3>Key Result Areas (KRAs) &amp; Key Performance Indicators (KPIs)</h3>
+                        <h3>Scopes &amp; Tasks</h3>
                         <table class="table table-sm table-bordered">
                             <thead class="table-light">
                                 <tr>
-                                    <th>KRA (Main Task)</th>
+                                    <th>Scope</th>
                                     <th>Lead / Responsible</th>
                                     <th>Stage</th>
-                                    <th>KPIs</th>
+                                    <th>Tasks</th>
                                     <th>Weekly Progress</th>
                                     <th>Monthly Score</th>
                                 </tr>
@@ -77,7 +77,7 @@
                                             <table class="table table-sm table-hover mb-0 ms-3" style="width: 95%;">
                                                 <thead>
                                                     <tr class="text-muted small">
-                                                        <th>Sub-Task (KPI)</th>
+                                                        <th>Task</th>
                                                         <th>Assigned Employee</th>
                                                         <th>Type</th>
                                                         <th>Stage</th>
@@ -107,7 +107,7 @@
                                     </tr>
                                 </t>
                                 <tr t-if="not o.kra_ids">
-                                    <td colspan="6">No KRAs configured.</td>
+                                    <td colspan="6">No Scopes configured.</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -136,7 +136,7 @@
                     <div class="page">
                         <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
                             <div>
-                                <h2 class="mb-0 text-primary">KRA &amp; KPI Performance Report</h2>
+                                <h2 class="mb-0 text-primary">Scope &amp; Task Performance Report</h2>
                                 <span class="text-muted">Daily, Weekly &amp; Monthly Performance Breakdown</span>
                             </div>
                             <div class="text-end">
@@ -150,9 +150,9 @@
                         <!-- Scorecard Summary -->
                         <div class="row text-center mb-4 p-3 bg-light rounded border">
                             <div class="col-4 border-end">
-                                <span class="text-muted small">Total Key Result Areas</span>
+                                <span class="text-muted small">Total Scopes</span>
                                 <h3 class="text-dark my-1"><t t-esc="len(kras)"/></h3>
-                                <span class="text-muted small">Main Tasks</span>
+                                <span class="text-muted small">Main Scopes</span>
                             </div>
                             <div class="col-4 border-end">
                                 <span class="text-muted small">Weekly Progress</span>
@@ -176,8 +176,8 @@
                             </div>
                         </div>
 
-                        <!-- Detailed KRAs & Sub-Task KPIs -->
-                        <h4 class="mb-3 text-secondary">KRAs (Main Tasks) &amp; Assigned KPIs (Sub-Tasks)</h4>
+                        <!-- Detailed Scopes & Assigned Tasks -->
+                        <h4 class="mb-3 text-secondary">Scopes &amp; Assigned Tasks</h4>
 
                         <t t-foreach="kras" t-as="kra">
                             <div class="card mb-3 border">
@@ -198,7 +198,7 @@
                                         <thead class="table-light small">
                                             <tr>
                                                 <th>Date</th>
-                                                <th>Sub-Task (KPI)</th>
+                                                <th>Task</th>
                                                 <th>Assigned Employee</th>
                                                 <th>Stage</th>
                                                 <th>Repeating?</th>
@@ -230,7 +230,7 @@
                                                 <td class="text-end fw-bold text-primary"><span t-field="kpi.monthly_achievement"/> / 100</td>
                                             </tr>
                                             <tr t-if="not kra.kpi_ids">
-                                                <td colspan="9" class="text-center text-muted">No KPI sub-tasks defined under this KRA.</td>
+                                                <td colspan="9" class="text-center text-muted">No tasks defined under this Scope.</td>
                                             </tr>
                                         </tbody>
                                     </table>

@@ -7,7 +7,7 @@ class BusinessReportingWizard(models.TransientModel):
     _description = 'Business Reporting Wizard'
 
     report_type = fields.Selection([
-        ('all', 'Comprehensive KRA & KPI Report'),
+        ('all', 'Comprehensive Scope & Task Report'),
         ('daily', 'Daily Report (Today / Selected Date)'),
         ('weekly', 'Weekly Report (Targets & Achievements)'),
         ('monthly', 'Monthly Report (Target: 100 Score)'),
@@ -18,7 +18,7 @@ class BusinessReportingWizard(models.TransientModel):
     end_date = fields.Date(string='End Date')
 
     project_id = fields.Many2one('business.project', string='Business Project')
-    kra_id = fields.Many2one('business.project.kra', string='Key Result Area (KRA)')
+    kra_id = fields.Many2one('business.project.kra', string='Scope')
     department_id = fields.Many2one('hr.department', string='Department')
     employee_id = fields.Many2one('res.users', string='Assigned Employee')
 

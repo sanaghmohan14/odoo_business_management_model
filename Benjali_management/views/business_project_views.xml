@@ -190,6 +190,14 @@
                                    widget="statinfo"
                                    string="Meetings"/>
                         </button>
+                        <button name="action_view_project_trackers"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-list-ol">
+                            <field name="tracker_count"
+                                   widget="statinfo"
+                                   string="Scope Tracker"/>
+                        </button>
                     </div>
                     <!-- Title -->
                     <div class="oe_title">
@@ -224,6 +232,81 @@
                     </group>
 
                     <notebook>
+
+                        <!-- ================= SCOPE TRACKER (SME ADVANCED) ================= -->
+                        <page string="Scope Tracker" name="scope_tracker_page">
+                            <div class="d-flex justify-content-between align-items-center mb-3 p-3 bg-light rounded border">
+                                <div class="d-flex gap-2 align-items-center">
+                                    <button name="action_open_load_tracker_wizard"
+                                            type="object"
+                                            string="Load from Scope Template"
+                                            class="btn btn-primary btn-sm"
+                                            icon="fa-plus-circle"/>
+                                    <button name="action_view_project_trackers"
+                                            type="object"
+                                            string="Open Full Tracker"
+                                            class="btn btn-outline-secondary btn-sm"
+                                            icon="fa-external-link"/>
+                                </div>
+                                <div class="d-flex gap-4 align-items-center">
+                                    <div class="text-center">
+                                        <span class="text-muted small d-block">Documentation:</span>
+                                        <span class="badge text-bg-info"><field name="tracker_doc_count"/> Deliverables</span>
+                                        <field name="tracker_doc_progress" widget="progressbar" class="d-block mt-1" style="width: 120px;"/>
+                                    </div>
+                                    <div class="text-center">
+                                        <span class="text-muted small d-block">Implementation:</span>
+                                        <span class="badge text-bg-primary"><field name="tracker_impl_count"/> Activities</span>
+                                        <field name="tracker_impl_progress" widget="progressbar" class="d-block mt-1" style="width: 120px;"/>
+                                    </div>
+                                    <div class="text-center">
+                                        <span class="text-muted small d-block">Overall Progress:</span>
+                                        <span class="badge text-bg-success"><field name="tracker_completed_count"/> Done</span>
+                                        <field name="tracker_progress" widget="progressbar" class="d-block mt-1" style="width: 130px;"/>
+                                    </div>
+                                    <div class="text-center" invisible="tracker_pending_approval_count == 0">
+                                        <span class="text-muted small d-block">Sign-off:</span>
+                                        <span class="badge text-bg-warning"><field name="tracker_pending_approval_count"/> Pending</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <field name="tracker_ids">
+                                <list string="Scope Trackers" decoration-danger="is_overdue" decoration-muted="state == 'cancelled'" editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="item_id" readonly="1"/>
+                                    <field name="scope_no" readonly="1" optional="show"/>
+                                    <field name="scope_name" readonly="1" optional="show"/>
+                                    <field name="category" widget="badge" readonly="1"
+                                           decoration-info="category == 'documentation'"
+                                           decoration-primary="category == 'implementation'"/>
+                                    <field name="name"/>
+                                    <field name="final_approval_authority" widget="badge"
+                                           decoration-warning="final_approval_authority == 'CEO'"
+                                           decoration-danger="final_approval_authority == 'VP'"
+                                           decoration-primary="final_approval_authority == 'PM'"
+                                           decoration-info="final_approval_authority == 'TL'"/>
+                                    <field name="accountable_id" optional="show"/>
+                                    <field name="responsible_id" optional="show"/>
+                                    <field name="end_date" optional="show"/>
+                                    <field name="is_overdue" column_invisible="1"/>
+                                    <field name="can_current_user_approve" column_invisible="1"/>
+                                    <field name="progress" widget="progressbar" optional="show"/>
+                                    <field name="state" widget="badge"
+                                           decoration-muted="state == 'not_started'"
+                                           decoration-info="state == 'in_progress'"
+                                           decoration-warning="state == 'submitted'"
+                                           decoration-success="state in ('approved', 'completed')"
+                                           decoration-danger="state == 'cancelled'"/>
+                                    <button name="action_start" string="Start" type="object" icon="fa-play"
+                                            invisible="state != 'not_started'"/>
+                                    <button name="action_submit" string="Submit" type="object" icon="fa-arrow-up"
+                                            invisible="state != 'in_progress'"/>
+                                    <button name="action_approve" string="Approve" type="object" icon="fa-check"
+                                            class="btn-success"
+                                            invisible="state != 'submitted' or not can_current_user_approve"/>
+                                </list>
+                            </field>
+                        </page>
 
                         <!-- ================= SCOPE & TASK MANAGEMENT ================= -->
                         <page string="Scopes &amp; Tasks" name="kra_kpi_page">

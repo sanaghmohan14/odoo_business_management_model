@@ -15,7 +15,7 @@
                         class="oe_stat_button"
                         icon="fa-tasks"
                         invisible="kpi_count == 0">
-                    <field name="kpi_count" widget="statinfo" string="KPIs"/>
+                    <field name="kpi_count" widget="statinfo" string="Tasks"/>
                 </button>
             </xpath>
         </field>

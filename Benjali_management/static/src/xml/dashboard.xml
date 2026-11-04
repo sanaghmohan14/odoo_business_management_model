@@ -15,6 +15,14 @@
                     <nav class="dash_nav_tabs">
                         <button
                             type="button"
+                            t-att-class="'tab_btn ' + (state.activeTab === 'overview' ? 'active' : '')"
+                            t-on-click="() => this.setTab('overview')"
+                        >
+                            <i class="fa fa-dashboard me-1"/>
+                            <span>Project Dashboard</span>
+                        </button>
+                        <button
+                            type="button"
                             t-att-class="'tab_btn ' + (state.activeTab === 'kpi' ? 'active' : '')"
                             t-on-click="() => this.setTab('kpi')"
                         >
@@ -148,8 +156,540 @@
                 <!-- MAIN WORKSPACE -->
                 <main class="dash_main_content">
 
-                    <!-- Title & Search Header -->
-                    <div class="dash_content_header">
+                    <!-- ======================================================== -->
+                    <!-- TAB 0: EXACT EXECUTIVE OVERVIEW DASHBOARD (User Design) -->
+                    <!-- ======================================================== -->
+                    <div t-if="state.activeTab === 'overview'" class="dash_tab_overview">
+
+                        <!-- OVERVIEW SUB-HEADER (As in screenshot) -->
+                        <div class="dash_overview_subhead">
+                            <div class="brand_title_box">
+                                <div class="brand_badge_icon"><t t-esc="executiveData.header.brand_letter"/></div>
+                                <div class="brand_text_wrap">
+                                    <h1 class="brand_title"><t t-esc="executiveData.header.title"/></h1>
+                                    <span class="brand_subtitle"><t t-esc="executiveData.header.subtitle"/></span>
+                                </div>
+                            </div>
+
+                            <div class="overview_top_legend">
+                                <div class="legend_team_dots">
+                                    <t t-foreach="executiveData.header.teams_legend" t-as="tm" t-key="tm.name">
+                                        <div t-att-class="'team_legend_item ' + (state.executiveFilterTeam === tm.name ? 'active' : '')"
+                                             t-on-click="() => this.filterExecutiveTeam(tm.name)"
+                                             t-att-title="'Filter by ' + tm.name">
+                                            <span class="legend_dot" t-att-style="'background-color: ' + tm.color + ';'"/>
+                                            <span class="team_legend_text"><t t-esc="tm.name"/> · <t t-esc="tm.lead"/></span>
+                                        </div>
+                                    </t>
+                                </div>
+                                <div class="overview_date_badge">
+                                    <t t-esc="executiveData.header.date_str"/>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ROW 1: 5 SUMMARY KPI CARDS -->
+                        <div class="overview_kpi_row">
+                            <!-- Card 1: Total projects -->
+                            <div class="ov_kpi_card">
+                                <div class="ov_kpi_top">
+                                    <div class="ov_kpi_icon_wrap">
+                                        <i class="fa fa-th-large"/>
+                                    </div>
+                                    <span class="ov_kpi_label">Total projects</span>
+                                </div>
+                                <div class="ov_kpi_val"><t t-esc="executiveData.top_kpis.total_projects.count"/></div>
+                                <div class="ov_kpi_multi_bar">
+                                    <t t-foreach="executiveData.top_kpis.total_projects.segments" t-as="seg" t-key="seg_index">
+                                        <div class="ov_bar_seg" t-att-style="'width: ' + seg.pct + '%; background-color: ' + seg.color + ';'"/>
+                                    </t>
+                                </div>
+                                <div class="ov_kpi_sub"><t t-esc="executiveData.top_kpis.total_projects.sub"/></div>
+                            </div>
+
+                            <!-- Card 2: Running now -->
+                            <div class="ov_kpi_card" t-on-click="() => this.filterExecutiveStatus('running')">
+                                <div class="ov_kpi_top">
+                                    <div class="ov_kpi_icon_wrap text-primary">
+                                        <i class="fa fa-play"/>
+                                    </div>
+                                    <span class="ov_kpi_label">Running now</span>
+                                </div>
+                                <div class="ov_kpi_val">
+                                    <span><t t-esc="executiveData.top_kpis.running_now.count"/></span>
+                                    <span class="val_small_sub"> of <t t-esc="executiveData.top_kpis.running_now.total"/></span>
+                                </div>
+                                <div class="ov_kpi_bar_track">
+                                    <div class="ov_bar_fill bg_navy" t-att-style="'width: ' + executiveData.top_kpis.running_now.bar_pct + '%;'"/>
+                                </div>
+                                <div class="ov_kpi_sub"><t t-esc="executiveData.top_kpis.running_now.sub"/></div>
+                            </div>
+
+                            <!-- Card 3: Overall health -->
+                            <div class="ov_kpi_card">
+                                <div class="ov_kpi_top">
+                                    <div class="ov_kpi_icon_wrap text-success">
+                                        <i class="fa fa-heart-o"/>
+                                    </div>
+                                    <span class="ov_kpi_label">Overall health</span>
+                                </div>
+                                <div class="ov_kpi_val">
+                                    <span><t t-esc="executiveData.top_kpis.overall_health.score"/>%</span>
+                                    <span class="val_badge_status text-success"><t t-esc="executiveData.top_kpis.overall_health.status"/></span>
+                                </div>
+                                <div class="ov_kpi_multi_bar">
+                                    <t t-foreach="executiveData.top_kpis.overall_health.segments" t-as="seg" t-key="seg_index">
+                                        <div class="ov_bar_seg" t-att-style="'width: ' + seg.pct + '%; background-color: ' + seg.color + ';'"/>
+                                    </t>
+                                </div>
+                                <div class="ov_kpi_sub"><t t-esc="executiveData.top_kpis.overall_health.sub"/></div>
+                            </div>
+
+                            <!-- Card 4: High-risk projects -->
+                            <div class="ov_kpi_card" t-on-click="() => this.filterExecutiveHealth('poor')">
+                                <div class="ov_kpi_top">
+                                    <div class="ov_kpi_icon_wrap text-danger">
+                                        <i class="fa fa-exclamation-triangle"/>
+                                    </div>
+                                    <span class="ov_kpi_label">High-risk projects</span>
+                                </div>
+                                <div class="ov_kpi_val">
+                                    <span class="text-danger"><t t-esc="executiveData.top_kpis.high_risk.count"/></span>
+                                    <span class="val_badge_status text-danger"><t t-esc="executiveData.top_kpis.high_risk.sub_label"/></span>
+                                </div>
+                                <div class="ov_kpi_multi_bar">
+                                    <t t-foreach="executiveData.top_kpis.high_risk.segments" t-as="seg" t-key="seg_index">
+                                        <div class="ov_bar_seg" t-att-style="'width: ' + seg.pct + '%; background-color: ' + seg.color + ';'"/>
+                                    </t>
+                                </div>
+                                <div class="ov_kpi_sub"><t t-esc="executiveData.top_kpis.high_risk.sub"/></div>
+                            </div>
+
+                            <!-- Card 5: On-time delivery -->
+                            <div class="ov_kpi_card">
+                                <div class="ov_kpi_top">
+                                    <div class="ov_kpi_icon_wrap text-primary">
+                                        <i class="fa fa-clock-o"/>
+                                    </div>
+                                    <span class="ov_kpi_label">On-time delivery</span>
+                                </div>
+                                <div class="ov_kpi_val">
+                                    <span><t t-esc="executiveData.top_kpis.on_time.score"/>%</span>
+                                    <span class="val_small_sub"> on time</span>
+                                </div>
+                                <div class="ov_kpi_bar_track">
+                                    <div class="ov_bar_fill bg_blue" t-att-style="'width: ' + executiveData.top_kpis.on_time.bar_pct + '%;'"/>
+                                </div>
+                                <div class="ov_kpi_sub"><t t-esc="executiveData.top_kpis.on_time.sub"/></div>
+                            </div>
+                        </div>
+
+                        <!-- ROW 2: 4 ANALYTICS WIDGETS -->
+                        <div class="overview_analytics_row">
+                            <!-- Widget 1: Project health (Donut) -->
+                            <div class="ov_widget_card">
+                                <div class="ov_widget_header">
+                                    <h3 class="widget_title">Project health</h3>
+                                    <span class="widget_subtitle">How healthy each project is</span>
+                                </div>
+                                <div class="health_chart_wrap">
+                                    <div class="donut_container">
+                                        <svg class="health_donut_svg" viewBox="0 0 120 120">
+                                            <circle cx="60" cy="60" r="48" fill="none" stroke="currentColor" stroke-width="14" class="donut_bg"/>
+                                            <!-- Green Good segment -->
+                                            <circle cx="60" cy="60" r="48" fill="none" stroke="#10b981" stroke-width="14"
+                                                    t-att-stroke-dasharray="executiveData.project_health.donut_good" stroke-dashoffset="0" transform="rotate(-90 60 60)"/>
+                                            <!-- Yellow Fair segment -->
+                                            <circle cx="60" cy="60" r="48" fill="none" stroke="#f59e0b" stroke-width="14"
+                                                    t-att-stroke-dasharray="executiveData.project_health.donut_fair"
+                                                    t-att-stroke-dashoffset="executiveData.project_health.donut_fair_offset" transform="rotate(-90 60 60)"/>
+                                            <!-- Red Poor segment -->
+                                            <circle cx="60" cy="60" r="48" fill="none" stroke="#ef4444" stroke-width="14"
+                                                    t-att-stroke-dasharray="executiveData.project_health.donut_poor"
+                                                    t-att-stroke-dashoffset="executiveData.project_health.donut_poor_offset" transform="rotate(-90 60 60)"/>
+                                        </svg>
+                                        <div class="donut_center_text">
+                                            <div class="donut_score_num"><t t-esc="executiveData.project_health.score"/>%</div>
+                                            <div class="donut_score_lbl">health score</div>
+                                        </div>
+                                    </div>
+                                    <div class="health_legend_list">
+                                        <div t-att-class="'health_legend_item ' + (state.executiveFilterHealth === 'good' ? 'active' : '')"
+                                             t-on-click="() => this.filterExecutiveHealth('good')">
+                                            <span class="hl_dot bg_good"/>
+                                            <span class="hl_label">Good</span>
+                                            <span class="hl_count"><t t-esc="executiveData.project_health.good"/></span>
+                                        </div>
+                                        <div t-att-class="'health_legend_item ' + (state.executiveFilterHealth === 'fair' ? 'active' : '')"
+                                             t-on-click="() => this.filterExecutiveHealth('fair')">
+                                            <span class="hl_dot bg_fair"/>
+                                            <span class="hl_label">Fair</span>
+                                            <span class="hl_count"><t t-esc="executiveData.project_health.fair"/></span>
+                                        </div>
+                                        <div t-att-class="'health_legend_item ' + (state.executiveFilterHealth === 'poor' ? 'active' : '')"
+                                             t-on-click="() => this.filterExecutiveHealth('poor')">
+                                            <span class="hl_dot bg_poor"/>
+                                            <span class="hl_label">Poor</span>
+                                            <span class="hl_count"><t t-esc="executiveData.project_health.poor"/></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Widget 2: Running status -->
+                            <div class="ov_widget_card">
+                                <div class="ov_widget_header">
+                                    <h3 class="widget_title">Running status</h3>
+                                    <span class="widget_subtitle">Where each project stands today</span>
+                                </div>
+                                <div class="status_top_segmented_bar">
+                                    <div class="bar_seg bg_navy" t-att-style="'width: ' + executiveData.running_status.running_pct + '%;'"/>
+                                    <div class="bar_seg bg_good" t-att-style="'width: ' + executiveData.running_status.completed_pct + '%;'"/>
+                                    <div class="bar_seg bg_fair" t-att-style="'width: ' + executiveData.running_status.on_hold_pct + '%;'"/>
+                                    <div class="bar_seg bg_slate" t-att-style="'width: ' + executiveData.running_status.not_started_pct + '%;'"/>
+                                </div>
+                                <div class="status_pills_grid">
+                                    <div t-att-class="'status_pill_box pill_running ' + (state.executiveFilterStatus === 'running' ? 'active' : '')"
+                                         t-on-click="() => this.filterExecutiveStatus('running')">
+                                        <i class="fa fa-play status_box_icon"/>
+                                        <span class="status_box_num"><t t-esc="executiveData.running_status.running"/></span>
+                                        <span class="status_box_lbl">Running</span>
+                                    </div>
+                                    <div t-att-class="'status_pill_box pill_completed ' + (state.executiveFilterStatus === 'completed' ? 'active' : '')"
+                                         t-on-click="() => this.filterExecutiveStatus('completed')">
+                                        <i class="fa fa-check status_box_icon"/>
+                                        <span class="status_box_num"><t t-esc="executiveData.running_status.completed"/></span>
+                                        <span class="status_box_lbl">Completed</span>
+                                    </div>
+                                    <div t-att-class="'status_pill_box pill_on_hold ' + (state.executiveFilterStatus === 'on_hold' ? 'active' : '')"
+                                         t-on-click="() => this.filterExecutiveStatus('on_hold')">
+                                        <i class="fa fa-pause status_box_icon"/>
+                                        <span class="status_box_num"><t t-esc="executiveData.running_status.on_hold"/></span>
+                                        <span class="status_box_lbl">On hold</span>
+                                    </div>
+                                    <div t-att-class="'status_pill_box pill_not_started ' + (state.executiveFilterStatus === 'not_started' ? 'active' : '')"
+                                         t-on-click="() => this.filterExecutiveStatus('not_started')">
+                                        <i class="fa fa-minus status_box_icon"/>
+                                        <span class="status_box_num"><t t-esc="executiveData.running_status.not_started"/></span>
+                                        <span class="status_box_lbl">Not started</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Widget 3: Risk level (Speedometer Gauge) -->
+                            <div class="ov_widget_card">
+                                <div class="ov_widget_header">
+                                    <h3 class="widget_title">Risk level</h3>
+                                    <span class="widget_subtitle">Overall portfolio risk</span>
+                                </div>
+                                <div class="gauge_widget_wrap">
+                                    <svg class="speedometer_svg" viewBox="0 0 160 95">
+                                        <!-- Gauge Arc background track -->
+                                        <path d="M 20 85 A 60 60 0 0 1 140 85" fill="none" stroke="currentColor" stroke-width="13" class="gauge_bg"/>
+                                        <!-- Colored segments: Green (left), Amber (middle), Red (right) -->
+                                        <path d="M 20 85 A 60 60 0 0 1 80 25" fill="none" stroke="#10b981" stroke-width="13" stroke-linecap="round"/>
+                                        <path d="M 80 25 A 60 60 0 0 1 125 43" fill="none" stroke="#f59e0b" stroke-width="13"/>
+                                        <path d="M 125 43 A 60 60 0 0 1 140 85" fill="none" stroke="#ef4444" stroke-width="13" stroke-linecap="round"/>
+                                        <!-- Needle pointing dynamically based on portfolio risk ratio -->
+                                        <g t-att-transform="'rotate(' + executiveData.risk_level.needle_deg + ' 80 85)'">
+                                            <line x1="80" y1="85" x2="80" y2="35" stroke="#0f172a" stroke-width="3" stroke-linecap="round" class="gauge_needle_line"/>
+                                            <circle cx="80" cy="85" r="6" fill="#0f172a" class="gauge_needle_hub"/>
+                                            <circle cx="80" cy="85" r="2.5" fill="#ffffff"/>
+                                        </g>
+                                    </svg>
+                                    <div class="gauge_risk_label text-success">
+                                        <t t-esc="executiveData.risk_level.label"/>
+                                    </div>
+                                </div>
+                                <div class="risk_stats_grid">
+                                    <div class="risk_stat_box r_low">
+                                        <div class="risk_num"><t t-esc="executiveData.risk_level.low"/></div>
+                                        <div class="risk_lbl">Low</div>
+                                    </div>
+                                    <div class="risk_stat_box r_medium">
+                                        <div class="risk_num"><t t-esc="executiveData.risk_level.medium"/></div>
+                                        <div class="risk_lbl">Medium</div>
+                                    </div>
+                                    <div class="risk_stat_box r_high">
+                                        <div class="risk_num"><t t-esc="executiveData.risk_level.high"/></div>
+                                        <div class="risk_lbl">High</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Widget 4: Project condition -->
+                            <div class="ov_widget_card">
+                                <div class="ov_widget_header">
+                                    <h3 class="widget_title">Project condition</h3>
+                                    <span class="widget_subtitle">Progress compared with plan</span>
+                                </div>
+                                <div class="condition_bars_wrap">
+                                    <!-- Bar 1: Ahead -->
+                                    <div class="condition_bar_col">
+                                        <span class="cond_bar_val"><t t-esc="executiveData.project_condition.ahead"/></span>
+                                        <div class="cond_bar_track">
+                                            <div class="cond_bar_fill bg_green" t-att-style="'height: ' + executiveData.project_condition.ahead_h + '%;'"/>
+                                        </div>
+                                        <span class="cond_bar_lbl">Ahead</span>
+                                    </div>
+                                    <!-- Bar 2: On plan -->
+                                    <div class="condition_bar_col">
+                                        <span class="cond_bar_val"><t t-esc="executiveData.project_condition.on_plan"/></span>
+                                        <div class="cond_bar_track">
+                                            <div class="cond_bar_fill bg_navy" t-att-style="'height: ' + executiveData.project_condition.on_plan_h + '%;'"/>
+                                        </div>
+                                        <span class="cond_bar_lbl">On plan</span>
+                                    </div>
+                                    <!-- Bar 3: Behind -->
+                                    <div class="condition_bar_col">
+                                        <span class="cond_bar_val"><t t-esc="executiveData.project_condition.behind"/></span>
+                                        <div class="cond_bar_track">
+                                            <div class="cond_bar_fill bg_amber" t-att-style="'height: ' + executiveData.project_condition.behind_h + '%;'"/>
+                                        </div>
+                                        <span class="cond_bar_lbl">Behind</span>
+                                    </div>
+                                    <!-- Bar 4: Overdue -->
+                                    <div class="condition_bar_col">
+                                        <span class="cond_bar_val"><t t-esc="executiveData.project_condition.overdue"/></span>
+                                        <div class="cond_bar_track">
+                                            <div class="cond_bar_fill bg_crimson" t-att-style="'height: ' + executiveData.project_condition.overdue_h + '%;'"/>
+                                        </div>
+                                        <span class="cond_bar_lbl">Overdue</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ROW 3: TEAMS & TEAM COMPARISON -->
+                        <div class="overview_teams_row">
+                            <!-- Team Cards (Dynamically generated from real teams/departments) -->
+                            <t t-foreach="executiveData.teams" t-as="team" t-key="team.id">
+                                <div class="ov_team_card">
+                                    <div class="team_card_header">
+                                        <div>
+                                            <h4 class="team_card_title"><t t-esc="team.name"/></h4>
+                                            <span class="team_card_lead">Lead <t t-esc="team.lead"/></span>
+                                        </div>
+                                        <span t-att-class="'team_card_badge ' + team.badge_class"><t t-esc="team.badge"/></span>
+                                    </div>
+
+                                    <div class="team_card_metrics_row">
+                                        <!-- Donut gauge on left -->
+                                        <div class="team_donut_col">
+                                            <div class="team_donut_svg_wrap">
+                                                <svg class="team_donut_svg" viewBox="0 0 80 80">
+                                                    <circle cx="40" cy="40" r="30" fill="none" stroke="currentColor" stroke-width="8" class="team_donut_bg"/>
+                                                    <circle cx="40" cy="40" r="30" fill="none" t-att-stroke="team.trend_color" stroke-width="8"
+                                                            t-att-stroke-dasharray="188.5"
+                                                            t-att-stroke-dashoffset="188.5 * (1 - team.productivity / 100)"
+                                                            transform="rotate(-90 40 40)"/>
+                                                </svg>
+                                                <div class="team_donut_text">
+                                                    <span class="td_pct"><t t-esc="team.productivity"/>%</span>
+                                                    <span class="td_lbl">productivity</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Bars on right -->
+                                        <div class="team_bars_col">
+                                            <div class="metric_progress_line">
+                                                <span class="mp_label">Quality</span>
+                                                <div class="mp_bar_wrap">
+                                                    <div class="mp_bar_fill bg_blue" t-att-style="'width: ' + team.quality + '%;'"/>
+                                                </div>
+                                                <span class="mp_val"><t t-esc="team.quality"/>%</span>
+                                            </div>
+                                            <div class="metric_progress_line">
+                                                <span class="mp_label">On-time</span>
+                                                <div class="mp_bar_wrap">
+                                                    <div class="mp_bar_fill bg_blue" t-att-style="'width: ' + team.on_time + '%;'"/>
+                                                </div>
+                                                <span class="mp_val"><t t-esc="team.on_time"/>%</span>
+                                            </div>
+                                            <div class="metric_progress_line">
+                                                <span class="mp_label">Utilisation</span>
+                                                <div class="mp_bar_wrap">
+                                                    <div class="mp_bar_fill bg_blue" t-att-style="'width: ' + team.utilisation + '%;'"/>
+                                                </div>
+                                                <span class="mp_val"><t t-esc="team.utilisation"/>%</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="team_card_footer">
+                                        <div class="team_projects_summary">
+                                            <span class="tp_text"><t t-esc="team.projects_count"/> projects · <t t-esc="team.healthy_count"/> healthy</span>
+                                            <div class="team_dots_wrap">
+                                                <t t-foreach="team.dots" t-as="dotColor" t-key="dotColor_index">
+                                                    <span class="tp_square_dot" t-att-style="'background-color: ' + dotColor + ';'"/>
+                                                </t>
+                                            </div>
+                                        </div>
+                                        <div class="team_sparkline_wrap">
+                                            <svg class="team_spark_svg" viewBox="0 0 100 24">
+                                                <path t-att-d="team.trend_path" fill="none" t-att-stroke="team.trend_color" stroke-width="2.5" stroke-linecap="round"/>
+                                            </svg>
+                                            <span class="trend_text" t-att-style="'color: ' + team.trend_color + ';'"><t t-esc="team.trend_text"/></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </t>
+
+                            <!-- Team Comparison Card (Grouped Bar Chart - Dynamic) -->
+                            <div class="ov_team_card comparison_card" t-if="executiveData.teams and executiveData.teams.length > 0">
+                                <div class="team_card_header">
+                                    <div>
+                                        <h4 class="team_card_title">Team comparison</h4>
+                                        <span class="team_card_lead">Higher is better</span>
+                                    </div>
+                                    <div class="comparison_legend">
+                                        <div class="c_leg_item"><span class="c_dot bg_navy"/><span class="c_txt">Productivity</span></div>
+                                        <div class="c_leg_item"><span class="c_dot bg_blue"/><span class="c_txt">Quality</span></div>
+                                        <div class="c_leg_item"><span class="c_dot bg_lightblue"/><span class="c_txt">On-time</span></div>
+                                    </div>
+                                </div>
+
+                                <!-- Grouped Bar Chart Visual -->
+                                <div class="comparison_chart_area">
+                                    <div class="comp_y_axis">
+                                        <span>100</span>
+                                        <span>75</span>
+                                        <span>50</span>
+                                    </div>
+                                    <div class="comp_bars_content">
+                                        <div class="comp_grid_lines">
+                                            <div class="c_grid_line"/>
+                                            <div class="c_grid_line"/>
+                                            <div class="c_grid_line"/>
+                                        </div>
+                                        <div class="comp_teams_groups">
+                                            <t t-foreach="executiveData.teams" t-as="tm" t-key="tm.id">
+                                                <div class="comp_team_group">
+                                                    <div class="group_bars_wrap">
+                                                        <div class="comp_bar bg_navy" t-att-style="'height: ' + tm.productivity + '%;'" t-att-title="'Productivity: ' + tm.productivity + '%'"/>
+                                                        <div class="comp_bar bg_blue" t-att-style="'height: ' + tm.quality + '%;'" t-att-title="'Quality: ' + tm.quality + '%'"/>
+                                                        <div class="comp_bar bg_lightblue" t-att-style="'height: ' + tm.on_time + '%;'" t-att-title="'On-time: ' + tm.on_time + '%'"/>
+                                                    </div>
+                                                    <span class="group_name"><t t-esc="tm.name"/></span>
+                                                </div>
+                                            </t>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ROW 4: PROJECTS TABLE -->
+                        <div class="overview_table_card">
+                            <div class="ov_table_header">
+                                <h3 class="table_main_title">Projects</h3>
+                                <div class="table_header_actions">
+                                    <div class="plan_reference_legend">
+                                        <span class="black_plan_mark">|</span>
+                                        <span>Black line – where the plan says it should be today</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="table_responsive_wrap">
+                                <table class="ov_projects_table">
+                                    <thead>
+                                        <tr>
+                                            <th class="th_project">Project</th>
+                                            <th class="th_team">Team</th>
+                                            <th class="th_status">Running status</th>
+                                            <th class="th_health">Health</th>
+                                            <th class="th_risk">Risk level</th>
+                                            <th class="th_progress">Progress vs plan</th>
+                                            <th class="th_due">Due date</th>
+                                            <th class="th_cond">Condition</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="executiveProjects" t-as="p" t-key="p.id">
+                                            <tr class="ov_project_row">
+                                                <!-- Project & Client -->
+                                                <td class="td_project">
+                                                    <div class="proj_title"><t t-esc="p.name"/></div>
+                                                    <div class="proj_client_sub"><t t-esc="p.client"/></div>
+                                                </td>
+
+                                                <!-- Team -->
+                                                <td class="td_team">
+                                                    <div class="team_dot_tag" t-on-click="() => this.filterExecutiveTeam(p.team)">
+                                                        <span class="tag_dot" t-att-style="'background-color: ' + p.team_color + ';'"/>
+                                                        <span class="tag_txt"><t t-esc="p.team"/></span>
+                                                    </div>
+                                                </td>
+
+                                                <!-- Running Status -->
+                                                <td class="td_status">
+                                                    <span t-att-class="'status_badge pill_' + p.status"
+                                                          t-on-click="() => this.filterExecutiveStatus(p.status)">
+                                                        <t t-esc="p.status_label"/>
+                                                    </span>
+                                                </td>
+
+                                                <!-- Health -->
+                                                <td class="td_health">
+                                                    <div class="health_indicator" t-on-click="() => this.filterExecutiveHealth(p.health)">
+                                                        <span class="health_circle_dot" t-att-style="'background-color: ' + p.health_color + ';'"/>
+                                                        <span class="health_txt"><t t-esc="p.health_label"/></span>
+                                                    </div>
+                                                </td>
+
+                                                <!-- Risk level -->
+                                                <td class="td_risk">
+                                                    <span t-att-class="'risk_pill risk_' + p.risk">
+                                                        <t t-esc="p.risk_label"/>
+                                                    </span>
+                                                </td>
+
+                                                <!-- Progress vs Plan with Target Line Marker -->
+                                                <td class="td_progress">
+                                                    <div class="progress_plan_cell">
+                                                        <div class="dual_progress_track">
+                                                            <div class="dual_fill_bar"
+                                                                 t-att-style="'width: ' + p.progress + '%; background-color: ' + p.progress_color + ';'"/>
+                                                            <!-- Vertical black line where plan says it should be today -->
+                                                            <div class="plan_target_marker"
+                                                                 t-att-style="'left: ' + p.target_plan + '%;'"/>
+                                                        </div>
+                                                        <span class="progress_pct_txt"><t t-esc="p.progress"/>%</span>
+                                                    </div>
+                                                </td>
+
+                                                <!-- Due Date & Variance -->
+                                                <td class="td_due">
+                                                    <div class="due_cell_content">
+                                                        <span t-if="p.variance" class="due_pts_tag"><t t-esc="p.variance"/></span>
+                                                        <span class="due_date_label"><t t-esc="p.due_date_str"/></span>
+                                                    </div>
+                                                </td>
+
+                                                <!-- Condition -->
+                                                <td class="td_cond">
+                                                    <div t-att-class="'condition_cell_tag ' + p.condition_class">
+                                                        <i t-att-class="p.condition_icon + ' me-1'"/>
+                                                        <span><t t-esc="p.condition_label"/></span>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                        <tr t-if="!executiveProjects || executiveProjects.length === 0">
+                                            <td colspan="8" class="text-center py-4 text-muted">
+                                                <i class="fa fa-folder-open-o me-2"/>No projects found for the selected department.
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Title & Search Header (Other tabs) -->
+                    <div t-if="state.activeTab !== 'overview'" class="dash_content_header">
                         <div class="header_info">
                             <h1 class="main_title"><t t-esc="currentTitle"/></h1>
                             <p class="main_subtitle">
@@ -161,15 +701,15 @@
                             <input
                                 type="text"
                                 class="search_input"
-                                placeholder="Search projects, KRAs, owners..."
+                                placeholder="Search projects, Scopes, owners..."
                                 t-att-value="state.searchQuery"
                                 t-on-input="onSearchInput"
                             />
                         </div>
                     </div>
 
-                    <!-- 4 Metric KPI Cards -->
-                    <div class="dash_kpi_row">
+                    <!-- 4 Metric KPI Cards (Other tabs) -->
+                    <div t-if="state.activeTab !== 'overview'" class="dash_kpi_row">
                         <!-- Card 1: Active Projects -->
                         <div class="dash_kpi_card" t-on-click="() => this.openProjectsList('active')">
                             <span class="kpi_card_label">Active projects</span>
@@ -203,29 +743,6 @@
                             <span class="kpi_card_label">Needs attention</span>
                             <div class="kpi_card_value"><t t-esc="kpis.needs_attention"/></div>
                             <span class="kpi_card_sub"><t t-esc="kpis.delayed_count"/> delayed</span>
-                        </div>
-
-                        <!-- Card 4: Budget Used (with Mini Meter Gauge) -->
-                        <div class="dash_kpi_card has_mini_gauge">
-                            <div class="kpi_card_text_wrap">
-                                <span class="kpi_card_label">Budget used</span>
-                                <div class="kpi_card_value"><t t-esc="kpis.budget_used_pct"/>%</div>
-                                <span class="kpi_card_sub">
-                                    <t t-esc="kpis.budget_spent_str"/> of <t t-esc="kpis.budget_total_str"/>
-                                </span>
-                            </div>
-                            <div class="mini_gauge_container" title="Budget Utilization Meter Gauge">
-                                <t t-set="gaugeB" t-value="this.getMiniGauge(kpis.budget_used_pct)"/>
-                                <svg class="mini_gauge_svg" viewBox="0 0 60 36">
-                                    <path d="M 6 30 A 24 24 0 0 1 54 30" fill="none" stroke="currentColor" stroke-width="4.5" class="mini_gauge_track"/>
-                                    <path d="M 6 30 A 24 24 0 0 1 54 30" fill="none" t-att-stroke="gaugeB.color" stroke-width="4.5" stroke-linecap="round" t-att-stroke-dasharray="gaugeB.arcLength" t-att-stroke-dashoffset="gaugeB.arcOffset"/>
-                                    <g t-att-transform="'rotate(' + gaugeB.needleAngle + ' 30 30)'">
-                                        <line x1="30" y1="30" x2="30" y2="10" t-att-stroke="gaugeB.color" stroke-width="2" stroke-linecap="round"/>
-                                        <circle cx="30" cy="10" r="2" fill="#ffffff"/>
-                                    </g>
-                                    <circle cx="30" cy="30" r="3.5" fill="currentColor"/>
-                                </svg>
-                            </div>
                         </div>
                     </div>
 
@@ -824,7 +1341,7 @@
                                                     type="button"
                                                     class="btn_card_perf"
                                                     t-on-click="() => this.openProjectPerformance(project.id)"
-                                                    title="View Employee Performance (Project Manager, Responsible, KRAs, KPIs &amp; Progress)"
+                                                    title="View Employee Performance (Project Manager, Responsible, Scopes, Tasks &amp; Progress)"
                                                 >
                                                     <i class="fa fa-users me-1"/>
                                                     <span>Performance</span>
@@ -1022,15 +1539,15 @@
                         <!-- Right Column: Widgets -->
                         <aside class="dash_widgets_section">
 
-                            <!-- Widget 1: Budget used by department -->
+                            <!-- Widget 1: Projects by department -->
                             <div class="widget_box">
-                                <h3 class="widget_box_title">Budget used by department</h3>
+                                <h3 class="widget_box_title">Projects by department</h3>
                                 <div class="widget_box_body">
                                     <t t-foreach="departments" t-as="dep" t-key="dep.id">
                                         <div class="budget_row_item" t-if="dep.count > 0" t-on-click="() => this.selectDepartment(dep.id)">
                                             <div class="b_label_row">
                                                 <span class="b_dep_name"><t t-esc="dep.name"/></span>
-                                                <span class="b_dep_val"><t t-esc="dep.budget_str"/></span>
+                                                <span class="b_dep_val"><t t-esc="dep.count"/> Projects (<t t-esc="dep.progress"/>%)</span>
                                             </div>
                                             <div class="b_track">
                                                 <div class="b_fill" t-att-style="'width: ' + dep.progress + '%; background-color: ' + dep.color + ';'"/>
@@ -2364,7 +2881,7 @@
                                             <div class="card_content">
                                                 <span class="card_val text-warning"><t t-esc="currentPerformanceProject.kra_count"/></span>
                                                 <span class="card_title">Scopes Overseen</span>
-                                                <span class="card_sub">Key Result Focus Areas</span>
+                                                <span class="card_sub">Key Scope Focus Areas</span>
                                             </div>
                                         </div>
                                         <div class="metric_card card_cyan">
@@ -3365,18 +3882,18 @@
                                     Calendar &amp; Task Deliverables
                                 </h2>
                                 <p class="cal_section_sub">
-                                    Track today's pending tasks, tomorrow's deliverables, overdue targets, and full monthly KRA &amp; KPI schedules.
+                                    Track today's pending tasks, tomorrow's deliverables, overdue targets, and full monthly Scope &amp; Task schedules.
                                 </p>
                             </div>
                             <div class="cal_header_right">
                                 <button type="button" class="cal_action_btn btn_create" t-on-click="() => this.createKpi()">
-                                    <i class="fa fa-plus me-1"/> Create KPI
+                                    <i class="fa fa-plus me-1"/> Create Task
                                 </button>
-                                <button type="button" class="cal_action_btn btn_odoo_cal" t-on-click="() => this.openOdooCalendar('kpi')" title="Open Odoo KPI Calendar View">
-                                    <i class="fa fa-calendar-check-o me-1"/> KPI Calendar
+                                <button type="button" class="cal_action_btn btn_odoo_cal" t-on-click="() => this.openOdooCalendar('kpi')" title="Open Odoo Task Calendar View">
+                                    <i class="fa fa-calendar-check-o me-1"/> Task Calendar
                                 </button>
-                                <button type="button" class="cal_action_btn btn_odoo_cal" t-on-click="() => this.openOdooCalendar('kra')" title="Open Odoo KRA Calendar View">
-                                    <i class="fa fa-calendar-o me-1"/> KRA Calendar
+                                <button type="button" class="cal_action_btn btn_odoo_cal" t-on-click="() => this.openOdooCalendar('kra')" title="Open Odoo Scope Calendar View">
+                                    <i class="fa fa-calendar-o me-1"/> Scope Calendar
                                 </button>
                             </div>
                         </div>
@@ -3531,14 +4048,14 @@
                                             t-att-class="'cal_filter_pill ' + (state.calendarFilter === 'kpi' ? 'active' : '')"
                                             t-on-click="() => this.setCalendarFilter('kpi')"
                                         >
-                                            KPIs
+                                            Tasks
                                         </button>
                                         <button
                                             type="button"
                                             t-att-class="'cal_filter_pill ' + (state.calendarFilter === 'kra' ? 'active' : '')"
                                             t-on-click="() => this.setCalendarFilter('kra')"
                                         >
-                                            KRAs
+                                            Scopes
                                         </button>
                                     </div>
                                 </div>
@@ -3729,7 +4246,7 @@
                                                             type="button"
                                                             class="agenda_btn_done"
                                                             t-on-click="() => this.setKpiStage(task.id, 'completed')"
-                                                            title="Mark KPI Complete"
+                                                            title="Mark Task Complete"
                                                         >
                                                             <i class="fa fa-check me-1"/> Complete
                                                         </button>
@@ -3744,7 +4261,7 @@
                                                 <i class="fa fa-calendar-check-o"/>
                                             </div>
                                             <h4>No tasks found</h4>
-                                            <p>No KRAs or KPIs match this scheduled timeframe. Everything is caught up!</p>
+                                            <p>No Scopes or Tasks match this scheduled timeframe. Everything is caught up!</p>
                                             <button
                                                 type="button"
                                                 class="btn btn-sm btn-primary mt-2"

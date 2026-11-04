@@ -5,9 +5,9 @@ class HrEmployee(models.Model):
     _inherit = 'hr.employee'
 
     kpi_count = fields.Integer(
-        string='KPIs Count',
+        string='Tasks Count',
         compute='_compute_kpi_count',
-        help='Number of active KPIs assigned to this employee.',
+        help='Number of active Tasks assigned to this employee.',
     )
 
     def _compute_kpi_count(self):
@@ -32,7 +32,7 @@ class HrEmployee(models.Model):
         ] if user_id else [('id', '=', 0)]
         return {
             'type': 'ir.actions.act_window',
-            'name': f'{self.name} - Assigned KPIs',
+            'name': f'{self.name} - Assigned Tasks',
             'res_model': 'business.project.kpi',
             'view_mode': 'kanban,list,form,pivot,graph',
             'domain': domain,

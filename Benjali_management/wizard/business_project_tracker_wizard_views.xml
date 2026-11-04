@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Load Scope Tracker Wizard Form -->
+    <record id="view_business_project_tracker_load_wizard_form" model="ir.ui.view">
+        <field name="name">business.project.tracker.load.wizard.form</field>
+        <field name="model">business.project.tracker.load.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Load Scope Tracker from Template">
+                <sheet>
+                    <p class="text-muted">
+                        Select a Scope Template to load deliverables and activities into this project. You can filter by category (Documentation vs Implementation) or select specific scope numbers.
+                    </p>
+                    <group>
+                        <group string="Target &amp; Template">
+                            <field name="project_id" readonly="context.get('default_project_id', False)"/>
+                            <field name="template_id"/>
+                            <field name="category_filter" widget="radio"/>
+                        </group>
+                        <group string="Scope Selection">
+                            <field name="scope_filter_mode" widget="radio"/>
+                            <label for="scope_from" string="Scope Range" invisible="scope_filter_mode != 'range'"/>
+                            <div class="o_row" invisible="scope_filter_mode != 'range'">
+                                <span>From</span>
+                                <field name="scope_from" class="oe_inline"/>
+                                <span>To</span>
+                                <field name="scope_to" class="oe_inline"/>
+                            </div>
+                            <field name="scope_specific" invisible="scope_filter_mode != 'specific'"/>
+                        </group>
+                    </group>
+                    <group string="Default Assignments &amp; Schedule">
+                        <group>
+                            <field name="default_accountable_id"/>
+                            <field name="default_responsible_id"/>
+                        </group>
+                        <group>
+                            <field name="default_start_date"/>
+                            <field name="default_end_date"/>
+                            <field name="skip_existing"/>
+                        </group>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_load_trackers"
+                            string="Load Deliverables into Project"
+                            type="object"
+                            class="btn-primary"/>
+                    <button string="Cancel"
+                            class="btn-secondary"
+                            special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Import Scope Tracker Template Wizard Form -->
+    <record id="view_business_project_tracker_import_wizard_form" model="ir.ui.view">
+        <field name="name">business.project.tracker.import.wizard.form</field>
+        <field name="model">business.project.tracker.import.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Import Scope Template">
+                <sheet>
+                    <p class="text-muted">
+                        Populate or update master template lines from the pre-packaged SME Advanced Edition dataset (30 Scopes, 1,382 items) or by uploading an Excel (.xlsx) spreadsheet.
+                    </p>
+                    <group>
+                        <field name="template_id"/>
+                        <field name="import_source" widget="radio"/>
+                    </group>
+                    <group invisible="import_source != 'excel_file'">
+                        <field name="excel_filename" invisible="1"/>
+                        <field name="excel_file" filename="excel_filename" required="import_source == 'excel_file'"/>
+                        <field name="sheet_name" placeholder="SCOPE-WISE TASK LIST - SME ADVA"/>
+                    </group>
+                    <group>
+                        <field name="clear_existing"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_import"
+                            string="Import &amp; Apply to Template"
+                            type="object"
+                            class="btn-primary"/>
+                    <button string="Cancel"
+                            class="btn-secondary"
+                            special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>

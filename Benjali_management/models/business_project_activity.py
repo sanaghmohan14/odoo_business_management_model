@@ -15,7 +15,7 @@ class BusinessProjectActivity(models.Model):
 
     kra_id = fields.Many2one(
         'business.project.kra',
-        string='KRA',
+        string='Scope',
         ondelete='set null'
     )
 

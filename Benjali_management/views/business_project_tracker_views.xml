@@ -1,0 +1,395 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ================================================================= -->
+    <!-- BUSINESS PROJECT TRACKER: VIEWS                                  -->
+    <!-- ================================================================= -->
+
+    <record id="view_business_project_tracker_tree" model="ir.ui.view">
+        <field name="name">business.project.tracker.list</field>
+        <field name="model">business.project.tracker</field>
+        <field name="arch" type="xml">
+            <list string="Scope Trackers" decoration-danger="is_overdue" decoration-muted="state == 'cancelled'" multi_edit="1">
+                <field name="sequence" widget="handle"/>
+                <field name="item_id" decoration-bf="1"/>
+                <field name="scope_no" optional="show"/>
+                <field name="scope_name" optional="show"/>
+                <field name="category" widget="badge"
+                       decoration-info="category == 'documentation'"
+                       decoration-primary="category == 'implementation'"/>
+                <field name="name"/>
+                <field name="item_type" optional="show"/>
+                <field name="final_approval_authority" widget="badge"
+                       decoration-warning="final_approval_authority == 'CEO'"
+                       decoration-danger="final_approval_authority == 'VP'"
+                       decoration-primary="final_approval_authority == 'PM'"
+                       decoration-info="final_approval_authority == 'TL'"/>
+                <field name="accountable_id" optional="show"/>
+                <field name="responsible_id" optional="show"/>
+                <field name="end_date" optional="show"/>
+                <field name="is_overdue" column_invisible="1"/>
+                <field name="can_current_user_approve" column_invisible="1"/>
+                <field name="progress" widget="progressbar" optional="show"/>
+                <field name="state" widget="badge"
+                       decoration-muted="state == 'not_started'"
+                       decoration-info="state == 'in_progress'"
+                       decoration-warning="state == 'submitted'"
+                       decoration-success="state in ('approved', 'completed')"
+                       decoration-danger="state == 'cancelled'"/>
+                <button name="action_start" string="Start" type="object" icon="fa-play"
+                        invisible="state != 'not_started'"/>
+                <button name="action_submit" string="Submit" type="object" icon="fa-arrow-up"
+                        invisible="state != 'in_progress'"/>
+                <button name="action_approve" string="Approve" type="object" icon="fa-check"
+                        class="btn-success"
+                        invisible="state != 'submitted' or not can_current_user_approve"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_business_project_tracker_form" model="ir.ui.view">
+        <field name="name">business.project.tracker.form</field>
+        <field name="model">business.project.tracker</field>
+        <field name="arch" type="xml">
+            <form string="Scope Tracker">
+                <header>
+                    <button name="action_start" string="Start" type="object"
+                            class="btn-primary" icon="fa-play"
+                            invisible="state != 'not_started'"/>
+                    <button name="action_submit" string="Submit for Approval" type="object"
+                            class="btn-primary" icon="fa-paper-plane"
+                            invisible="state != 'in_progress'"/>
+                    <button name="action_approve" string="Approve" type="object"
+                            class="btn-success" icon="fa-check"
+                            invisible="state != 'submitted' or not can_current_user_approve"/>
+                    <button name="action_reject" string="Return / Request Revisions" type="object"
+                            class="btn-warning" icon="fa-undo"
+                            invisible="state != 'submitted' or not can_current_user_approve"/>
+                    <button name="action_complete" string="Mark Completed" type="object"
+                            class="btn-secondary" icon="fa-check-circle"
+                            invisible="state not in ('approved', 'in_progress')"/>
+                    <button name="action_reset" string="Reset to Not Started" type="object"
+                            class="btn-link"
+                            invisible="state in ('not_started', 'approved', 'completed')"/>
+                    <button name="action_cancel" string="Cancel" type="object"
+                            class="btn-secondary"
+                            invisible="state in ('cancelled', 'completed')"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="not_started,in_progress,submitted,approved,completed"/>
+                </header>
+                <sheet>
+                    <field name="can_current_user_approve" invisible="1"/>
+                    <field name="is_overdue" invisible="1"/>
+                    <div class="alert alert-danger text-center" role="alert" invisible="not is_overdue">
+                        <strong>Overdue Deliverable:</strong> Target end date has passed.
+                    </div>
+                    <div class="alert alert-warning text-center" role="alert" invisible="state != 'submitted'">
+                        <strong>Pending Approval:</strong> Waiting for review by <field name="final_approval_authority" class="fw-bold d-inline"/>.
+                    </div>
+                    <div class="oe_title">
+                        <span class="text-muted"><field name="item_id"/> - <field name="category"/></span>
+                        <h1>
+                            <field name="name" placeholder="Deliverable / Activity Name..."/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Scope &amp; Classification">
+                            <field name="project_id"/>
+                            <field name="scope_no"/>
+                            <field name="scope_name"/>
+                            <field name="scope_pillar"/>
+                            <field name="category"/>
+                            <field name="item_type"/>
+                            <field name="template_line_id" readonly="1" optional="hide"/>
+                        </group>
+                        <group string="Assignment &amp; Execution">
+                            <field name="final_approval_authority" widget="badge"/>
+                            <field name="accountable_id"/>
+                            <field name="responsible_id"/>
+                            <field name="start_date"/>
+                            <field name="end_date"/>
+                            <field name="progress" widget="progressbar"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Evidence &amp; Deliverable" name="evidence_page">
+                            <group>
+                                <field name="evidence_required" readonly="1"/>
+                            </group>
+                            <group string="Evidence Proof">
+                                <field name="evidence_filename" invisible="1"/>
+                                <field name="evidence_file" filename="evidence_filename"/>
+                                <field name="evidence_notes" placeholder="Enter notes, links, or details regarding the completion of this deliverable / activity..."/>
+                            </group>
+                        </page>
+                        <page string="Review &amp; Sign-off" name="approval_page">
+                            <group>
+                                <group>
+                                    <field name="approved_by_id"/>
+                                    <field name="approval_date"/>
+                                </group>
+                                <group>
+                                    <field name="review_comments" placeholder="Review remarks or rejection feedback..."/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_business_project_tracker_kanban" model="ir.ui.view">
+        <field name="name">business.project.tracker.kanban</field>
+        <field name="model">business.project.tracker</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state" class="o_kanban_small_column">
+                <field name="id"/>
+                <field name="name"/>
+                <field name="item_id"/>
+                <field name="scope_no"/>
+                <field name="scope_name"/>
+                <field name="category"/>
+                <field name="state"/>
+                <field name="progress"/>
+                <field name="responsible_id"/>
+                <field name="final_approval_authority"/>
+                <field name="end_date"/>
+                <field name="is_overdue"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="badge text-bg-light"><field name="item_id"/></span>
+                            <field name="category" widget="badge"
+                                   decoration-info="category == 'documentation'"
+                                   decoration-primary="category == 'implementation'"/>
+                        </div>
+                        <div class="fw-bold mt-1">
+                            <field name="name"/>
+                        </div>
+                        <div class="small text-muted">
+                            Scope <field name="scope_no"/>: <field name="scope_name"/>
+                        </div>
+                        <div class="mt-2">
+                            <field name="progress" widget="progressbar"/>
+                        </div>
+                        <footer class="pt-1 mt-2 d-flex justify-content-between align-items-center">
+                            <field name="final_approval_authority" widget="badge"/>
+                            <field name="responsible_id" widget="many2one_avatar_user"/>
+                        </footer>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="view_business_project_tracker_pivot" model="ir.ui.view">
+        <field name="name">business.project.tracker.pivot</field>
+        <field name="model">business.project.tracker</field>
+        <field name="arch" type="xml">
+            <pivot string="Scope Tracker Analysis" sample="1">
+                <field name="scope_name" type="row"/>
+                <field name="category" type="col"/>
+                <field name="progress" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_business_project_tracker_search" model="ir.ui.view">
+        <field name="name">business.project.tracker.search</field>
+        <field name="model">business.project.tracker</field>
+        <field name="arch" type="xml">
+            <search string="Search Scope Trackers">
+                <field name="name" string="Item Name"
+                       filter_domain="['|', '|', ('name', 'ilike', self), ('item_id', 'ilike', self), ('scope_name', 'ilike', self)]"/>
+                <field name="project_id"/>
+                <field name="scope_no"/>
+                <field name="scope_name" string="Scope"/>
+                <field name="accountable_id"/>
+                <field name="responsible_id"/>
+                <field name="final_approval_authority"/>
+
+                <filter string="My Assigned" name="my_assigned"
+                        domain="['|', ('responsible_id', '=', uid), ('accountable_id', '=', uid)]"/>
+                <separator/>
+                <filter string="Documentation" name="filter_documentation"
+                        domain="[('category', '=', 'documentation')]"/>
+                <filter string="Implementation" name="filter_implementation"
+                        domain="[('category', '=', 'implementation')]"/>
+                <separator/>
+                <filter string="Pending Approval" name="filter_submitted"
+                        domain="[('state', '=', 'submitted')]"/>
+                <filter string="In Progress" name="filter_in_progress"
+                        domain="[('state', '=', 'in_progress')]"/>
+                <filter string="Approved / Completed" name="filter_done"
+                        domain="[('state', 'in', ('approved', 'completed'))]"/>
+                <separator/>
+                <filter string="Overdue" name="filter_overdue"
+                        domain="[('is_overdue', '=', True)]"/>
+
+                <separator/>
+                <filter string="Project" name="group_by_project" context="{'group_by': 'project_id'}"/>
+                <filter string="Scope" name="group_by_scope" context="{'group_by': 'scope_name'}"/>
+                <filter string="Category" name="group_by_category" context="{'group_by': 'category'}"/>
+                <filter string="Status" name="group_by_state" context="{'group_by': 'state'}"/>
+                <filter string="Approval Authority" name="group_by_authority" context="{'group_by': 'final_approval_authority'}"/>
+                <filter string="Responsible" name="group_by_responsible" context="{'group_by': 'responsible_id'}"/>
+                <filter string="Target Date" name="group_by_end_date" context="{'group_by': 'end_date'}"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- Window Action: All Trackers -->
+    <record id="action_business_project_tracker_all" model="ir.actions.act_window">
+        <field name="name">Scope Trackers</field>
+        <field name="res_model">business.project.tracker</field>
+        <field name="view_mode">list,kanban,form,pivot</field>
+        <field name="search_view_id" ref="view_business_project_tracker_search"/>
+        <field name="context">{'search_default_group_by_scope': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No deliverables found in Scope Tracker.
+            </p>
+            <p>
+                Trackers are generated from master Scope Templates (SME Advanced Edition) or added directly to consulting projects.
+            </p>
+        </field>
+    </record>
+
+    <!-- Window Action: Documentation Deliverables -->
+    <record id="action_business_project_tracker_doc" model="ir.actions.act_window">
+        <field name="name">Documentation Deliverables</field>
+        <field name="res_model">business.project.tracker</field>
+        <field name="view_mode">list,kanban,form,pivot</field>
+        <field name="search_view_id" ref="view_business_project_tracker_search"/>
+        <field name="domain">[('category', '=', 'documentation')]</field>
+        <field name="context">{'search_default_group_by_scope': 1, 'default_category': 'documentation'}</field>
+    </record>
+
+    <!-- Window Action: Implementation Activities -->
+    <record id="action_business_project_tracker_impl" model="ir.actions.act_window">
+        <field name="name">Implementation Activities</field>
+        <field name="res_model">business.project.tracker</field>
+        <field name="view_mode">list,kanban,form,pivot</field>
+        <field name="search_view_id" ref="view_business_project_tracker_search"/>
+        <field name="domain">[('category', '=', 'implementation')]</field>
+        <field name="context">{'search_default_group_by_scope': 1, 'default_category': 'implementation'}</field>
+    </record>
+
+    <!-- Window Action: Pending Approvals -->
+    <record id="action_business_project_tracker_approvals" model="ir.actions.act_window">
+        <field name="name">Pending Tracker Approvals</field>
+        <field name="res_model">business.project.tracker</field>
+        <field name="view_mode">list,kanban,form</field>
+        <field name="search_view_id" ref="view_business_project_tracker_search"/>
+        <field name="domain">[('state', '=', 'submitted')]</field>
+        <field name="context">{'search_default_group_by_authority': 1}</field>
+    </record>
+
+    <!-- ================================================================= -->
+    <!-- BUSINESS PROJECT TRACKER TEMPLATE: VIEWS                         -->
+    <!-- ================================================================= -->
+
+    <record id="view_business_project_tracker_template_tree" model="ir.ui.view">
+        <field name="name">business.project.tracker.template.list</field>
+        <field name="model">business.project.tracker.template</field>
+        <field name="arch" type="xml">
+            <list string="Scope Templates">
+                <field name="code"/>
+                <field name="name"/>
+                <field name="total_scopes"/>
+                <field name="total_documents"/>
+                <field name="total_activities"/>
+                <field name="total_items" decoration-bf="1"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_business_project_tracker_template_form" model="ir.ui.view">
+        <field name="name">business.project.tracker.template.form</field>
+        <field name="model">business.project.tracker.template</field>
+        <field name="arch" type="xml">
+            <form string="Scope Template">
+                <header>
+                    <button name="action_load_default_master_data"
+                            string="Load / Refresh Default Master Data (1,382 Items)"
+                            type="object"
+                            class="btn-primary"
+                            icon="fa-database"/>
+                    <button name="action_open_import_wizard"
+                            string="Import from Excel (.xlsx)"
+                            type="object"
+                            class="btn-secondary"
+                            icon="fa-file-excel-o"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <span class="text-muted"><field name="code"/></span>
+                        <h1>
+                            <field name="name" placeholder="Template Name..."/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="code"/>
+                            <field name="active"/>
+                        </group>
+                        <group string="Template Scope Breakdown">
+                            <field name="total_scopes"/>
+                            <field name="total_documents"/>
+                            <field name="total_activities"/>
+                            <field name="total_items" class="fw-bold fs-5"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="description"/>
+                    </group>
+                    <notebook>
+                        <page string="Master Scope Items (Deliverables &amp; Activities)" name="lines_page">
+                            <field name="line_ids">
+                                <list string="Template Lines" editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="item_id"/>
+                                    <field name="scope_no"/>
+                                    <field name="scope_name"/>
+                                    <field name="scope_pillar" optional="show"/>
+                                    <field name="category" widget="badge"
+                                           decoration-info="category == 'documentation'"
+                                           decoration-primary="category == 'implementation'"/>
+                                    <field name="item_no"/>
+                                    <field name="name"/>
+                                    <field name="item_type" optional="show"/>
+                                    <field name="approval_authority" widget="badge"
+                                           decoration-warning="approval_authority == 'CEO'"
+                                           decoration-danger="approval_authority == 'VP'"
+                                           decoration-primary="approval_authority == 'PM'"
+                                           decoration-info="approval_authority == 'TL'"/>
+                                    <field name="evidence_proof" optional="hide"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Window Action: Tracker Templates -->
+    <record id="action_business_project_tracker_template" model="ir.actions.act_window">
+        <field name="name">Scope Templates</field>
+        <field name="res_model">business.project.tracker.template</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create or manage Scope Master Templates.
+            </p>
+            <p>
+                Click "Load Default Master Data" inside the template to immediately populate all 30 Scopes (1,382 items) for India &amp; GCC SME Advanced Edition.
+            </p>
+        </field>
+    </record>
+
+</odoo>

@@ -20,14 +20,14 @@ class BusinessProjectApproval(models.Model):
 
     kra_id = fields.Many2one(
         'business.project.kra',
-        string='KRA',
+        string='Scope',
         ondelete='cascade',
         index=True,
     )
 
     kpi_id = fields.Many2one(
         'business.project.kpi',
-        string='KPI',
+        string='Task',
         ondelete='cascade',
         index=True,
     )
@@ -41,14 +41,14 @@ class BusinessProjectApproval(models.Model):
 
     approval_type = fields.Selection([
         ('management_review', 'Management Review'),
-        ('kra', 'KRA Approval'),
+        ('kra', 'Scope Approval'),
         ('activity_plan', 'Activity Plan Approval'),
         ('system_study', 'System Study Report Approval'),
         ('strategic_foundation', 'Strategic Foundation Approval'),
         ('deliverables', 'Consulting Deliverables Approval'),
         ('project_closure', 'Project Closure Approval'),
-        ('kra_completion', 'KRA Completion Approval'),
-        ('kpi_completion', 'KPI Completion Approval'),
+        ('kra_completion', 'Scope Completion Approval'),
+        ('kpi_completion', 'Task Completion Approval'),
         ('subtask_completion', 'Subtask Completion Approval'),
         ('other', 'Other'),
     ], string='Approval Type', required=True)
@@ -211,7 +211,7 @@ class BusinessProjectApproval(models.Model):
                 approval.kra_id.sudo()._do_mark_completed()
                 approval.kra_id.message_post(
                     body=(
-                        f'Approval <b>{approval.name}</b> for KRA completion '
+                        f'Approval <b>{approval.name}</b> for Scope completion '
                         f'has been <b>approved</b> by {self.env.user.name}.'
                     )
                 )
@@ -219,7 +219,7 @@ class BusinessProjectApproval(models.Model):
                 approval.kpi_id.sudo()._do_mark_completed()
                 approval.kpi_id.message_post(
                     body=(
-                        f'Approval <b>{approval.name}</b> for KPI completion '
+                        f'Approval <b>{approval.name}</b> for Task completion '
                         f'has been <b>approved</b> by {self.env.user.name}.'
                     )
                 )
@@ -262,7 +262,7 @@ class BusinessProjectApproval(models.Model):
                 approval.kra_id.write({'approval_pending': False})
                 approval.kra_id.message_post(
                     body=(
-                        f'Approval <b>{approval.name}</b> for KRA completion '
+                        f'Approval <b>{approval.name}</b> for Scope completion '
                         f'has been <b>rejected</b> by {self.env.user.name}.{comments_str}'
                     )
                 )
@@ -270,7 +270,7 @@ class BusinessProjectApproval(models.Model):
                 approval.kpi_id.write({'approval_pending': False})
                 approval.kpi_id.message_post(
                     body=(
-                        f'Approval <b>{approval.name}</b> for KPI completion '
+                        f'Approval <b>{approval.name}</b> for Task completion '
                         f'has been <b>rejected</b> by {self.env.user.name}.{comments_str}'
                     )
                 )

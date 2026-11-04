@@ -12,3 +12,5 @@ from . import hr_department
 from . import dashboard
 from . import crm_tag
 from . import hr_employee
+from . import business_project_tracker_template
+from . import business_project_tracker

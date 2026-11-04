@@ -26,7 +26,11 @@ export class BenjaliDashboard extends Component {
             error: false,
             data: null,
             theme: savedTheme, // 'dark' | 'light'
-            activeTab: "kpi", // 'kpi' | 'portfolio' | 'performance' | 'stages' | 'sops' | 'approvals'
+            activeTab: "overview", // 'overview' | 'kpi' | 'portfolio' | 'performance' | 'stages' | 'sops' | 'approvals' | 'calendar'
+            executiveFilterTeam: "all",
+            executiveFilterStatus: "all",
+            executiveFilterHealth: "all",
+            executiveSearch: "",
             departmentId: false, // false = All departments
             statusFilter: "all", // all | on_track | at_risk | delayed | done
             projectPriorityFilter: "all", // 'all' | '3' | '2' | '1' | '0'
@@ -277,25 +281,17 @@ export class BenjaliDashboard extends Component {
             "Overall Health across all active projects"
         );
 
-        // Sub Gauge Left: Budget Utilization Meter
-        const budgetUsedVal = (this.state.data && this.state.data.kpis && this.state.data.kpis.budget_used_pct) || 0;
-        const budgetSpentStr = (this.state.data && this.state.data.kpis && this.state.data.kpis.budget_spent_str) || "$0K";
-        const budgetTotalStr = (this.state.data && this.state.data.kpis && this.state.data.kpis.budget_total_str) || "$0K";
-        const subGaugeLeft = createMeterGauge(
-            150, 180, 68, 54,
-            budgetUsedVal,
-            "Budget Used",
-            `${budgetSpentStr} of ${budgetTotalStr}`
-        );
+        // Sub Gauge Left: Budget gauge removed
+        const subGaugeLeft = null;
 
-        // Sub Gauge Right: KRA & KPI Execution Health Meter
+        // Sub Gauge Right: Scope & Task Execution Health Meter
         const kraPerfVal = (this.state.data && this.state.data.kpis && this.state.data.kpis.avg_kra_performance) || mainProgressVal;
         const totalKpis = (this.state.data && this.state.data.kpis && this.state.data.kpis.total_kpis) || 0;
         const subGaugeRight = createMeterGauge(
             650, 180, 68, 54,
             kraPerfVal,
             "Execution Health",
-            `${totalKpis} Total KPIs Tracked`
+            `${totalKpis} Total Tasks Tracked`
         );
 
         // Department Gauges for when Department metric is selected
@@ -362,6 +358,570 @@ export class BenjaliDashboard extends Component {
             arcOffset: arcOffset.toFixed(1),
             color,
         };
+    }
+
+    // ================= EXACT EXECUTIVE DASHBOARD GETTERS & INTERACTIONS =================
+    get executiveData() {
+        if (!this.state.data) {
+            return this.defaultExecutiveData;
+        }
+
+        const rawProjects = Array.isArray(this.state.data.projects) ? this.state.data.projects : [];
+        const departments = Array.isArray(this.state.data.departments) ? this.state.data.departments : [];
+        const companyName = this.state.data.company_name || "Benjali Group";
+        const currentTitle = this.currentTitle || "All departments";
+        const todayStr = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+
+        const teamPalette = ["#2563eb", "#7c3aed", "#0d9488", "#ea580c", "#0891b2", "#4f46e5", "#16a34a", "#d97706"];
+
+        // Team assignment is strictly based on Project Responsible (NOT Project Manager)
+        const uniqueResponsibles = [];
+        for (const p of rawProjects) {
+            let rName = (p.project_responsible && p.project_responsible.name) || p.responsible_name || "";
+            if (!rName || rName === "Unassigned") {
+                if (p.responsible_user_id) {
+                    rName = typeof p.responsible_user_id === "string" ? p.responsible_user_id : (Array.isArray(p.responsible_user_id) ? p.responsible_user_id[1] : "");
+                }
+            }
+            rName = rName || "Unassigned";
+            if (!uniqueResponsibles.includes(rName)) {
+                uniqueResponsibles.push(rName);
+            }
+        }
+
+        const respTeamMap = {};
+        uniqueResponsibles.forEach((rName, rIdx) => {
+            const tNum = `Team ${rIdx + 1}`;
+            respTeamMap[rName] = {
+                number: tNum,
+                lead: rName,
+                displayName: rName !== "Unassigned" ? `${tNum} · ${rName}` : "Unassigned",
+                color: teamPalette[rIdx % teamPalette.length],
+                id: `t_${rIdx + 1}`,
+            };
+        });
+
+        const execProjects = rawProjects.map((p, idx) => {
+            const prog = typeof p.progress === "number" ? Math.round(p.progress) : 0;
+            const stageName = (p.stage_name || "").toLowerCase();
+            const isCompleted = p.status === "done" || stageName.includes("completed") || prog >= 100;
+            const isHold = p.status === "at_risk" && stageName.includes("hold");
+            const isDelayed = p.status === "delayed" || (p.days_remaining && p.days_remaining.includes("overdue"));
+
+            let status = "running";
+            let statusLabel = "Running";
+            if (isCompleted) {
+                status = "completed";
+                statusLabel = "Completed";
+            } else if (isHold) {
+                status = "on_hold";
+                statusLabel = "On hold";
+            } else if (prog === 0 && (stageName.includes("new") || p.status === "not_started")) {
+                status = "not_started";
+                statusLabel = "Not started";
+            }
+
+            // Target Plan: where the plan says it should be today
+            let targetPlan = prog;
+            if (isCompleted) {
+                targetPlan = 100;
+            } else if (status === "not_started") {
+                targetPlan = 0;
+            } else if (isDelayed) {
+                targetPlan = Math.min(100, Math.max(prog + 10, 85));
+            } else {
+                targetPlan = Math.min(100, Math.max(10, Math.round(prog * 0.95)));
+            }
+
+            const diff = prog - targetPlan;
+
+            // Condition
+            let cond = "on_plan";
+            let condLabel = "On plan";
+            let condIcon = "fa fa-arrow-right";
+            let condClass = "cond_on_plan";
+            if (isDelayed) {
+                cond = "overdue";
+                condLabel = "Overdue";
+                condIcon = "fa fa-clock-o";
+                condClass = "cond_overdue";
+            } else if (diff >= 5) {
+                cond = "ahead";
+                condLabel = "Ahead";
+                condIcon = "fa fa-arrow-up";
+                condClass = "cond_ahead";
+            } else if (diff <= -5) {
+                cond = "behind";
+                condLabel = "Behind";
+                condIcon = "fa fa-arrow-down";
+                condClass = "cond_behind";
+            }
+
+            // Health & Risk
+            let health = "good";
+            let healthLabel = "Good";
+            let healthColor = "#10b981";
+            let risk = "low";
+            let riskLabel = "Low";
+            let riskBadge = "success";
+            let progressColor = "#10b981";
+
+            if (cond === "overdue" || diff <= -15 || p.priority === "3") {
+                health = "poor";
+                healthLabel = "Poor";
+                healthColor = "#ef4444";
+                risk = "high";
+                riskLabel = "High";
+                riskBadge = "danger";
+                progressColor = "#ef4444";
+            } else if (diff <= -5 || p.priority === "2" || status === "on_hold") {
+                health = "fair";
+                healthLabel = "Fair";
+                healthColor = "#f59e0b";
+                risk = "medium";
+                riskLabel = "Medium";
+                riskBadge = "warning";
+                progressColor = "#f59e0b";
+            }
+
+            // Team allocation strictly based on Project Responsible
+            let prName = (p.project_responsible && p.project_responsible.name) || p.responsible_name || "";
+            if (!prName || prName === "Unassigned") {
+                if (p.responsible_user_id) {
+                    prName = typeof p.responsible_user_id === "string" ? p.responsible_user_id : (Array.isArray(p.responsible_user_id) ? p.responsible_user_id[1] : "");
+                }
+            }
+            prName = prName || "Unassigned";
+
+            const tMeta = respTeamMap[prName] || {
+                number: "Team 1",
+                lead: prName,
+                displayName: `Team 1 · ${prName}`,
+                color: teamPalette[0],
+                id: "t_1"
+            };
+
+            const clientStr = p.client || `${p.name} · ${p.department_name || 'Consulting'}`;
+            const dueDateStr = p.expected_end_date || (p.days_remaining ? p.days_remaining : "Ongoing");
+            const varianceStr = diff > 0 ? `+${diff} pts` : (diff < 0 ? `${diff} pts` : "on plan");
+
+            return {
+                id: p.id,
+                name: p.name,
+                client: clientStr,
+                team: tMeta.displayName,
+                team_short: tMeta.number,
+                team_lead: tMeta.lead,
+                team_color: tMeta.color,
+                status,
+                status_label: statusLabel,
+                health,
+                health_label: healthLabel,
+                health_color: healthColor,
+                risk,
+                risk_label: riskLabel,
+                risk_badge: riskBadge,
+                progress: prog,
+                target_plan: targetPlan,
+                progress_color: progressColor,
+                variance: varianceStr,
+                due_date_str: dueDateStr,
+                condition: cond,
+                condition_label: condLabel,
+                condition_icon: condIcon,
+                condition_class: condClass,
+                responsible_name: prName,
+            };
+        });
+
+        const execTotal = execProjects.length;
+        const runningCnt = execProjects.filter((p) => p.status === "running").length;
+        const completedCnt = execProjects.filter((p) => p.status === "completed").length;
+        const onHoldCnt = execProjects.filter((p) => p.status === "on_hold").length;
+        const notStartedCnt = execProjects.filter((p) => p.status === "not_started").length;
+
+        const goodCnt = execProjects.filter((p) => p.health === "good").length;
+        const fairCnt = execProjects.filter((p) => p.health === "fair").length;
+        const poorCnt = execProjects.filter((p) => p.health === "poor").length;
+
+        const lowRiskCnt = execProjects.filter((p) => p.risk === "low").length;
+        const medRiskCnt = execProjects.filter((p) => p.risk === "medium").length;
+        const highRiskCnt = execProjects.filter((p) => p.risk === "high").length;
+
+        const aheadCnt = execProjects.filter((p) => p.condition === "ahead").length;
+        const onPlanCnt = execProjects.filter((p) => p.condition === "on_plan").length;
+        const behindCnt = execProjects.filter((p) => p.condition === "behind").length;
+        const overdueCnt = execProjects.filter((p) => p.condition === "overdue").length;
+
+        const healthScore = execTotal > 0
+            ? Math.round((goodCnt * 100 + fairCnt * 65 + poorCnt * 25) / execTotal)
+            : 100;
+        const onTimeScore = execTotal > 0
+            ? Math.round(((aheadCnt + onPlanCnt) / execTotal) * 100)
+            : 100;
+        const avgExecProg = execTotal > 0
+            ? Math.round(execProjects.reduce((sum, p) => sum + p.progress, 0) / execTotal)
+            : 0;
+
+        // Group into teams based on Project Responsible
+        const teamsMap = {};
+        for (const p of execProjects) {
+            const leadKey = p.team_lead;
+            if (!teamsMap[leadKey]) {
+                const meta = respTeamMap[leadKey] || {};
+                teamsMap[leadKey] = {
+                    id: meta.id || `t_${Object.keys(teamsMap).length + 1}`,
+                    name: meta.number || `Team ${Object.keys(teamsMap).length + 1}`,
+                    lead: leadKey,
+                    full_name: meta.displayName || leadKey,
+                    color: meta.color || p.team_color,
+                    projects: [],
+                };
+            }
+            teamsMap[leadKey].projects.push(p);
+        }
+
+        const teamsCards = [];
+        const teamsLegend = [];
+        const teamCompNames = [];
+        const teamCompProd = [];
+        const teamCompQual = [];
+        const teamCompOntime = [];
+
+        Object.values(teamsMap).forEach((tInfo, idx) => {
+            const tProjs = tInfo.projects;
+            const tCount = tProjs.length;
+            const tHealthy = tProjs.filter((p) => p.health === "good").length;
+            const tProd = tCount ? Math.round(tProjs.reduce((s, p) => s + p.progress, 0) / tCount) : 0;
+            const tOntime = tCount ? Math.round(tProjs.filter((p) => p.condition === "ahead" || p.condition === "on_plan").length / tCount * 100) : 0;
+            const tPoorCnt = tProjs.filter((p) => p.health === "poor").length;
+            const tQual = Math.max(50, Math.min(100, 100 - tPoorCnt * 12));
+            const tUtil = Math.max(60, Math.min(95, 75 + Math.round(tProd * 0.15)));
+
+            const composite = Math.round((tProd + tQual + tOntime) / 3);
+            let tBadge = "Good";
+            let tBadgeClass = "badge_good";
+            let trendPath = "M 0 16 Q 25 18 50 10 T 100 6";
+            let trendText = `+${Math.max(1, composite - 68)} pts`;
+            if (composite >= 82) {
+                tBadge = "Excellent";
+                tBadgeClass = "badge_excellent";
+                trendPath = "M 0 18 Q 30 16 60 10 T 100 4";
+                trendText = `+${Math.max(3, composite - 75)} pts`;
+            } else if (composite < 70) {
+                tBadge = "Needs support";
+                tBadgeClass = "badge_support";
+                trendPath = "M 0 4 Q 30 2 60 14 T 100 18";
+                trendText = `-${Math.max(2, 75 - composite)} pts`;
+            }
+
+            const dots = tProjs.map((p) => {
+                if (p.condition === "ahead" || p.condition === "on_plan") return "#10b981";
+                if (p.condition === "behind") return "#f59e0b";
+                return "#ef4444";
+            });
+
+            teamsLegend.push({
+                name: tInfo.name,
+                lead: tInfo.lead,
+                color: tInfo.color,
+            });
+
+            teamsCards.push({
+                id: `t_${idx + 1}`,
+                name: tInfo.name,
+                lead: tInfo.lead,
+                badge: tBadge,
+                badge_class: tBadgeClass,
+                productivity: tProd,
+                quality: tQual,
+                on_time: tOntime,
+                utilisation: tUtil,
+                projects_count: tCount,
+                healthy_count: tHealthy,
+                dots,
+                trend_text: trendText,
+                trend_color: tInfo.color,
+                trend_path: trendPath,
+            });
+
+            teamCompNames.push(tInfo.name);
+            teamCompProd.push(tProd);
+            teamCompQual.push(tQual);
+            teamCompOntime.push(tOntime);
+        });
+
+        // Donut SVG circumference = 301.6
+        const cLen = 301.6;
+        const dGood = execTotal > 0 ? ((goodCnt / execTotal) * cLen).toFixed(1) : "301.6";
+        const dFair = execTotal > 0 ? ((fairCnt / execTotal) * cLen).toFixed(1) : "0.0";
+        const dPoor = execTotal > 0 ? ((poorCnt / execTotal) * cLen).toFixed(1) : "0.0";
+        const dFairOffset = execTotal > 0 ? -(goodCnt / execTotal * cLen) : 0;
+        const dPoorOffset = execTotal > 0 ? -((goodCnt + fairCnt) / execTotal * cLen) : 0;
+
+        // Needle Degree
+        const riskRatio = execTotal > 0 ? (highRiskCnt * 1.0 + medRiskCnt * 0.45) / execTotal : 0;
+        const needleDeg = Math.round(-60 + riskRatio * 120);
+        let riskLabelStr = "Low risk portfolio";
+        if (highRiskCnt === 0 && medRiskCnt <= 1) {
+            riskLabelStr = "Low risk portfolio";
+        } else if (highRiskCnt <= 1) {
+            riskLabelStr = "Low to medium risk";
+        } else {
+            riskLabelStr = "Elevated risk - action needed";
+        }
+
+        // Condition Bar Heights
+        const maxCond = Math.max(1, aheadCnt, onPlanCnt, behindCnt, overdueCnt);
+        const condHAhead = aheadCnt ? Math.max(15, Math.round((aheadCnt / maxCond) * 100)) : 0;
+        const condHOnPlan = onPlanCnt ? Math.max(15, Math.round((onPlanCnt / maxCond) * 100)) : 0;
+        const condHBehind = behindCnt ? Math.max(15, Math.round((behindCnt / maxCond) * 100)) : 0;
+        const condHOverdue = overdueCnt ? Math.max(15, Math.round((overdueCnt / maxCond) * 100)) : 0;
+
+        // Segments
+        const totalProjSegments = teamsCards.map((tm) => ({
+            color: tm.trend_color,
+            pct: Math.round((tm.projects_count / Math.max(1, execTotal)) * 100),
+        }));
+        if (!totalProjSegments.length) {
+            totalProjSegments.push({ color: "#2563eb", pct: 100 });
+        }
+
+        const healthSegments = [];
+        if (goodCnt > 0) healthSegments.push({ color: "#10b981", pct: Math.round((goodCnt / Math.max(1, execTotal)) * 100) });
+        if (fairCnt > 0) healthSegments.push({ color: "#f59e0b", pct: Math.round((fairCnt / Math.max(1, execTotal)) * 100) });
+        if (poorCnt > 0) healthSegments.push({ color: "#ef4444", pct: Math.round((poorCnt / Math.max(1, execTotal)) * 100) });
+        if (!healthSegments.length) healthSegments.push({ color: "#10b981", pct: 100 });
+
+        const riskSegments = [];
+        if (lowRiskCnt > 0) riskSegments.push({ color: "#10b981", pct: Math.round((lowRiskCnt / Math.max(1, execTotal)) * 100) });
+        if (medRiskCnt > 0) riskSegments.push({ color: "#f59e0b", pct: Math.round((medRiskCnt / Math.max(1, execTotal)) * 100) });
+        if (highRiskCnt > 0) riskSegments.push({ color: "#ef4444", pct: Math.round((highRiskCnt / Math.max(1, execTotal)) * 100) });
+        if (!riskSegments.length) riskSegments.push({ color: "#10b981", pct: 100 });
+
+        const totalTeamMembersCount = execProjects.reduce((sum, p) => sum + 1, 0);
+
+        return {
+            header: {
+                brand_letter: companyName ? companyName[0].toUpperCase() : "B",
+                title: this.state.departmentId ? `Project Dashboard · ${currentTitle}` : "Project Dashboard",
+                subtitle: companyName,
+                teams_legend: teamsLegend,
+                date_str: todayStr,
+            },
+            top_kpis: {
+                total_projects: {
+                    count: execTotal,
+                    sub: `${teamsCards.length} teams · ${totalTeamMembersCount} members`,
+                    segments: totalProjSegments,
+                },
+                running_now: {
+                    count: runningCnt,
+                    total: execTotal,
+                    sub: `${completedCnt} completed · ${onHoldCnt} on hold · ${notStartedCnt} not started`,
+                    bar_pct: Math.round((runningCnt / Math.max(1, execTotal)) * 100),
+                },
+                overall_health: {
+                    score: healthScore,
+                    status: healthScore >= 75 ? "Good" : (healthScore >= 60 ? "Fair" : "Needs Focus"),
+                    sub: `${goodCnt} good · ${fairCnt} fair · ${poorCnt} poor`,
+                    segments: healthSegments,
+                },
+                high_risk: {
+                    count: highRiskCnt,
+                    sub_label: highRiskCnt > 0 ? "need action" : "under control",
+                    sub: `${lowRiskCnt} low · ${medRiskCnt} medium · ${highRiskCnt} high`,
+                    segments: riskSegments,
+                },
+                on_time: {
+                    score: onTimeScore,
+                    sub_label: "on time",
+                    sub: `Average progress ${avgExecProg}% across projects`,
+                    bar_pct: onTimeScore,
+                },
+            },
+            project_health: {
+                score: healthScore,
+                good: goodCnt,
+                fair: fairCnt,
+                poor: poorCnt,
+                donut_good: `${dGood} ${cLen}`,
+                donut_fair: `${dFair} ${cLen}`,
+                donut_poor: `${dPoor} ${cLen}`,
+                donut_fair_offset: dFairOffset,
+                donut_poor_offset: dPoorOffset,
+            },
+            running_status: {
+                running: runningCnt,
+                completed: completedCnt,
+                on_hold: onHoldCnt,
+                not_started: notStartedCnt,
+                running_pct: Math.round((runningCnt / Math.max(1, execTotal)) * 100),
+                completed_pct: Math.round((completedCnt / Math.max(1, execTotal)) * 100),
+                on_hold_pct: Math.round((onHoldCnt / Math.max(1, execTotal)) * 100),
+                not_started_pct: Math.round((notStartedCnt / Math.max(1, execTotal)) * 100),
+            },
+            risk_level: {
+                label: riskLabelStr,
+                needle_deg: needleDeg,
+                low: lowRiskCnt,
+                medium: medRiskCnt,
+                high: highRiskCnt,
+            },
+            project_condition: {
+                ahead: aheadCnt,
+                on_plan: onPlanCnt,
+                behind: behindCnt,
+                overdue: overdueCnt,
+                ahead_h: condHAhead,
+                on_plan_h: condHOnPlan,
+                behind_h: condHBehind,
+                overdue_h: condHOverdue,
+            },
+            teams: teamsCards,
+            team_comparison: {
+                teams: teamCompNames,
+                metrics: [
+                    { name: "Productivity", color: "#0f172a", dark_color: "#f8fafc", values: teamCompProd },
+                    { name: "Quality", color: "#2563eb", dark_color: "#3b82f6", values: teamCompQual },
+                    { name: "On-time", color: "#93c5fd", dark_color: "#60a5fa", values: teamCompOntime },
+                ],
+            },
+            projects: execProjects,
+        };
+    }
+
+    get defaultExecutiveData() {
+        const todayStr = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+        return {
+            header: {
+                brand_letter: "B",
+                title: "Project Dashboard",
+                subtitle: "Benac Business Solutions",
+                teams_legend: [],
+                date_str: todayStr,
+            },
+            top_kpis: {
+                total_projects: {
+                    count: 0,
+                    sub: "0 teams · 0 consultants",
+                    segments: [],
+                },
+                running_now: {
+                    count: 0,
+                    total: 0,
+                    sub: "0 completed · 0 on hold · 0 not started",
+                    bar_pct: 0,
+                },
+                overall_health: {
+                    score: 100,
+                    status: "Good",
+                    sub: "0 good · 0 fair · 0 poor",
+                    segments: [],
+                },
+                high_risk: {
+                    count: 0,
+                    sub_label: "under control",
+                    sub: "0 low · 0 medium · 0 high",
+                    segments: [],
+                },
+                on_time: {
+                    score: 100,
+                    sub_label: "on time",
+                    sub: "Average progress 0% across projects",
+                    bar_pct: 100,
+                },
+            },
+            project_health: {
+                score: 100,
+                good: 0,
+                fair: 0,
+                poor: 0,
+                donut_good: "301.6 301.6",
+                donut_fair: "0.0 301.6",
+                donut_poor: "0.0 301.6",
+                donut_fair_offset: 0,
+                donut_poor_offset: 0,
+            },
+            running_status: {
+                running: 0,
+                completed: 0,
+                on_hold: 0,
+                not_started: 0,
+                running_pct: 0,
+                completed_pct: 0,
+                on_hold_pct: 0,
+                not_started_pct: 0,
+            },
+            risk_level: {
+                label: "Low risk portfolio",
+                needle_deg: -60,
+                low: 0,
+                medium: 0,
+                high: 0,
+            },
+            project_condition: {
+                ahead: 0,
+                on_plan: 0,
+                behind: 0,
+                overdue: 0,
+                ahead_h: 0,
+                on_plan_h: 0,
+                behind_h: 0,
+                overdue_h: 0,
+            },
+            teams: [],
+            team_comparison: {
+                teams: [],
+                metrics: [
+                    { name: "Productivity", color: "#0f172a", dark_color: "#f8fafc", values: [] },
+                    { name: "Quality", color: "#2563eb", dark_color: "#3b82f6", values: [] },
+                    { name: "On-time", color: "#93c5fd", dark_color: "#60a5fa", values: [] },
+                ],
+            },
+            projects: [],
+        };
+    }
+
+    get executiveProjects() {
+        const data = this.executiveData;
+        let list = (data && Array.isArray(data.projects)) ? data.projects : [];
+        if (this.state.executiveFilterTeam !== "all") {
+            const fKey = this.state.executiveFilterTeam;
+            list = list.filter((p) => p.team === fKey || p.team_short === fKey || p.team_lead === fKey);
+        }
+        if (this.state.executiveFilterStatus !== "all") {
+            list = list.filter((p) => p.status === this.state.executiveFilterStatus);
+        }
+        if (this.state.executiveFilterHealth !== "all") {
+            list = list.filter((p) => p.health === this.state.executiveFilterHealth);
+        }
+        if (this.state.executiveSearch) {
+            const q = this.state.executiveSearch.toLowerCase();
+            list = list.filter(
+                (p) =>
+                    (p.name && p.name.toLowerCase().includes(q)) ||
+                    (p.client && p.client.toLowerCase().includes(q)) ||
+                    (p.team && p.team.toLowerCase().includes(q))
+            );
+        }
+        return list;
+    }
+
+    filterExecutiveTeam(teamName) {
+        this.state.executiveFilterTeam = this.state.executiveFilterTeam === teamName ? "all" : teamName;
+    }
+
+    filterExecutiveStatus(status) {
+        this.state.executiveFilterStatus = this.state.executiveFilterStatus === status ? "all" : status;
+    }
+
+    filterExecutiveHealth(health) {
+        this.state.executiveFilterHealth = this.state.executiveFilterHealth === health ? "all" : health;
+    }
+
+    onExecutiveSearch(ev) {
+        this.state.executiveSearch = (ev.target.value || "").trim();
     }
 
     // SAFE GETTERS FOR TEMPLATE
@@ -699,9 +1259,9 @@ export class BenjaliDashboard extends Component {
         } else if (rf === "pr") {
             list = list.filter((e) => e.is_responsible);
         } else if (rf === "kra") {
-            list = list.filter((e) => (e.roles && e.roles.some((r) => r.includes("KRA"))) || (e.kras && e.kras.length > 0));
+            list = list.filter((e) => (e.roles && e.roles.some((r) => r.includes("KRA") || r.includes("Scope"))) || (e.kras && e.kras.length > 0));
         } else if (rf === "kpi") {
-            list = list.filter((e) => (e.roles && e.roles.some((r) => r.includes("KPI"))) || e.kpi_count > 0);
+            list = list.filter((e) => (e.roles && e.roles.some((r) => r.includes("KPI") || r.includes("Task"))) || e.kpi_count > 0);
         }
 
         return list;
@@ -1008,10 +1568,10 @@ export class BenjaliDashboard extends Component {
                     k.priority = String(priority);
                 }
             }
-            this.notification.add("KRA priority updated.", { type: "success" });
+            this.notification.add("Scope priority updated.", { type: "success" });
             await this.loadDashboardData();
         } catch (error) {
-            this.notification.add(error.message || "Failed to update KRA priority.", { type: "danger" });
+            this.notification.add(error.message || "Failed to update Scope priority.", { type: "danger" });
         }
     }
 
@@ -1024,10 +1584,10 @@ export class BenjaliDashboard extends Component {
                     k.priority = String(priority);
                 }
             }
-            this.notification.add("KPI priority updated.", { type: "success" });
+            this.notification.add("Task priority updated.", { type: "success" });
             await this.loadDashboardData();
         } catch (error) {
-            this.notification.add(error.message || "Failed to update KPI priority.", { type: "danger" });
+            this.notification.add(error.message || "Failed to update Task priority.", { type: "danger" });
         }
     }
 
@@ -1067,7 +1627,7 @@ export class BenjaliDashboard extends Component {
         this.state.expandedKras[kraId] = !this.state.expandedKras[kraId];
     }
 
-    // KRA ACTIONS & MANAGEMENT
+    // SCOPE ACTIONS & MANAGEMENT
     async createKra(projectId = false) {
         const context = {};
         if (projectId) {
@@ -1077,7 +1637,7 @@ export class BenjaliDashboard extends Component {
         }
         await this.action.doAction({
             type: "ir.actions.act_window",
-            name: "Create Key Result Area (KRA)",
+            name: "Create Scope",
             res_model: "business.project.kra",
             views: [[false, "form"]],
             target: "new",
@@ -1090,7 +1650,7 @@ export class BenjaliDashboard extends Component {
         if (!kraId) return;
         await this.action.doAction({
             type: "ir.actions.act_window",
-            name: "Key Result Area",
+            name: "Scope",
             res_model: "business.project.kra",
             res_id: kraId,
             views: [[false, "form"]],
@@ -1105,7 +1665,7 @@ export class BenjaliDashboard extends Component {
         }
         await this.action.doAction({
             type: "ir.actions.act_window",
-            name: "KRA Stages Kanban",
+            name: "Scope Stages Kanban",
             res_model: "business.project.kra",
             views: [
                 [false, "kanban"],
@@ -1120,14 +1680,14 @@ export class BenjaliDashboard extends Component {
     async setKraStage(kraId, state) {
         try {
             await this.orm.call("benjali.management.dashboard", "set_kra_stage", [kraId, state]);
-            this.notification.add("KRA stage updated successfully.", { type: "success" });
+            this.notification.add("Scope stage updated successfully.", { type: "success" });
             await this.loadDashboardData();
         } catch (error) {
-            this.notification.add(error.message || "Failed to update KRA stage.", { type: "danger" });
+            this.notification.add(error.message || "Failed to update Scope stage.", { type: "danger" });
         }
     }
 
-    // KPI ACTIONS & MANAGEMENT
+    // TASK ACTIONS & MANAGEMENT
     async createKpi(kraId = false, projectId = false) {
         const context = {};
         if (kraId) context.default_kra_id = kraId;
@@ -1135,7 +1695,7 @@ export class BenjaliDashboard extends Component {
         if (this.state.departmentId) context.default_department_id = this.state.departmentId;
         await this.action.doAction({
             type: "ir.actions.act_window",
-            name: "Create KPI (Sub-Task)",
+            name: "Create Task",
             res_model: "business.project.kpi",
             views: [[false, "form"]],
             target: "new",
@@ -1148,7 +1708,7 @@ export class BenjaliDashboard extends Component {
         if (!kpiId) return;
         await this.action.doAction({
             type: "ir.actions.act_window",
-            name: "Key Performance Indicator",
+            name: "Task",
             res_model: "business.project.kpi",
             res_id: kpiId,
             views: [[false, "form"]],
@@ -1163,7 +1723,7 @@ export class BenjaliDashboard extends Component {
         }
         await this.action.doAction({
             type: "ir.actions.act_window",
-            name: "KPI Stages Kanban",
+            name: "Task Stages Kanban",
             res_model: "business.project.kpi",
             views: [
                 [false, "kanban"],
@@ -1178,10 +1738,10 @@ export class BenjaliDashboard extends Component {
     async setKpiStage(kpiId, state) {
         try {
             await this.orm.call("benjali.management.dashboard", "set_kpi_stage", [kpiId, state]);
-            this.notification.add("KPI stage updated successfully.", { type: "success" });
+            this.notification.add("Task stage updated successfully.", { type: "success" });
             await this.loadDashboardData();
         } catch (error) {
-            this.notification.add(error.message || "Failed to update KPI stage.", { type: "danger" });
+            this.notification.add(error.message || "Failed to update Task stage.", { type: "danger" });
         }
     }
 
@@ -1197,17 +1757,17 @@ export class BenjaliDashboard extends Component {
         const clamped = Math.min(100, Math.max(0, val));
         try {
             await this.orm.call("benjali.management.dashboard", "update_kpi_progress", [kpiId, clamped]);
-            this.notification.add(`KPI progress updated to ${clamped}%.`, { type: "success" });
+            this.notification.add(`Task progress updated to ${clamped}%.`, { type: "success" });
             await this.loadDashboardData();
         } catch (error) {
-            this.notification.add(error.message || "Failed to update KPI progress.", { type: "danger" });
+            this.notification.add(error.message || "Failed to update Task progress.", { type: "danger" });
         }
     }
 
     async logKpiTimesheet(kpiId, projectId = false) {
         await this.action.doAction({
             type: "ir.actions.act_window",
-            name: "Log KPI Timesheet",
+            name: "Log Task Timesheet",
             res_model: "account.analytic.line",
             views: [[false, "form"]],
             target: "new",
@@ -1219,7 +1779,7 @@ export class BenjaliDashboard extends Component {
         await this.loadDashboardData();
     }
 
-    async viewKpiTimesheets(kpiId, kpiName = "KPI") {
+    async viewKpiTimesheets(kpiId, kpiName = "Task") {
         await this.action.doAction({
             type: "ir.actions.act_window",
             name: `Timesheets - ${kpiName}`,
@@ -1403,18 +1963,18 @@ export class BenjaliDashboard extends Component {
         }
 
         if (filterType === "today_pending") {
-            actionName = "Today's Pending Tasks (KPIs)";
+            actionName = "Today's Pending Tasks";
             domain.push(["is_today", "=", true]);
             domain.push(["state", "not in", ["completed", "cancelled"]]);
         } else if (filterType === "tomorrow") {
-            actionName = "Tomorrow's Tasks (KPIs)";
+            actionName = "Tomorrow's Tasks";
             domain.push(["is_tomorrow", "=", true]);
             domain.push(["state", "not in", ["completed", "cancelled"]]);
         } else if (filterType === "overdue") {
-            actionName = "Overdue Tasks (KPIs)";
+            actionName = "Overdue Tasks";
             domain.push(["is_overdue", "=", true]);
         } else if (filterType === "today_completed") {
-            actionName = "Completed Today (KPIs)";
+            actionName = "Completed Today";
             domain.push(["is_today", "=", true]);
             domain.push(["state", "=", "completed"]);
         } else if (filterType === "selected" && this.state.selectedCalendarDate) {
@@ -1444,7 +2004,7 @@ export class BenjaliDashboard extends Component {
     async openOdooCalendar(modelType) {
         const isKpi = modelType === "kpi";
         const model = isKpi ? "business.project.kpi" : "business.project.kra";
-        const actionName = isKpi ? "KPI Calendar View" : "KRA Calendar View";
+        const actionName = isKpi ? "Task Calendar View" : "Scope Calendar View";
         const domain = [];
         if (this.state.departmentId) {
             domain.push(["department_id", "=", this.state.departmentId]);

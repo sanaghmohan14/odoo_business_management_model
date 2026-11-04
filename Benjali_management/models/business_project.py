@@ -222,7 +222,7 @@ class BusinessProject(models.Model):
         string='End Date',
         related='completed_date',
         readonly=False,
-        store=True
+        store=False
     )
 
     actual_end_date = fields.Date(
@@ -257,56 +257,55 @@ class BusinessProject(models.Model):
                         'message': _("Start Date cannot be a previous date. Only today's date or future dates are allowed."),
                     }
                 }
-        if self.completed_date and self.start_date and self.completed_date < self.start_date:
-            self.completed_date = self.start_date
+            if self.completed_date and self.completed_date < self.start_date:
+                is_completed = bool(self.stage_id and self.stage_id.name == 'Completed')
+                if not is_completed:
+                    self.completed_date = False
+                else:
+                    self.completed_date = self.start_date
 
-    @api.onchange('completed_date', 'end_date', 'actual_end_date')
+    @api.onchange('completed_date')
     def _onchange_completed_date(self):
-        target = self.completed_date or self.end_date or self.actual_end_date
-        if target and self.start_date and target < self.start_date:
+        if self.completed_date and self.start_date and self.completed_date < self.start_date:
             self.completed_date = self.start_date
             return {
                 'warning': {
                     'title': _("Invalid Completed Date"),
-                    'message': _("End and Completed Date must be greater than or equal to Start Date."),
+                    'message': _("Completed Date must be greater than or equal to Start Date."),
                 }
             }
 
     def init(self):
         super().init()
         cr = self.env.cr
-        # Repair pre-existing inconsistent completed dates — only if columns already exist
-        if tools.sql.column_exists(cr, 'business_project', 'completed_date') and \
-                tools.sql.column_exists(cr, 'business_project', 'start_date'):
+        if tools.sql.table_exists(cr, 'business_project'):
+            # Clear invalid/premature completed dates on projects that are not Completed
+            cr.execute("""
+                UPDATE business_project
+                SET completed_date = NULL
+                WHERE (stage_id IN (
+                    SELECT id FROM business_project_stage WHERE name != 'Completed'
+                ) OR stage_id IS NULL)
+                AND completed_date IS NOT NULL;
+            """)
+            # For completed projects, repair completed_date < start_date
             cr.execute("""
                 UPDATE business_project
                 SET completed_date = start_date
                 WHERE completed_date IS NOT NULL AND start_date IS NOT NULL AND completed_date < start_date;
             """)
-        if tools.sql.column_exists(cr, 'business_project', 'end_date') and \
-                tools.sql.column_exists(cr, 'business_project', 'start_date'):
-            cr.execute("""
-                UPDATE business_project
-                SET end_date = start_date
-                WHERE end_date IS NOT NULL AND start_date IS NOT NULL AND end_date < start_date;
-            """)
-        if tools.sql.column_exists(cr, 'business_project', 'actual_end_date') and \
-                tools.sql.column_exists(cr, 'business_project', 'start_date'):
-            cr.execute("""
-                UPDATE business_project
-                SET actual_end_date = start_date
-                WHERE actual_end_date IS NOT NULL AND start_date IS NOT NULL AND actual_end_date < start_date;
-            """)
-
-    @api.constrains('start_date', 'completed_date', 'end_date', 'actual_end_date')
-    def _check_dates_consistency(self):
-        if not self.env.registry.ready or self.env.context.get('install_mode') or self.env.context.get('upgrade_mode'):
-            return
-        for project in self:
-            if project.start_date:
-                check_completed = project.completed_date or project.end_date or project.actual_end_date
-                if check_completed and check_completed < project.start_date:
-                    raise ValidationError(_("End and Completed Date (%s) must be greater than or equal to Start Date (%s).") % (check_completed, project.start_date))
+            if tools.sql.column_exists(cr, 'business_project', 'end_date'):
+                cr.execute("""
+                    UPDATE business_project
+                    SET end_date = completed_date
+                    WHERE end_date IS DISTINCT FROM completed_date;
+                """)
+            if tools.sql.column_exists(cr, 'business_project', 'actual_end_date'):
+                cr.execute("""
+                    UPDATE business_project
+                    SET actual_end_date = completed_date
+                    WHERE actual_end_date IS DISTINCT FROM completed_date;
+                """)
 
     #client kickoff
 
@@ -368,6 +367,107 @@ class BusinessProject(models.Model):
         compute='_compute_kra_kpi_metrics'
     )
 
+    # Scope Tracker connection (SME Advanced Edition - 30 Scopes)
+    tracker_ids = fields.One2many(
+        'business.project.tracker',
+        'project_id',
+        string='Scope Trackers'
+    )
+    tracker_count = fields.Integer(
+        string='Total Trackers',
+        compute='_compute_tracker_metrics'
+    )
+    tracker_doc_count = fields.Integer(
+        string='Documentation Deliverables',
+        compute='_compute_tracker_metrics'
+    )
+    tracker_impl_count = fields.Integer(
+        string='Implementation Activities',
+        compute='_compute_tracker_metrics'
+    )
+    tracker_completed_count = fields.Integer(
+        string='Completed Deliverables',
+        compute='_compute_tracker_metrics'
+    )
+    tracker_in_progress_count = fields.Integer(
+        string='In Progress Deliverables',
+        compute='_compute_tracker_metrics'
+    )
+    tracker_pending_approval_count = fields.Integer(
+        string='Pending Approval',
+        compute='_compute_tracker_metrics'
+    )
+    tracker_overdue_count = fields.Integer(
+        string='Overdue Deliverables',
+        compute='_compute_tracker_metrics'
+    )
+    tracker_progress = fields.Float(
+        string='Scope Tracker Progress (%)',
+        compute='_compute_tracker_metrics'
+    )
+    tracker_doc_progress = fields.Float(
+        string='Documentation Progress (%)',
+        compute='_compute_tracker_metrics'
+    )
+    tracker_impl_progress = fields.Float(
+        string='Implementation Progress (%)',
+        compute='_compute_tracker_metrics'
+    )
+
+    @api.depends(
+        'tracker_ids',
+        'tracker_ids.state',
+        'tracker_ids.progress',
+        'tracker_ids.category',
+        'tracker_ids.is_overdue'
+    )
+    def _compute_tracker_metrics(self):
+        for proj in self:
+            trackers = proj.tracker_ids
+            docs = trackers.filtered(lambda t: t.category == 'documentation')
+            impls = trackers.filtered(lambda t: t.category == 'implementation')
+
+            proj.tracker_count = len(trackers)
+            proj.tracker_doc_count = len(docs)
+            proj.tracker_impl_count = len(impls)
+            proj.tracker_completed_count = len(trackers.filtered(lambda t: t.state in ('approved', 'completed')))
+            proj.tracker_in_progress_count = len(trackers.filtered(lambda t: t.state == 'in_progress'))
+            proj.tracker_pending_approval_count = len(trackers.filtered(lambda t: t.state == 'submitted'))
+            proj.tracker_overdue_count = len(trackers.filtered(lambda t: t.is_overdue))
+
+            proj.tracker_progress = (sum(trackers.mapped('progress')) / len(trackers)) if trackers else 0.0
+            proj.tracker_doc_progress = (sum(docs.mapped('progress')) / len(docs)) if docs else 0.0
+            proj.tracker_impl_progress = (sum(impls.mapped('progress')) / len(impls)) if impls else 0.0
+
+    def action_view_project_trackers(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': f'{self.name} - Scope Tracker',
+            'res_model': 'business.project.tracker',
+            'view_mode': 'list,kanban,form,pivot',
+            'domain': [('project_id', '=', self.id)],
+            'context': {
+                'default_project_id': self.id,
+                'search_default_group_by_scope': 1,
+            },
+        }
+
+    def action_open_load_tracker_wizard(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Load Scope Tracker from Template'),
+            'res_model': 'business.project.tracker.load.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_project_id': self.id,
+                'default_default_accountable_id': self.project_manager_id.id if self.project_manager_id else False,
+                'default_default_responsible_id': self.responsible_user_id.id if self.responsible_user_id else False,
+            },
+        }
+
     @api.depends('kra_ids', 'kpi_ids', 'kra_ids.weekly_progress', 'kra_ids.monthly_achievement', 'kra_ids.active')
     def _compute_kra_kpi_metrics(self):
         for proj in self:
@@ -385,7 +485,7 @@ class BusinessProject(models.Model):
         self.ensure_one()
         return {
             'type': 'ir.actions.act_window',
-            'name': f'{self.name} - KRAs (Main Tasks)',
+            'name': f'{self.name} - Scopes',
             'res_model': 'business.project.kra',
             'view_mode': 'list,kanban,form',
             'domain': [('project_id', '=', self.id)],
@@ -399,7 +499,7 @@ class BusinessProject(models.Model):
         self.ensure_one()
         return {
             'type': 'ir.actions.act_window',
-            'name': f'{self.name} - KPIs',
+            'name': f'{self.name} - Tasks',
             'res_model': 'business.project.kpi',
             'view_mode': 'list,kanban,form,pivot,graph',
             'domain': [('project_id', '=', self.id)],
@@ -418,7 +518,7 @@ class BusinessProject(models.Model):
             'type': 'ir.actions.client',
             'tag': 'display_notification',
             'params': {
-                'title': 'Repeating KPIs Processed',
+                'title': 'Repeating Tasks Processed',
                 'message': f"Today's repeating tasks checked and updated for project '{self.name}'.",
                 'type': 'success',
                 'sticky': False,
@@ -575,16 +675,6 @@ class BusinessProject(models.Model):
         string='Approvals'
     )
 
-    # qualification_status = fields.Selection([
-    #     ('not_checked', 'Not Checked'),
-    #     ('qualified', 'Qualified'),
-    #     ('not_qualified', 'Not Qualified'),
-    # ], string='Qualification Status', default='not_checked', tracking=True)
-    #
-    # qualification_notes = fields.Text(
-    #     string='Qualification Notes'
-    # )
-
     meeting_count = fields.Integer(
         string='Meetings',
         compute='_compute_meeting_count'
@@ -669,19 +759,6 @@ class BusinessProject(models.Model):
     # ---------------------------------------------------------
     # CREATE
     # ---------------------------------------------------------
-
-
-    # @api.model_create_multi
-    # def create(self, vals_list):
-    #     for vals in vals_list:
-    #         if vals.get('reference', 'New') == 'New':
-    #             vals['reference'] = (
-    #                     self.env['ir.sequence'].next_by_code(
-    #                         'business.project'
-    #                     ) or 'New'
-    #             )
-    #
-    #     return super().create(vals_list)
 
     def _assign_stage_responsible_user(self):
         for record in self:
@@ -1032,6 +1109,25 @@ class BusinessProject(models.Model):
             start_date_val = fields.Date.to_date(vals['start_date'])
             if start_date_val < today:
                 raise ValidationError(_("Start Date cannot be a previous date. Only today's date or future dates are allowed."))
+            for project in self:
+                is_completed = bool(
+                    (vals.get('stage_id') and self.env['business.project.stage'].browse(vals['stage_id']).name == 'Completed') or
+                    (not vals.get('stage_id') and project.stage_id and project.stage_id.name == 'Completed')
+                )
+                check_completed = vals.get('completed_date') or project.completed_date or project.end_date or project.actual_end_date
+                if check_completed and fields.Date.to_date(check_completed) < start_date_val:
+                    if not is_completed:
+                        vals['completed_date'] = False
+                        if 'end_date' in project._fields:
+                            vals['end_date'] = False
+                        if 'actual_end_date' in project._fields:
+                            vals['actual_end_date'] = False
+                    else:
+                        vals['completed_date'] = start_date_val
+                        if 'end_date' in project._fields:
+                            vals['end_date'] = start_date_val
+                        if 'actual_end_date' in project._fields:
+                            vals['actual_end_date'] = start_date_val
         if 'stage_id' in vals and not self.env.context.get(
                 'skip_stage_requirements'):
             for record in self:
@@ -1368,6 +1464,3 @@ class BusinessProject(models.Model):
         )
 
         return True
-
-
-

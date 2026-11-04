@@ -120,7 +120,7 @@
     </record>
 
     <record id="stage_kra" model="business.project.stage">
-        <field name="name">Project KRA &amp; Success Criteria Development</field>
+        <field name="name">Project Scope &amp; Success Criteria Development</field>
         <field name="sequence">803</field>
         <field name="active">False</field>
         <field name="folded">True</field>

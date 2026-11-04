@@ -44,6 +44,10 @@
         --dash-btn-bg: #141b2a;
         --dash-tab-active-bg: #1e293b;
         --dash-tab-active-text: #ffffff;
+        --dash-card-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+        --dash-plan-line: #ffffff;
+        --dash-bar-bg: #1e293b;
+        --dash-table-hover: rgba(255, 255, 255, 0.03);
 
         color: #f1f5f9;
 
@@ -72,7 +76,7 @@
     }
 
     &.dashboard_light {
-        --dash-bg: #f3f5f9;
+        --dash-bg: #f4f6fa;
         --dash-top-bg: #ffffff;
         --dash-sidebar-bg: #ffffff;
         --dash-card-bg: #ffffff;
@@ -88,6 +92,10 @@
         --dash-btn-bg: #f8fafc;
         --dash-tab-active-bg: #0f172a;
         --dash-tab-active-text: #ffffff;
+        --dash-card-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        --dash-plan-line: #000000;
+        --dash-bar-bg: #e2e8f0;
+        --dash-table-hover: #f8fafc;
 
         color: #1e293b;
 
@@ -356,7 +364,9 @@
     // ================= MAIN CONTENT WORKSPACE =================
     .dash_main_content {
         flex: 1;
+        min-width: 0;
         overflow-y: auto;
+        overflow-x: hidden;
         padding: 24px 32px 40px;
         display: flex;
         flex-direction: column;
@@ -419,10 +429,10 @@
             }
         }
 
-        // 4 KPI Cards
+        // 3 KPI Cards
         .dash_kpi_row {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(3, 1fr);
             gap: 16px;
 
             .dash_kpi_card {
@@ -5089,8 +5099,12 @@
     .dash_calendar_section {
         display: flex;
         flex-direction: column;
-        gap: 20px;
-        padding: 24px 32px;
+        gap: 16px;
+        padding: 0;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
         animation: dashFadeIn 0.25s ease-out;
 
         .cal_header_banner {
@@ -5098,11 +5112,11 @@
             align-items: center;
             justify-content: space-between;
             flex-wrap: wrap;
-            gap: 16px;
-            padding: 20px 24px;
+            gap: 12px;
+            padding: 14px 20px;
             background: var(--dash-card-bg);
             border: 1px solid var(--dash-border);
-            border-radius: 14px;
+            border-radius: 12px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 
             .cal_header_left {
@@ -5168,7 +5182,9 @@
         .cal_metric_cards_row {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
+            gap: 12px;
+            width: 100%;
+            min-width: 0;
 
             @media (max-width: 1024px) {
                 grid-template-columns: repeat(2, 1fr);
@@ -5182,7 +5198,7 @@
                 background: var(--dash-card-bg);
                 border: 1px solid var(--dash-border);
                 border-radius: 12px;
-                padding: 18px 20px;
+                padding: 12px 16px;
                 cursor: pointer;
                 transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
                 display: flex;
@@ -5350,40 +5366,49 @@
 
         .cal_main_split {
             display: grid;
-            grid-template-columns: 1.45fr 1fr;
-            gap: 20px;
+            grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.95fr);
+            gap: 16px;
             align-items: flex-start;
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            box-sizing: border-box;
 
-            @media (max-width: 1200px) {
+            @media (max-width: 1024px) {
                 grid-template-columns: 1fr;
             }
 
             .cal_grid_panel {
                 background: var(--dash-card-bg);
                 border: 1px solid var(--dash-border);
-                border-radius: 14px;
-                padding: 20px;
+                border-radius: 12px;
+                padding: 14px;
                 display: flex;
                 flex-direction: column;
-                gap: 14px;
+                gap: 10px;
                 box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+                min-width: 0;
+                width: 100%;
+                max-width: 100%;
+                overflow: hidden;
+                box-sizing: border-box;
 
                 .cal_nav_header {
                     display: flex;
                     align-items: center;
                     justify-content: space-between;
                     flex-wrap: wrap;
-                    gap: 12px;
+                    gap: 8px;
 
                     .cal_nav_controls {
                         display: flex;
                         align-items: center;
-                        gap: 12px;
+                        gap: 8px;
 
                         .cal_today_btn {
-                            padding: 6px 14px;
+                            padding: 4px 10px;
                             border-radius: 6px;
-                            font-size: 0.82rem;
+                            font-size: 0.78rem;
                             font-weight: 600;
                             background: var(--dash-btn-bg);
                             border: 1px solid var(--dash-border);
@@ -5399,11 +5424,11 @@
 
                         .cal_arrows_wrap {
                             display: flex;
-                            gap: 4px;
+                            gap: 3px;
 
                             .cal_arrow_btn {
-                                width: 32px;
-                                height: 32px;
+                                width: 28px;
+                                height: 28px;
                                 border-radius: 6px;
                                 display: flex;
                                 align-items: center;
@@ -5423,7 +5448,7 @@
 
                         .cal_month_display {
                             margin: 0;
-                            font-size: 1.2rem;
+                            font-size: 1.05rem;
                             font-weight: 700;
                             color: var(--dash-title);
                         }
@@ -5431,12 +5456,12 @@
 
                     .cal_filter_pills {
                         display: flex;
-                        gap: 6px;
+                        gap: 4px;
 
                         .cal_filter_pill {
-                            padding: 5px 12px;
-                            border-radius: 20px;
-                            font-size: 0.78rem;
+                            padding: 3px 10px;
+                            border-radius: 16px;
+                            font-size: 0.74rem;
                             font-weight: 600;
                             background: var(--dash-btn-bg);
                             border: 1px solid var(--dash-border);
@@ -5460,33 +5485,41 @@
 
                 .cal_weekdays_row {
                     display: grid;
-                    grid-template-columns: repeat(7, 1fr);
-                    gap: 6px;
+                    grid-template-columns: repeat(7, minmax(0, 1fr));
+                    gap: 4px;
                     text-align: center;
-                    font-size: 0.78rem;
+                    font-size: 0.74rem;
                     font-weight: 700;
                     color: var(--dash-muted);
-                    padding-bottom: 6px;
+                    padding-bottom: 4px;
                     border-bottom: 1px solid var(--dash-border);
+                    width: 100%;
+                    min-width: 0;
                 }
 
                 .cal_days_grid {
                     display: grid;
-                    grid-template-columns: repeat(7, 1fr);
-                    gap: 6px;
+                    grid-template-columns: repeat(7, minmax(0, 1fr));
+                    gap: 4px;
+                    width: 100%;
+                    min-width: 0;
 
                     .cal_day_cell {
-                        min-height: 96px;
+                        min-height: 68px;
                         background: var(--dash-card-bg);
                         border: 1px solid var(--dash-border);
-                        border-radius: 8px;
-                        padding: 6px 8px;
+                        border-radius: 6px;
+                        padding: 4px;
                         display: flex;
                         flex-direction: column;
-                        gap: 4px;
+                        gap: 2px;
                         cursor: pointer;
                         transition: all 0.15s;
                         position: relative;
+                        min-width: 0;
+                        max-width: 100%;
+                        overflow: hidden;
+                        box-sizing: border-box;
 
                         &:hover {
                             border-color: #3b82f6;
@@ -5507,8 +5540,8 @@
                                 background: #3b82f6;
                                 color: #ffffff !important;
                                 border-radius: 50%;
-                                width: 22px;
-                                height: 22px;
+                                width: 20px;
+                                height: 20px;
                                 display: flex;
                                 align-items: center;
                                 justify-content: center;
@@ -5530,41 +5563,47 @@
                             display: flex;
                             align-items: center;
                             justify-content: space-between;
+                            line-height: 1;
+                            margin-bottom: 2px;
 
                             .cal_cell_num {
-                                font-size: 0.8rem;
+                                font-size: 0.74rem;
                                 font-weight: 600;
                                 color: var(--dash-text);
                             }
 
                             .cal_cell_badge {
-                                font-size: 0.68rem;
+                                font-size: 0.62rem;
                                 font-weight: 700;
                                 background: var(--dash-border);
                                 color: var(--dash-text);
-                                border-radius: 10px;
-                                padding: 1px 6px;
+                                border-radius: 8px;
+                                padding: 0 4px;
                             }
                         }
 
                         .cal_cell_events {
                             display: flex;
                             flex-direction: column;
-                            gap: 3px;
+                            gap: 2px;
                             overflow: hidden;
+                            min-width: 0;
+                            width: 100%;
 
                             .cal_event_chip {
                                 display: flex;
                                 align-items: center;
-                                gap: 4px;
-                                padding: 2px 6px;
-                                border-radius: 4px;
-                                font-size: 0.7rem;
+                                gap: 3px;
+                                padding: 1px 4px;
+                                border-radius: 3px;
+                                font-size: 0.62rem;
                                 font-weight: 600;
                                 cursor: pointer;
-                                white-space: nowrap;
+                                min-width: 0;
+                                max-width: 100%;
                                 overflow: hidden;
-                                text-overflow: ellipsis;
+                                line-height: 1.25;
+                                box-sizing: border-box;
                                 transition: transform 0.1s;
 
                                 &:hover {
@@ -5597,29 +5636,35 @@
                                 }
 
                                 .chip_type {
-                                    font-size: 0.62rem;
+                                    font-size: 0.54rem;
                                     text-transform: uppercase;
                                     font-weight: 800;
                                     opacity: 0.85;
+                                    flex-shrink: 0;
                                 }
 
                                 .chip_name {
                                     overflow: hidden;
                                     text-overflow: ellipsis;
+                                    white-space: nowrap;
                                     flex: 1;
+                                    min-width: 0;
                                 }
 
                                 .chip_prog {
-                                    font-size: 0.65rem;
+                                    font-size: 0.56rem;
                                     opacity: 0.8;
+                                    flex-shrink: 0;
+                                    margin-left: auto;
                                 }
                             }
 
                             .cal_more_events {
-                                font-size: 0.68rem;
+                                font-size: 0.62rem;
                                 color: var(--dash-muted);
                                 font-weight: 600;
                                 padding-top: 1px;
+                                white-space: nowrap;
                             }
                         }
                     }
@@ -5629,32 +5674,37 @@
             .cal_agenda_panel {
                 background: var(--dash-card-bg);
                 border: 1px solid var(--dash-border);
-                border-radius: 14px;
-                padding: 20px;
+                border-radius: 12px;
+                padding: 14px 16px;
                 display: flex;
                 flex-direction: column;
-                gap: 14px;
+                gap: 12px;
                 box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+                min-width: 0;
+                width: 100%;
+                max-width: 100%;
+                overflow: hidden;
+                box-sizing: border-box;
 
                 .cal_agenda_header {
                     border-bottom: 1px solid var(--dash-border);
-                    padding-bottom: 10px;
+                    padding-bottom: 8px;
                     display: flex;
                     align-items: center;
                     justify-content: space-between;
-                    gap: 10px;
+                    gap: 8px;
                     flex-wrap: wrap;
 
                     .cal_agenda_tabs {
                         display: flex;
-                        gap: 6px;
+                        gap: 4px;
                         flex-wrap: wrap;
                         flex: 1;
 
                         .cal_agenda_tab {
-                            padding: 6px 12px;
-                            border-radius: 8px;
-                            font-size: 0.8rem;
+                            padding: 4px 8px;
+                            border-radius: 6px;
+                            font-size: 0.74rem;
                             font-weight: 600;
                             background: var(--dash-btn-bg);
                             border: 1px solid var(--dash-border);
@@ -5662,7 +5712,8 @@
                             cursor: pointer;
                             display: flex;
                             align-items: center;
-                            gap: 6px;
+                            gap: 4px;
+                            white-space: nowrap;
                             transition: all 0.15s;
 
                             &:hover {
@@ -5740,8 +5791,8 @@
                 .cal_agenda_list {
                     display: flex;
                     flex-direction: column;
-                    gap: 12px;
-                    max-height: 600px;
+                    gap: 10px;
+                    max-height: 520px;
                     overflow-y: auto;
                     padding-right: 4px;
 
@@ -5749,12 +5800,12 @@
                         background: var(--dash-btn-bg);
                         border: 1px solid var(--dash-border);
                         border-radius: 10px;
-                        padding: 14px;
+                        padding: 11px 13px;
                         cursor: pointer;
                         transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
                         display: flex;
                         flex-direction: column;
-                        gap: 8px;
+                        gap: 6px;
 
                         &:hover {
                             border-color: #3b82f6;
@@ -6043,6 +6094,1191 @@
 
                 i {
                     color: #0f172a !important;
+                }
+            }
+        }
+    }
+
+    // =========================================================
+    // EXACT EXECUTIVE OVERVIEW DASHBOARD (MATCHING IMAGE 1:1)
+    // =========================================================
+    .full_width_overview {
+        max-width: 1400px;
+        width: 100%;
+        margin: 0 auto;
+        padding: 24px 28px !important;
+        overflow-y: auto;
+    }
+
+    .dash_tab_overview {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        width: 100%;
+        padding-bottom: 40px;
+
+        // Color Utilities
+        .bg_navy { background-color: #0f172a !important; color: #ffffff !important; }
+        .bg_good, .bg_green { background-color: #10b981 !important; color: #ffffff !important; }
+        .bg_fair, .bg_amber { background-color: #f59e0b !important; color: #ffffff !important; }
+        .bg_poor, .bg_crimson { background-color: #ef4444 !important; color: #ffffff !important; }
+        .bg_slate { background-color: #94a3b8 !important; color: #ffffff !important; }
+        .bg_blue { background-color: #2563eb !important; color: #ffffff !important; }
+        .bg_lightblue { background-color: #93c5fd !important; color: #0f172a !important; }
+
+        // Top Sub-header
+        .dash_overview_subhead {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 4px 0 10px 0;
+            flex-wrap: wrap;
+            gap: 16px;
+
+            .brand_title_box {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+
+                .brand_badge_icon {
+                    width: 38px;
+                    height: 38px;
+                    border-radius: 8px;
+                    background: #0f172a;
+                    color: #ffffff;
+                    font-size: 20px;
+                    font-weight: 800;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    letter-spacing: -0.5px;
+                    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+                }
+
+                .brand_text_wrap {
+                    display: flex;
+                    flex-direction: column;
+
+                    .brand_title {
+                        font-size: 19px;
+                        font-weight: 700;
+                        margin: 0;
+                        line-height: 1.2;
+                        letter-spacing: -0.3px;
+                    }
+
+                    .brand_subtitle {
+                        font-size: 12.5px;
+                        color: var(--dash-muted);
+                        font-weight: 400;
+                    }
+                }
+            }
+
+            .overview_top_legend {
+                display: flex;
+                align-items: center;
+                gap: 22px;
+                flex-wrap: wrap;
+
+                .legend_team_dots {
+                    display: flex;
+                    align-items: center;
+                    gap: 16px;
+
+                    .team_legend_item {
+                        display: flex;
+                        align-items: center;
+                        gap: 7px;
+                        font-size: 12.5px;
+                        font-weight: 500;
+                        color: var(--dash-text);
+                        cursor: pointer;
+                        padding: 4px 8px;
+                        border-radius: 6px;
+                        transition: all 0.2s ease;
+
+                        &:hover, &.active {
+                            background: var(--dash-card-hover);
+                        }
+
+                        .legend_dot {
+                            width: 7px;
+                            height: 7px;
+                            border-radius: 50%;
+                        }
+                    }
+                }
+
+                .overview_date_badge {
+                    font-size: 12.5px;
+                    color: var(--dash-muted);
+                    font-weight: 400;
+                }
+            }
+        }
+
+        // ROW 1: 5 KPI CARDS
+        .overview_kpi_row {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 14px;
+
+            @media (max-width: 1200px) {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            @media (max-width: 768px) {
+                grid-template-columns: 1fr;
+            }
+
+            .ov_kpi_card {
+                background: var(--dash-card-bg);
+                border: 1px solid var(--dash-border);
+                border-radius: 12px;
+                padding: 16px 18px;
+                box-shadow: var(--dash-card-shadow);
+                display: flex;
+                flex-direction: column;
+                transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+                &:hover {
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+                }
+
+                .ov_kpi_top {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    margin-bottom: 6px;
+
+                    .ov_kpi_icon_wrap {
+                        font-size: 13px;
+                        color: var(--dash-muted);
+                    }
+
+                    .ov_kpi_label {
+                        font-size: 12.5px;
+                        font-weight: 500;
+                        color: var(--dash-muted);
+                    }
+                }
+
+                .ov_kpi_val {
+                    font-size: 28px;
+                    font-weight: 700;
+                    color: var(--dash-title);
+                    line-height: 1.1;
+                    margin-bottom: 12px;
+                    display: flex;
+                    align-items: baseline;
+                    gap: 6px;
+
+                    .val_small_sub {
+                        font-size: 13px;
+                        font-weight: 400;
+                        color: var(--dash-muted);
+                    }
+
+                    .val_badge_status {
+                        font-size: 12.5px;
+                        font-weight: 600;
+                    }
+                }
+
+                .ov_kpi_multi_bar {
+                    display: flex;
+                    gap: 2px;
+                    height: 4px;
+                    border-radius: 2px;
+                    overflow: hidden;
+                    margin-bottom: 9px;
+
+                    .ov_bar_seg {
+                        height: 100%;
+                        border-radius: 1px;
+                    }
+                }
+
+                .ov_kpi_bar_track {
+                    width: 100%;
+                    height: 4px;
+                    background: var(--dash-border);
+                    border-radius: 2px;
+                    overflow: hidden;
+                    margin-bottom: 9px;
+
+                    .ov_bar_fill {
+                        height: 100%;
+                        border-radius: 2px;
+                    }
+                }
+
+                .ov_kpi_sub {
+                    font-size: 11px;
+                    color: var(--dash-muted);
+                    line-height: 1.2;
+                }
+            }
+        }
+
+        // ROW 2: 4 ANALYTICS WIDGETS
+        .overview_analytics_row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+
+            @media (max-width: 1200px) {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            @media (max-width: 768px) {
+                grid-template-columns: 1fr;
+            }
+
+            .ov_widget_card {
+                background: var(--dash-card-bg);
+                border: 1px solid var(--dash-border);
+                border-radius: 12px;
+                padding: 18px 20px;
+                box-shadow: var(--dash-card-shadow);
+                display: flex;
+                flex-direction: column;
+
+                .ov_widget_header {
+                    margin-bottom: 16px;
+
+                    .widget_title {
+                        font-size: 15px;
+                        font-weight: 700;
+                        margin: 0;
+                        color: var(--dash-title);
+                        letter-spacing: -0.2px;
+                    }
+
+                    .widget_subtitle {
+                        font-size: 11.5px;
+                        color: var(--dash-muted);
+                        margin-top: 2px;
+                        display: block;
+                    }
+                }
+            }
+
+            // Widget 1: Health Donut
+            .health_chart_wrap {
+                display: flex;
+                align-items: center;
+                justify-content: space-around;
+                gap: 12px;
+                padding: 4px 0;
+
+                .donut_container {
+                    position: relative;
+                    width: 110px;
+                    height: 110px;
+
+                    .health_donut_svg {
+                        width: 100%;
+                        height: 100%;
+                        transform: rotate(-90deg);
+
+                        .donut_bg {
+                            stroke: var(--dash-border);
+                        }
+                    }
+
+                    .donut_center_text {
+                        position: absolute;
+                        inset: 0;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+
+                        .donut_score_num {
+                            font-size: 22px;
+                            font-weight: 700;
+                            color: var(--dash-title);
+                            line-height: 1;
+                        }
+
+                        .donut_score_lbl {
+                            font-size: 9.5px;
+                            color: var(--dash-muted);
+                            margin-top: 3px;
+                            text-align: center;
+                        }
+                    }
+                }
+
+                .health_legend_list {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 8px;
+
+                    .health_legend_item {
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        font-size: 12.5px;
+                        cursor: pointer;
+                        padding: 3px 6px;
+                        border-radius: 4px;
+                        transition: background 0.15s ease;
+
+                        &:hover, &.active {
+                            background: var(--dash-card-hover);
+                        }
+
+                        .hl_dot {
+                            width: 8px;
+                            height: 8px;
+                            border-radius: 50%;
+                        }
+
+                        .hl_label {
+                            color: var(--dash-text);
+                            font-weight: 500;
+                            min-width: 36px;
+                        }
+
+                        .hl_count {
+                            font-weight: 700;
+                            color: var(--dash-title);
+                            margin-left: 10px;
+                        }
+                    }
+                }
+            }
+
+            // Widget 2: Running Status
+            .status_top_segmented_bar {
+                display: flex;
+                gap: 2px;
+                height: 4px;
+                border-radius: 2px;
+                overflow: hidden;
+                margin-bottom: 18px;
+
+                .bar_seg {
+                    height: 100%;
+                }
+            }
+
+            .status_pills_grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+
+                .status_pill_box {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    padding: 8px 12px;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    transition: transform 0.15s ease;
+
+                    &:hover {
+                        transform: translateY(-1px);
+                    }
+
+                    .status_box_icon {
+                        font-size: 11px;
+                        width: 14px;
+                        text-align: center;
+                    }
+
+                    .status_box_num {
+                        font-size: 15px;
+                        font-weight: 700;
+                    }
+
+                    .status_box_lbl {
+                        font-size: 11.5px;
+                        font-weight: 500;
+                    }
+
+                    &.pill_running {
+                        background: #0f172a;
+                        color: #ffffff;
+                    }
+                    &.pill_completed {
+                        background: #dcfce7;
+                        color: #15803d;
+                    }
+                    &.pill_on_hold {
+                        background: #fef3c7;
+                        color: #b45309;
+                    }
+                    &.pill_not_started {
+                        background: #f1f5f9;
+                        color: #64748b;
+                    }
+                }
+            }
+
+            // Widget 3: Risk Level Speedometer
+            .gauge_widget_wrap {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                padding-bottom: 6px;
+
+                .speedometer_svg {
+                    width: 150px;
+                    height: 90px;
+
+                    .gauge_bg {
+                        stroke: var(--dash-border);
+                    }
+                    .gauge_needle_line {
+                        stroke: var(--dash-title);
+                    }
+                    .gauge_needle_hub {
+                        fill: var(--dash-title);
+                    }
+                }
+
+                .gauge_risk_label {
+                    font-size: 13.5px;
+                    font-weight: 700;
+                    margin-top: 4px;
+                    text-align: center;
+                }
+            }
+
+            .risk_stats_grid {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 8px;
+                margin-top: 8px;
+
+                .risk_stat_box {
+                    padding: 8px 4px;
+                    border-radius: 6px;
+                    text-align: center;
+
+                    .risk_num {
+                        font-size: 16px;
+                        font-weight: 700;
+                        line-height: 1;
+                    }
+
+                    .risk_lbl {
+                        font-size: 11px;
+                        font-weight: 500;
+                        margin-top: 4px;
+                    }
+
+                    &.r_low {
+                        background: #ecfdf5;
+                        color: #047857;
+                    }
+                    &.r_medium {
+                        background: #fffbeb;
+                        color: #b45309;
+                    }
+                    &.r_high {
+                        background: #dc2626;
+                        color: #ffffff;
+                    }
+                }
+            }
+
+            // Widget 4: Project Condition Bars
+            .condition_bars_wrap {
+                display: flex;
+                align-items: flex-end;
+                justify-content: space-around;
+                height: 135px;
+                padding-top: 10px;
+
+                .condition_bar_col {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 6px;
+                    width: 44px;
+
+                    .cond_bar_val {
+                        font-size: 14px;
+                        font-weight: 700;
+                        color: var(--dash-title);
+                    }
+
+                    .cond_bar_track {
+                        width: 32px;
+                        height: 80px;
+                        background: transparent;
+                        display: flex;
+                        align-items: flex-end;
+                        border-radius: 4px;
+                        overflow: hidden;
+
+                        .cond_bar_fill {
+                            width: 100%;
+                            border-radius: 3px;
+                            transition: height 0.3s ease;
+                        }
+                    }
+
+                    .cond_bar_lbl {
+                        font-size: 11px;
+                        font-weight: 500;
+                        color: var(--dash-muted);
+                        white-space: nowrap;
+                    }
+                }
+            }
+        }
+
+        // ROW 3: TEAMS & TEAM COMPARISON
+        .overview_teams_row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+
+            @media (max-width: 1200px) {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            @media (max-width: 768px) {
+                grid-template-columns: 1fr;
+            }
+
+            .ov_team_card {
+                background: var(--dash-card-bg);
+                border: 1px solid var(--dash-border);
+                border-radius: 12px;
+                padding: 18px 20px;
+                box-shadow: var(--dash-card-shadow);
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                gap: 14px;
+
+                .team_card_header {
+                    display: flex;
+                    align-items: flex-start;
+                    justify-content: space-between;
+                    gap: 10px;
+
+                    .team_card_title {
+                        font-size: 15px;
+                        font-weight: 700;
+                        margin: 0;
+                        color: var(--dash-title);
+                    }
+
+                    .team_card_lead {
+                        font-size: 11.5px;
+                        color: var(--dash-muted);
+                        margin-top: 1px;
+                        display: block;
+                    }
+
+                    .team_card_badge {
+                        font-size: 11px;
+                        font-weight: 600;
+                        padding: 3px 8px;
+                        border-radius: 12px;
+
+                        &.badge_excellent {
+                            background: #dcfce7;
+                            color: #15803d;
+                        }
+                        &.badge_support {
+                            background: #fef3c7;
+                            color: #b45309;
+                        }
+                        &.badge_good {
+                            background: #e0f2fe;
+                            color: #0369a1;
+                        }
+                    }
+                }
+
+                .team_card_metrics_row {
+                    display: flex;
+                    align-items: center;
+                    gap: 14px;
+
+                    .team_donut_col {
+                        position: relative;
+                        width: 72px;
+                        height: 72px;
+                        flex-shrink: 0;
+
+                        .team_donut_svg_wrap {
+                            width: 100%;
+                            height: 100%;
+                            position: relative;
+
+                            .team_donut_svg {
+                                width: 100%;
+                                height: 100%;
+
+                                .team_donut_bg {
+                                    stroke: var(--dash-border);
+                                }
+                            }
+
+                            .team_donut_text {
+                                position: absolute;
+                                inset: 0;
+                                display: flex;
+                                flex-direction: column;
+                                align-items: center;
+                                justify-content: center;
+
+                                .td_pct {
+                                    font-size: 15px;
+                                    font-weight: 700;
+                                    color: var(--dash-title);
+                                    line-height: 1;
+                                }
+
+                                .td_lbl {
+                                    font-size: 8px;
+                                    color: var(--dash-muted);
+                                    margin-top: 2px;
+                                }
+                            }
+                        }
+                    }
+
+                    .team_bars_col {
+                        flex: 1;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 6px;
+
+                        .metric_progress_line {
+                            display: flex;
+                            align-items: center;
+                            gap: 8px;
+                            font-size: 11px;
+
+                            .mp_label {
+                                min-width: 58px;
+                                color: var(--dash-muted);
+                            }
+
+                            .mp_bar_wrap {
+                                flex: 1;
+                                height: 5px;
+                                background: var(--dash-border);
+                                border-radius: 3px;
+                                overflow: hidden;
+
+                                .mp_bar_fill {
+                                    height: 100%;
+                                    border-radius: 3px;
+                                }
+                            }
+
+                            .mp_val {
+                                font-weight: 600;
+                                color: var(--dash-title);
+                                min-width: 28px;
+                                text-align: right;
+                            }
+                        }
+                    }
+                }
+
+                .team_card_footer {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    border-top: 1px solid var(--dash-border-subtle);
+                    padding-top: 10px;
+
+                    .team_projects_summary {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 4px;
+
+                        .tp_text {
+                            font-size: 11px;
+                            color: var(--dash-muted);
+                        }
+
+                        .team_dots_wrap {
+                            display: flex;
+                            gap: 4px;
+
+                            .tp_square_dot {
+                                width: 8px;
+                                height: 8px;
+                                border-radius: 2px;
+                            }
+                        }
+                    }
+
+                    .team_sparkline_wrap {
+                        display: flex;
+                        flex-direction: column;
+                        align-items: flex-end;
+                        gap: 2px;
+
+                        .team_spark_svg {
+                            width: 70px;
+                            height: 18px;
+                        }
+
+                        .trend_text {
+                            font-size: 10px;
+                            font-weight: 600;
+                        }
+                    }
+                }
+
+                // Comparison Card Styling
+                &.comparison_card {
+                    .comparison_legend {
+                        display: flex;
+                        gap: 10px;
+                        flex-wrap: wrap;
+
+                        .c_leg_item {
+                            display: flex;
+                            align-items: center;
+                            gap: 4px;
+                            font-size: 10.5px;
+                            color: var(--dash-muted);
+
+                            .c_dot {
+                                width: 6px;
+                                height: 6px;
+                                border-radius: 50%;
+                            }
+                        }
+                    }
+
+                    .comparison_chart_area {
+                        display: flex;
+                        gap: 10px;
+                        height: 120px;
+                        padding-top: 8px;
+
+                        .comp_y_axis {
+                            display: flex;
+                            flex-direction: column;
+                            justify-content: space-between;
+                            font-size: 9.5px;
+                            color: var(--dash-muted);
+                            text-align: right;
+                            padding-bottom: 20px;
+                            width: 20px;
+                        }
+
+                        .comp_bars_content {
+                            flex: 1;
+                            position: relative;
+                            display: flex;
+                            flex-direction: column;
+
+                            .comp_grid_lines {
+                                position: absolute;
+                                inset: 0 0 20px 0;
+                                display: flex;
+                                flex-direction: column;
+                                justify-content: space-between;
+                                pointer-events: none;
+
+                                .c_grid_line {
+                                    width: 100%;
+                                    border-top: 1px dashed var(--dash-border);
+                                }
+                            }
+
+                            .comp_teams_groups {
+                                position: relative;
+                                height: 100%;
+                                display: flex;
+                                justify-content: space-around;
+                                align-items: flex-end;
+                                z-index: 1;
+
+                                .comp_team_group {
+                                    display: flex;
+                                    flex-direction: column;
+                                    align-items: center;
+                                    gap: 6px;
+
+                                    .group_bars_wrap {
+                                        display: flex;
+                                        align-items: flex-end;
+                                        gap: 3px;
+                                        height: 90px;
+
+                                        .comp_bar {
+                                            width: 12px;
+                                            border-radius: 2px 2px 0 0;
+                                            transition: height 0.3s ease;
+                                        }
+                                    }
+
+                                    .group_name {
+                                        font-size: 11px;
+                                        font-weight: 600;
+                                        color: var(--dash-muted);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // ROW 4: PROJECTS TABLE
+        .overview_table_card {
+            background: var(--dash-card-bg);
+            border: 1px solid var(--dash-border);
+            border-radius: 12px;
+            padding: 20px 24px;
+            box-shadow: var(--dash-card-shadow);
+
+            .ov_table_header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: 16px;
+
+                .table_main_title {
+                    font-size: 17px;
+                    font-weight: 700;
+                    margin: 0;
+                    color: var(--dash-title);
+                }
+
+                .plan_reference_legend {
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                    font-size: 12px;
+                    color: var(--dash-muted);
+
+                    .black_plan_mark {
+                        font-weight: 800;
+                        color: var(--dash-plan-line);
+                        font-size: 14px;
+                    }
+                }
+            }
+
+            .table_responsive_wrap {
+                overflow-x: auto;
+
+                .ov_projects_table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    font-size: 12.5px;
+
+                    thead {
+                        border-bottom: 1px solid var(--dash-border);
+
+                        th {
+                            padding: 10px 12px;
+                            font-size: 11.5px;
+                            font-weight: 500;
+                            color: var(--dash-muted);
+                            text-align: left;
+                            white-space: nowrap;
+
+                            &.th_progress {
+                                min-width: 180px;
+                            }
+                        }
+                    }
+
+                    tbody {
+                        tr.ov_project_row {
+                            border-bottom: 1px solid var(--dash-border-subtle);
+                            transition: background 0.15s ease;
+
+                            &:hover {
+                                background: var(--dash-table-hover);
+                            }
+
+                            td {
+                                padding: 12px 12px;
+                                vertical-align: middle;
+                            }
+
+                            .td_project {
+                                .proj_title {
+                                    font-weight: 600;
+                                    color: var(--dash-title);
+                                    font-size: 13px;
+                                }
+
+                                .proj_client_sub {
+                                    font-size: 11.5px;
+                                    color: var(--dash-muted);
+                                    margin-top: 1px;
+                                }
+                            }
+
+                            .td_team {
+                                .team_dot_tag {
+                                    display: inline-flex;
+                                    align-items: center;
+                                    gap: 6px;
+                                    cursor: pointer;
+
+                                    .tag_dot {
+                                        width: 7px;
+                                        height: 7px;
+                                        border-radius: 50%;
+                                    }
+
+                                    .tag_txt {
+                                        color: var(--dash-text);
+                                        font-weight: 500;
+                                        font-size: 12px;
+                                    }
+                                }
+                            }
+
+                            .td_status {
+                                .status_badge {
+                                    display: inline-block;
+                                    font-size: 11px;
+                                    font-weight: 600;
+                                    padding: 3px 8px;
+                                    border-radius: 12px;
+
+                                    &.pill_running {
+                                        background: #e0f2fe;
+                                        color: #0369a1;
+                                    }
+                                    &.pill_completed {
+                                        background: #dcfce7;
+                                        color: #15803d;
+                                    }
+                                    &.pill_on_hold {
+                                        background: #fef3c7;
+                                        color: #b45309;
+                                    }
+                                    &.pill_not_started {
+                                        background: #f1f5f9;
+                                        color: #64748b;
+                                    }
+                                }
+                            }
+
+                            .td_health {
+                                .health_indicator {
+                                    display: inline-flex;
+                                    align-items: center;
+                                    gap: 6px;
+                                    cursor: pointer;
+
+                                    .health_circle_dot {
+                                        width: 8px;
+                                        height: 8px;
+                                        border-radius: 50%;
+                                    }
+
+                                    .health_txt {
+                                        font-weight: 500;
+                                        color: var(--dash-text);
+                                    }
+                                }
+                            }
+
+                            .td_risk {
+                                .risk_pill {
+                                    display: inline-block;
+                                    font-size: 11px;
+                                    font-weight: 600;
+                                    padding: 2px 8px;
+                                    border-radius: 4px;
+
+                                    &.risk_high {
+                                        background: #dc2626;
+                                        color: #ffffff;
+                                    }
+                                    &.risk_medium {
+                                        background: #fef3c7;
+                                        color: #b45309;
+                                    }
+                                    &.risk_low {
+                                        background: #ecfdf5;
+                                        color: #047857;
+                                    }
+                                }
+                            }
+
+                            .td_progress {
+                                .progress_plan_cell {
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 12px;
+
+                                    .dual_progress_track {
+                                        position: relative;
+                                        flex: 1;
+                                        height: 6px;
+                                        background: var(--dash-bar-bg);
+                                        border-radius: 3px;
+
+                                        .dual_fill_bar {
+                                            height: 100%;
+                                            border-radius: 3px;
+                                        }
+
+                                        .plan_target_marker {
+                                            position: absolute;
+                                            top: -3px;
+                                            width: 2px;
+                                            height: 12px;
+                                            background: var(--dash-plan-line);
+                                            border-radius: 1px;
+                                            z-index: 2;
+                                        }
+                                    }
+
+                                    .progress_pct_txt {
+                                        font-size: 12px;
+                                        font-weight: 600;
+                                        color: var(--dash-title);
+                                        min-width: 34px;
+                                        text-align: right;
+                                    }
+                                }
+                            }
+
+                            .td_due {
+                                .due_cell_content {
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 8px;
+                                    white-space: nowrap;
+
+                                    .due_pts_tag {
+                                        font-size: 11px;
+                                        font-weight: 600;
+                                        color: var(--dash-muted);
+                                        min-width: 44px;
+                                    }
+
+                                    .due_date_label {
+                                        font-size: 12px;
+                                        color: var(--dash-text);
+                                    }
+                                }
+                            }
+
+                            .td_cond {
+                                .condition_cell_tag {
+                                    display: inline-flex;
+                                    align-items: center;
+                                    font-size: 11.5px;
+                                    font-weight: 600;
+
+                                    &.cond_overdue {
+                                        color: #991b1b;
+                                    }
+                                    &.cond_behind {
+                                        color: #d97706;
+                                    }
+                                    &.cond_ahead {
+                                        color: #10b981;
+                                    }
+                                    &.cond_on_plan {
+                                        color: var(--dash-muted);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // DARK THEME SPECIFIC OVERRIDES FOR OVERVIEW DASHBOARD
+    &.dashboard_dark {
+        .dash_tab_overview {
+            .dash_overview_subhead {
+                .brand_title_box .brand_badge_icon {
+                    background: #1e293b;
+                    border: 1px solid #3b82f6;
+                    color: #60a5fa;
+                }
+            }
+
+            .status_pills_grid .status_pill_box {
+                &.pill_running {
+                    background: #1e293b;
+                    color: #93c5fd;
+                    border: 1px solid #3b82f6;
+                }
+                &.pill_completed {
+                    background: rgba(16, 185, 129, 0.15);
+                    color: #34d399;
+                    border: 1px solid rgba(16, 185, 129, 0.3);
+                }
+                &.pill_on_hold {
+                    background: rgba(245, 158, 11, 0.15);
+                    color: #fbbf24;
+                    border: 1px solid rgba(245, 158, 11, 0.3);
+                }
+                &.pill_not_started {
+                    background: rgba(148, 163, 184, 0.12);
+                    color: #cbd5e1;
+                    border: 1px solid rgba(148, 163, 184, 0.2);
+                }
+            }
+
+            .risk_stats_grid .risk_stat_box {
+                &.r_low {
+                    background: rgba(16, 185, 129, 0.15);
+                    color: #34d399;
+                }
+                &.r_medium {
+                    background: rgba(245, 158, 11, 0.15);
+                    color: #fbbf24;
+                }
+                &.r_high {
+                    background: #dc2626;
+                    color: #ffffff;
+                }
+            }
+
+            .ov_projects_table tbody tr.ov_project_row {
+                .status_badge {
+                    &.pill_running {
+                        background: rgba(59, 130, 246, 0.18);
+                        color: #93c5fd;
+                    }
+                    &.pill_completed {
+                        background: rgba(16, 185, 129, 0.18);
+                        color: #6ee7b7;
+                    }
+                    &.pill_on_hold {
+                        background: rgba(245, 158, 11, 0.18);
+                        color: #fcd34d;
+                    }
+                    &.pill_not_started {
+                        background: rgba(148, 163, 184, 0.15);
+                        color: #94a3b8;
+                    }
+                }
+
+                .risk_pill {
+                    &.risk_medium {
+                        background: rgba(245, 158, 11, 0.2);
+                        color: #fcd34d;
+                    }
+                    &.risk_low {
+                        background: rgba(16, 185, 129, 0.2);
+                        color: #6ee7b7;
+                    }
                 }
             }
         }

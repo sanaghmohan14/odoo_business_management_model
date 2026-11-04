@@ -11,7 +11,7 @@
         </record>
 
         <record id="seq_business_project_kra" model="ir.sequence">
-            <field name="name">KRA Sequence</field>
+            <field name="name">Scope Sequence</field>
             <field name="code">business.project.kra</field>
             <field name="prefix">KRA</field>
             <field name="padding">3</field>
@@ -20,7 +20,7 @@
         </record>
 
         <record id="seq_business_project_kpi" model="ir.sequence">
-            <field name="name">KPI Sequence</field>
+            <field name="name">Task Sequence</field>
             <field name="code">business.project.kpi</field>
             <field name="prefix">KPI</field>
             <field name="padding">3</field>
